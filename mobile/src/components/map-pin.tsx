@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Marker } from 'react-native-maps';
+import { Marker } from '@/components/maps';
 
 import type { IconName } from './ui';
 

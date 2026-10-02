@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import MapView from 'react-native-maps';
+import MapView from '@/components/maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MapPin } from '@/components/map-pin';

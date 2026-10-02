@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
-import MapView from 'react-native-maps';
+import MapView from '@/components/maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DemoFooter } from '@/components/demo-footer';
