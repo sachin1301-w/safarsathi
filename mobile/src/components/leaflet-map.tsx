@@ -38,10 +38,18 @@ export interface LeafletMapProps {
   style?: StyleProp<ViewStyle>;
 }
 
+// CARTO basemaps need a key (tiles say "API KEY REQUIRED" without one). With no key,
+// fall back to OpenStreetMap's own tiles, which have no dark style.
+const CARTO_KEY = process.env.EXPO_PUBLIC_CARTO_KEY;
+
+function tileUrl(dark: boolean) {
+  if (!CARTO_KEY) return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const style = dark ? 'dark_all' : 'rastertiles/voyager';
+  return `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(CARTO_KEY)}`;
+}
+
 function buildHtml(center: { lat: number; lng: number }, zoom: number, dark: boolean) {
-  const tiles = dark
-    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+  const tiles = tileUrl(dark);
   const bg = dark ? '#0B0E0F' : '#E8EEEE';
   return `<!doctype html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -62,7 +70,7 @@ var send=function(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMe
 if(!window.L){document.body.innerHTML='<div class="msg">The map needs an internet connection.</div>';}
 else{
 var map=L.map('map',{zoomControl:false}).setView([${center.lat},${center.lng}],${zoom});
-L.tileLayer('${tiles}',{maxZoom:19,subdomains:'abcd',attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
+L.tileLayer('${tiles}',{maxZoom:19,subdomains:'abcd',attribution:'${CARTO_KEY ? '&copy; OpenStreetMap &copy; CARTO' : '&copy; OpenStreetMap'}'}).addTo(map);
 map.on('click',function(){send({type:'map'})});
 var layer=L.layerGroup().addTo(map);
 var BOLT='<svg viewBox="0 0 24 24" width="62%" height="62%"><path fill="#fff" d="M13 2 4 14h7l-1 8 10-12h-7z"/></svg>';
@@ -112,7 +120,8 @@ export function LeafletMap({
   }, [ready, state]);
 
   useEffect(() => {
-    if (ready && !fit) ref.current?.injectJavaScript(`window.recenter(${center.lat},${center.lng},${zoom});true;`);
+    if (ready && !fit)
+      ref.current?.injectJavaScript(`window.recenter(${center.lat},${center.lng},${zoom});true;`);
   }, [ready, fit, center.lat, center.lng, zoom]);
 
   const onMessage = (e: WebViewMessageEvent) => {

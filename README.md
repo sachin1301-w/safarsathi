@@ -43,6 +43,7 @@ npm run dev                 # http://localhost:4000/api/health -> { "ok": true }
 ```bash
 cd mobile
 cp .env.example .env        # EXPO_PUBLIC_API_URL=http://<your-laptop-LAN-IP>:4000
+                            # EXPO_PUBLIC_CARTO_KEY=<key from carto.com/basemaps> (optional; nicer map tiles)
 npm install
 npx expo start              # scan the QR code with Expo Go
 ```
