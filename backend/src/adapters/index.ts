@@ -49,7 +49,13 @@ export function describeAdapters() {
     process.env.DEMO_OFFLINE?.trim().toLowerCase() === 'true'
       ? 'offline'
       : process.env.LLM_PROVIDER?.trim() ||
-        (process.env.ANTHROPIC_API_KEY?.trim() ? 'claude' : sarvamKey ? 'sarvam' : 'offline');
+        (process.env.ANTHROPIC_API_KEY?.trim()
+          ? 'claude'
+          : env('GEMINI_API_KEY')
+            ? 'gemini'
+            : sarvamKey
+              ? 'sarvam'
+              : 'offline');
   return {
     llm,
     chargers: ocmKey ? 'open-charge-map' : 'mock',

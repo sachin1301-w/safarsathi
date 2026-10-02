@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Icon } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
@@ -34,6 +34,13 @@ export function PlaceSearch({
 
   const showResults = focused && query.trim().length > 0 && results.length > 0;
 
+  const choose = (place: Place) => {
+    onSelect(place);
+    setQuery('');
+    setFocused(false);
+    Keyboard.dismiss();
+  };
+
   return (
     <View style={styles.wrap}>
       <View
@@ -50,6 +57,8 @@ export function PlaceSearch({
             setQuery('');
           }}
           onBlur={() => setTimeout(() => setFocused(false), 150)}
+          // Enter picks the top suggestion.
+          onSubmitEditing={() => results[0] && query.trim() && choose(results[0])}
           placeholder={placeholder}
           placeholderTextColor={theme.textSecondary}
           style={[styles.input, { color: theme.text }]}
@@ -63,11 +72,9 @@ export function PlaceSearch({
           {results.map((p) => (
             <Pressable
               key={p.id}
-              onPress={() => {
-                onSelect(p);
-                setQuery('');
-                setFocused(false);
-              }}
+              // onPressIn: on Android the keyboard closing blurs the input first, which hid the
+              // list before onPress could fire.
+              onPressIn={() => choose(p)}
               accessibilityRole="button"
               style={({ pressed }) => [
                 styles.result,

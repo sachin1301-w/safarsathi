@@ -15,6 +15,11 @@ import { useLocation } from '@/lib/location';
 import type { Charger, ChargerStatus } from '@/lib/types';
 
 const CONNECTORS = ['All', 'CCS2', 'Type2', 'GBT', 'Bharat AC001', 'CHAdeMO'];
+// Wide enough for the highway chargers towards Mahabaleshwar, Lonavala and Mumbai.
+const RADIUS_KM = 300;
+/** The map opens zoomed to this many of the closest chargers. */
+const FOCUS_COUNT = 6;
+
 const POWER = [
   { label: 'Any kW', minKw: undefined },
   { label: '22+ kW', minKw: 22 },
@@ -41,7 +46,7 @@ export default function EvScreen() {
       .chargers({
         lat: center.lat,
         lng: center.lng,
-        radiusKm: 150, // include the highway chargers towards Mahabaleshwar and Lonavala
+        radiusKm: RADIUS_KM,
         connector: connector === 'All' ? undefined : connector,
         minKw,
       })
@@ -60,6 +65,12 @@ export default function EvScreen() {
     chargers?.forEach((ch) => c[ch.status]++);
     return c;
   }, [chargers]);
+
+  // Results come sorted by distance; zoom to the closest ones so their pins are in view.
+  const focus = useMemo(
+    () => (chargers?.length ? [center, ...chargers.slice(0, FOCUS_COUNT)] : undefined),
+    [chargers, center],
+  );
 
   const selected = chargers?.find((c) => c.id === selectedId) ?? null;
   const openDetail = (id: string) => router.push({ pathname: '/charger/[id]', params: { id } });
@@ -119,6 +130,7 @@ export default function EvScreen() {
             style={StyleSheet.absoluteFill}
             center={center}
             zoom={12}
+            focus={focus}
             user={location.coords}
             markers={(chargers ?? []).map((c) => ({
               id: c.id,

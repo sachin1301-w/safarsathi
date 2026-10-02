@@ -21,7 +21,7 @@ const timeString = z.string().transform((s, ctx) => {
 const nearQuery = z.object({
   lat: queryNumber().min(-90).max(90),
   lng: queryNumber().min(-180).max(180),
-  radiusKm: queryNumber().positive().max(50).default(3),
+  radiusKm: queryNumber().positive().max(500).default(15),
   arriveAt: timeString.optional(),
 });
 

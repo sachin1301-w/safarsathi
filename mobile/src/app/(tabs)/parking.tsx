@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,6 +30,9 @@ const ARRIVAL_OPTIONS: { label: StringKey; offsetMins: number }[] = [
   { label: 'parking.in3h', offsetMins: 180 },
 ];
 const HOURS = [1, 2, 3, 4];
+const RADIUS_KM = 15;
+/** With nothing within RADIUS_KM, show this many of the nearest lots instead. */
+const FALLBACK_COUNT = 5;
 
 const TYPE_ICON: Record<ParkingLot['type'], IconName> = {
   MALL: 'shopping',
@@ -55,6 +58,8 @@ export default function ParkingScreen() {
   const [destination, setDestination] = useState<Place | null>(null);
   const [offsetMins, setOffsetMins] = useState(0);
   const [lots, setLots] = useState<ParkingLot[] | null>(null);
+  // True when nothing was within RADIUS_KM and `lots` holds the nearest ones instead.
+  const [fallback, setFallback] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<ParkingLot | null>(null);
   const [reserving, setReserving] = useState<{ lot: ParkingLot; arriveAt: Date } | null>(null);
@@ -65,22 +70,30 @@ export default function ParkingScreen() {
   const centerName = destination?.name ?? (here ? 'you' : (profile?.home?.name ?? 'Kothrud'));
 
   const load = useCallback(() => {
-    api
-      .parking({
+    const query = (radiusKm: number) =>
+      api.parking({
         lat: center.lat,
         lng: center.lng,
-        radiusKm: 3,
+        radiusKm,
         arriveAt: new Date(Date.now() + offsetMins * 60_000).toISOString(),
-      })
-      .then((l) => {
-        setLots(l);
+      });
+    query(RADIUS_KM)
+      .then(async (near) => {
+        const far = near.length ? null : (await query(500)).slice(0, FALLBACK_COUNT);
+        setLots(far ?? near);
+        setFallback(!!far?.length);
         setError(null);
       })
       .catch((e: Error) => setError(e.message));
   }, [center.lat, center.lng, offsetMins]);
 
-  useEffect(load, [load]);
+  // Zoom the map to the closest lots (and the search point) so the pins are in view.
+  const focus = useMemo(
+    () => (lots?.length ? [center, ...lots.slice(0, FALLBACK_COUNT)] : undefined),
+    [lots, center],
+  );
 
+  useEffect(load, [load]);
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -99,7 +112,9 @@ export default function ParkingScreen() {
         <View style={styles.nearRow}>
           <Icon name="map-marker-radius" size={16} color={theme.accent} />
           <Text style={{ color: theme.textSecondary, flex: 1 }} numberOfLines={1}>
-            Parking within 3 km of {centerName}
+            {fallback
+              ? `Nothing within ${RADIUS_KM} km of ${centerName}, showing the nearest`
+              : `Parking within ${RADIUS_KM} km of ${centerName}`}
           </Text>
           {destination && here && (
             <Chip label="Near me" icon="crosshairs-gps" onPress={() => setDestination(null)} />
@@ -127,6 +142,7 @@ export default function ParkingScreen() {
           style={StyleSheet.absoluteFill}
           center={center}
           zoom={14}
+          focus={focus}
           user={location.coords}
           markers={(lots ?? []).map((lot) => ({
             id: lot.id,
@@ -153,7 +169,7 @@ export default function ParkingScreen() {
         ) : lots.length === 0 ? (
           <EmptyState
             icon="parking"
-            title="No parking within 3 km"
+            title="No parking found"
             message="Try a nearby landmark, mall or station."
           />
         ) : (

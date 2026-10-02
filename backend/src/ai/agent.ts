@@ -1,14 +1,15 @@
 /**
  * The copilot: picks an LLM provider, runs its tool-use loop, and falls back down the chain
- * (Claude → Sarvam → offline assistant) so the chat always answers.
+ * (Claude → Gemini → Sarvam → offline assistant) so the chat always answers.
  *
- * LLM_PROVIDER=claude | sarvam | offline picks the first provider to try. Unset, it uses
- * Claude if ANTHROPIC_API_KEY is set, else Sarvam if SARVAM_API_KEY is set, else offline.
+ * LLM_PROVIDER=claude | gemini | sarvam | offline picks the first provider to try. Unset, it
+ * tries every provider with a key in that order, then the offline assistant.
  */
 import { DEMO_USER_ID, prisma } from '../lib/db';
 import { getProfile } from '../routes/profile';
 import type { Card } from '../types';
 import { claudeConfigured, isAccountError, runClaude } from './claudeAgent';
+import { geminiConfigured, runGemini } from './geminiAgent';
 import { describeCards, runOfflineAgent } from './offline';
 import { withRequestContext, type UserLocation } from './requestContext';
 import { runSarvam, sarvamConfigured } from './sarvamAgent';
@@ -23,7 +24,7 @@ export interface ChatTurn {
   content: string;
 }
 
-export type Provider = 'claude' | 'sarvam' | 'offline';
+export type Provider = 'claude' | 'gemini' | 'sarvam' | 'offline';
 
 export interface ChatResult {
   reply: string;
@@ -82,6 +83,7 @@ function providerChain(): Provider[] {
   if (process.env.DEMO_OFFLINE?.trim().toLowerCase() === 'true') return ['offline'];
   const available: Provider[] = [];
   if (claudeConfigured() && Date.now() >= claudeBlockedUntil) available.push('claude');
+  if (geminiConfigured()) available.push('gemini');
   if (sarvamConfigured()) available.push('sarvam');
   const preferred = process.env.LLM_PROVIDER?.trim().toLowerCase() as Provider | undefined;
   if (preferred === 'offline') return ['offline'];
@@ -115,8 +117,8 @@ async function runChain(
     }
     const started = Date.now();
     try {
-      const out =
-        provider === 'claude' ? await runClaude(history, ctx!) : await runSarvam(history, ctx!);
+      const run = { claude: runClaude, gemini: runGemini, sarvam: runSarvam }[provider];
+      const out = await run(history, ctx!);
       console.log(`chat: ${provider}, ${out.rounds} tool round(s), ${Date.now() - started} ms`);
       return {
         reply: out.reply || describeCards(out.cards, language),

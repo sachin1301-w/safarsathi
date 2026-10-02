@@ -23,7 +23,9 @@ export class SarvamSpeechAdapter implements SpeechAdapter {
   async transcribe(audio: Buffer, mimeType: string, languageCode?: string) {
     const form = new FormData();
     const ext = mimeType.split('/')[1]?.split(';')[0] ?? 'm4a';
-    form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `speech.${ext}`);
+    // Android records .m4a and labels it audio/m4a, which Sarvam rejects; audio/mp4 is accepted.
+    const type = /^audio\/(x-)?m4a\b/.test(mimeType) ? 'audio/mp4' : mimeType;
+    form.append('file', new Blob([new Uint8Array(audio)], { type }), `speech.${ext}`);
     form.append('model', 'saaras:v4');
     form.append('mode', 'transcribe');
     form.append('language_code', languageCode ?? 'unknown');

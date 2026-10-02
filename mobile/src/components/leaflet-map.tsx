@@ -33,6 +33,8 @@ export interface LeafletMapProps {
   user?: { lat: number; lng: number } | null;
   /** Zoom to show every marker and line whenever they change. */
   fit?: boolean;
+  /** Zoom to show these points (e.g. the nearest results) whenever they change; overrides center. */
+  focus?: { lat: number; lng: number }[];
   onMarkerPress?: (id: string) => void;
   onMapPress?: () => void;
   style?: StyleProp<ViewStyle>;
@@ -92,6 +94,7 @@ window.render=function(s){
   if(s.fit&&pts.length){map.fitBounds(pts,{padding:[36,36],maxZoom:15});}
 };
 window.recenter=function(lat,lng,zoom){map.setView([lat,lng],zoom||map.getZoom(),{animate:true})};
+window.focusOn=function(pts){if(pts.length===1){map.setView(pts[0],15)}else if(pts.length){map.fitBounds(pts,{padding:[40,40],maxZoom:15})}};
 send({type:'ready'});
 }
 </script></body></html>`;
@@ -104,6 +107,7 @@ export function LeafletMap({
   polylines = [],
   user,
   fit,
+  focus,
   onMarkerPress,
   onMapPress,
   style,
@@ -119,10 +123,15 @@ export function LeafletMap({
     if (ready) ref.current?.injectJavaScript(`window.render(${state});true;`);
   }, [ready, state]);
 
+  const focusPts = focus?.length ? JSON.stringify(focus.map((p) => [p.lat, p.lng])) : null;
   useEffect(() => {
-    if (ready && !fit)
-      ref.current?.injectJavaScript(`window.recenter(${center.lat},${center.lng},${zoom});true;`);
-  }, [ready, fit, center.lat, center.lng, zoom]);
+    if (!ready || fit) return;
+    ref.current?.injectJavaScript(
+      focusPts
+        ? `window.focusOn(${focusPts});true;`
+        : `window.recenter(${center.lat},${center.lng},${zoom});true;`,
+    );
+  }, [ready, fit, focusPts, center.lat, center.lng, zoom]);
 
   const onMessage = (e: WebViewMessageEvent) => {
     try {

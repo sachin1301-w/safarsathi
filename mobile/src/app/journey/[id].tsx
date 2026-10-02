@@ -126,7 +126,13 @@ export default function JourneyDetailScreen() {
             dashed: l.mode === 'WALK',
           }))}
           markers={[
-            { id: 'start', lat: first.from.lat, lng: first.from.lng, color: '#16A34A', glyph: 'start' },
+            {
+              id: 'start',
+              lat: first.from.lat,
+              lng: first.from.lng,
+              color: '#16A34A',
+              glyph: 'start',
+            },
             { id: 'end', lat: last.to.lat, lng: last.to.lng, color: '#DC2626', glyph: 'end' },
           ]}
         />

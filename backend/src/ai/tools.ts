@@ -154,7 +154,7 @@ export const TOOLS = [
         .describe(
           'Place name, "home"/"office" or "current location". Defaults to where the user is now, else home.',
         ),
-      radiusKm: z.number().positive().max(100).optional().describe('Search radius, default 5 km'),
+      radiusKm: z.number().positive().max(300).optional().describe('Search radius, default 25 km'),
       connector: z.string().optional().describe('CCS2, Type2, GBT, Bharat AC001 or CHAdeMO'),
       minKw: z.number().nonnegative().optional().describe('Minimum charging power in kW'),
     }),
@@ -163,7 +163,7 @@ export const TOOLS = [
       const list = await chargers.findNear({
         lat: place.lat,
         lng: place.lng,
-        radiusKm: input.radiusKm ?? 5,
+        radiusKm: input.radiusKm ?? 25,
         connector: input.connector,
         minKw: input.minKw,
       });
@@ -203,7 +203,7 @@ export const TOOLS = [
     async run(input) {
       const place = await resolveNear(input.near);
       const at = parseOptionalTime(input.arriveAt, 'arriveAt') ?? new Date();
-      const lots = (await parking.findNear(place.lat, place.lng, 3))
+      const lots = (await parking.findNear(place.lat, place.lng, 15))
         .map((l) => withPrediction(l, at))
         .slice(0, 6);
       return {

@@ -54,8 +54,10 @@ Find your LAN IP with `ipconfig` (Windows, the Wi-Fi adapter's IPv4 address) or 
 
 | Variable | Needed for | Without it |
 | --- | --- | --- |
-| `LLM_PROVIDER` | Which LLM runs the chat: `claude`, `sarvam` or `offline` | Claude if `ANTHROPIC_API_KEY` is set, else Sarvam, else offline |
-| `ANTHROPIC_API_KEY` | The Claude copilot (needs prepaid API credits) | Sarvam or the offline assistant |
+| `LLM_PROVIDER` | Which LLM runs the chat: `claude`, `gemini`, `sarvam` or `offline` | The first of Claude, Gemini, Sarvam with a key, else offline |
+| `ANTHROPIC_API_KEY` | The Claude copilot (needs prepaid API credits) | Gemini, Sarvam or the offline assistant |
+| `GEMINI_API_KEY` | The Gemini copilot (key from aistudio.google.com/apikey) | Sarvam or the offline assistant |
+| `GEMINI_CHAT_MODEL` | Override the Gemini chat model | `gemini-3.5-flash-lite` |
 | `SARVAM_API_KEY` | Voice in and out, and the Sarvam copilot (`sarvam-105b-conversations`) | Keyboard dictation, the phone's own text-to-speech, and the offline assistant |
 | `SARVAM_CHAT_MODEL` | Override the Sarvam chat model | `sarvam-105b-conversations` |
 | `COGNEE_API_URL`, `COGNEE_API_KEY` | Long-term memory in Cognee | Memory is kept in the local database only |
@@ -106,7 +108,7 @@ Before you start: `npm run db:seed` in `backend`, open the app, and check that H
 
 - **Planner** (`backend/src/services/planner.ts`): builds candidate chains (walk/auto/bike taxi/cab, metro with line changes, PMPML bus, city leg → train/flight/bus → city leg, EV drive with charger stops), schedules them in India time with boarding buffers and peak-hour speeds, and picks Fastest, Cheapest and Greenest.
 - **Replanner** (`backend/src/services/replanner.ts`): applies a delay, checks every connection and the deadline, pushes an SSE alert, and plans from the user's current point without the delayed service.
-- **Copilot** (`backend/src/ai`): an LLM tool-use loop with tools for planning, replanning, chargers, parking, booking, trips, geocoding and memory; facts only come from tools. It runs on Claude Sonnet 5.5 or Sarvam (`sarvam-105b-conversations`) and falls back Claude → Sarvam → offline assistant if a provider fails.
+- **Copilot** (`backend/src/ai`): an LLM tool-use loop with tools for planning, replanning, chargers, parking, booking, trips, geocoding and memory; facts only come from tools. It runs on Claude Sonnet 5.5, Gemini (`gemini-3.5-flash-lite`) or Sarvam (`sarvam-105b-conversations`) and falls back Claude → Gemini → Sarvam → offline assistant if a provider fails.
 - **Adapters** (`backend/src/adapters`): one interface per data source, with offline mocks plus Open Charge Map, Sarvam and Cognee implementations.
 
 All prices, timings, PNRs and charger statuses are demo data.
