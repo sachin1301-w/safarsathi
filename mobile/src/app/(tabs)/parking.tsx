@@ -1,5 +1,379 @@
-import { ComingSoon } from '@/components/screen';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import MapView from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { MapPin } from '@/components/map-pin';
+import { PlaceSearch } from '@/components/place-search';
+import {
+  Badge,
+  Button,
+  Card,
+  Chip,
+  EmptyState,
+  ErrorState,
+  Icon,
+  SkeletonCard,
+  type IconName,
+} from '@/components/ui';
+import { Radius, Spacing, useTheme } from '@/constants/theme';
+import { api } from '@/lib/api';
+import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
+import { formatInr, formatKm, formatTime } from '@/lib/format';
+import type { ParkingLot, Place } from '@/lib/types';
+
+const ARRIVAL_OPTIONS = [
+  { label: 'Now', offsetMins: 0 },
+  { label: 'In 1 hour', offsetMins: 60 },
+  { label: 'In 3 hours', offsetMins: 180 },
+];
+const HOURS = [1, 2, 3, 4];
+
+const TYPE_ICON: Record<ParkingLot['type'], IconName> = {
+  MALL: 'shopping',
+  STATION: 'train',
+  AIRPORT: 'airplane',
+  STREET: 'road-variant',
+  MULTILEVEL: 'garage',
+};
+
+function availabilityColor(lot: ParkingLot) {
+  const ratio = (lot.predictedFreeSpots ?? 0) / lot.totalSpots;
+  if (ratio > 0.3) return '#22C55E';
+  if (ratio > 0.1) return '#F59E0B';
+  return '#EF4444';
+}
 
 export default function ParkingScreen() {
-  return <ComingSoon title="Parking" phase={3} />;
+  const theme = useTheme();
+  const { profile } = useApp();
+  const mapRef = useRef<MapView>(null);
+
+  const [destination, setDestination] = useState<Place | null>(null);
+  const [offsetMins, setOffsetMins] = useState(0);
+  const [lots, setLots] = useState<ParkingLot[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<ParkingLot | null>(null);
+  const [reserving, setReserving] = useState<{ lot: ParkingLot; arriveAt: Date } | null>(null);
+
+  const center = destination ?? profile?.home ?? DEFAULT_CENTER;
+
+  const load = useCallback(() => {
+    api
+      .parking({
+        lat: center.lat,
+        lng: center.lng,
+        radiusKm: 3,
+        arriveAt: new Date(Date.now() + offsetMins * 60_000).toISOString(),
+      })
+      .then((l) => {
+        setLots(l);
+        setError(null);
+      })
+      .catch((e: Error) => setError(e.message));
+  }, [center.lat, center.lng, offsetMins]);
+
+  useEffect(load, [load]);
+
+  useEffect(() => {
+    mapRef.current?.animateToRegion(
+      { latitude: center.lat, longitude: center.lng, latitudeDelta: 0.05, longitudeDelta: 0.05 },
+      400,
+    );
+  }, [center.lat, center.lng]);
+
+  return (
+    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: theme.text }]}>Parking</Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+          Predicted free spots when you arrive
+        </Text>
+      </View>
+      <View style={styles.searchWrap}>
+        <PlaceSearch
+          value={destination}
+          onSelect={setDestination}
+          placeholder="Where are you going?"
+        />
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chips}>
+        {ARRIVAL_OPTIONS.map((o) => (
+          <Chip
+            key={o.label}
+            label={o.label}
+            icon="clock-outline"
+            selected={offsetMins === o.offsetMins}
+            onPress={() => setOffsetMins(o.offsetMins)}
+          />
+        ))}
+      </ScrollView>
+
+      <View style={styles.mapWrap}>
+        <MapView
+          ref={mapRef}
+          style={StyleSheet.absoluteFill}
+          initialRegion={{
+            latitude: center.lat,
+            longitude: center.lng,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
+          toolbarEnabled={false}>
+          {lots?.map((lot) => (
+            <MapPin
+              key={`${lot.id}-${lot.predictedFreeSpots}-${selected?.id === lot.id}`}
+              lat={lot.lat}
+              lng={lot.lng}
+              color={availabilityColor(lot)}
+              icon="parking"
+              label={`${lot.predictedFreeSpots}`}
+              selected={selected?.id === lot.id}
+              onPress={() => setSelected(lot)}
+              accessibilityLabel={`${lot.name}, ${lot.predictedFreeSpots} free spots`}
+            />
+          ))}
+        </MapView>
+      </View>
+
+      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+        {error ? (
+          <ErrorState message={error} onRetry={load} />
+        ) : !lots ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : lots.length === 0 ? (
+          <EmptyState
+            icon="parking"
+            title="No parking within 3 km"
+            message="Try a nearby landmark, mall or station."
+          />
+        ) : (
+          [...lots]
+            .sort((a, b) => (a.id === selected?.id ? -1 : b.id === selected?.id ? 1 : 0))
+            .map((lot) => (
+              <LotCard
+                key={lot.id}
+                lot={lot}
+                highlighted={lot.id === selected?.id}
+                onPress={() => setSelected(lot)}
+                onReserve={() =>
+                  setReserving({ lot, arriveAt: new Date(Date.now() + offsetMins * 60_000) })
+                }
+              />
+            ))
+        )}
+      </ScrollView>
+
+      <ReserveSheet
+        lot={reserving?.lot ?? null}
+        arriveAt={reserving?.arriveAt ?? null}
+        onClose={() => setReserving(null)}
+      />
+    </SafeAreaView>
+  );
 }
+
+function LotCard({
+  lot,
+  highlighted,
+  onPress,
+  onReserve,
+}: {
+  lot: ParkingLot;
+  highlighted: boolean;
+  onPress: () => void;
+  onReserve: () => void;
+}) {
+  const theme = useTheme();
+  const free = lot.predictedFreeSpots ?? 0;
+  const color = availabilityColor(lot);
+  return (
+    <Card onPress={onPress} style={highlighted && { borderColor: theme.accent, borderWidth: 2 }}>
+      <View style={styles.lotTop}>
+        <View style={[styles.lotIcon, { backgroundColor: theme.accentSoft }]}>
+          <Icon name={TYPE_ICON[lot.type]} color={theme.accent} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.lotName, { color: theme.text }]} numberOfLines={1}>
+            {lot.name}
+          </Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+            {lot.distanceKm !== undefined ? `${formatKm(lot.distanceKm)} · ` : ''}
+            {formatInr(lot.ratePerHour)}/hr{lot.hasEvCharging ? ' · EV charging' : ''}
+          </Text>
+        </View>
+        <Badge label={`${free} free`} color={color} />
+      </View>
+      <View style={[styles.bar, { backgroundColor: theme.surfaceAlt }]}>
+        <View
+          style={[
+            styles.barFill,
+            { backgroundColor: color, width: `${(free / lot.totalSpots) * 100}%` },
+          ]}
+        />
+      </View>
+      <View style={styles.lotBottom}>
+        <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+          {free} of {lot.totalSpots} spots predicted free
+        </Text>
+        <Button
+          label="Reserve"
+          icon="calendar-check"
+          onPress={onReserve}
+          disabled={free === 0}
+          style={styles.reserve}
+        />
+      </View>
+    </Card>
+  );
+}
+
+function ReserveSheet({
+  lot,
+  arriveAt,
+  onClose,
+}: {
+  lot: ParkingLot | null;
+  arriveAt: Date | null;
+  onClose: () => void;
+}) {
+  const theme = useTheme();
+  const [hours, setHours] = useState(2);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ reservationId: string; amount: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const close = () => {
+    setResult(null);
+    setError(null);
+    onClose();
+  };
+
+  async function confirm() {
+    if (!lot || !arriveAt) return;
+    setBusy(true);
+    setError(null);
+    try {
+      setResult(await api.reserveParking(lot.id, arriveAt.toISOString(), hours));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal visible={lot !== null} transparent animationType="slide" onRequestClose={close}>
+      <View style={styles.backdrop}>
+        <View style={[styles.sheet, { backgroundColor: theme.surface }]}>
+          {result ? (
+            <>
+              <View style={[styles.successIcon, { backgroundColor: theme.accentSoft }]}>
+                <Icon name="check-bold" size={32} color={theme.accent} />
+              </View>
+              <Text style={[styles.sheetTitle, { color: theme.text }]}>Spot reserved</Text>
+              <Text style={{ color: theme.textSecondary, textAlign: 'center' }}>
+                {lot?.name} from {arriveAt ? formatTime(arriveAt.toISOString()) : ''} for {hours} h
+              </Text>
+              <Text style={[styles.reservationId, { color: theme.text }]}>
+                {result.reservationId}
+              </Text>
+              <Text style={{ color: theme.textSecondary }}>
+                Pay {formatInr(result.amount)} at the gate (demo)
+              </Text>
+              <Button label="Done" onPress={close} style={{ alignSelf: 'stretch' }} />
+            </>
+          ) : (
+            <>
+              <Text style={[styles.sheetTitle, { color: theme.text }]}>Reserve at {lot?.name}</Text>
+              <Text style={{ color: theme.textSecondary }}>
+                Arriving {arriveAt ? formatTime(arriveAt.toISOString()) : ''}. How long?
+              </Text>
+              <View style={styles.hours}>
+                {HOURS.map((h) => (
+                  <Chip
+                    key={h}
+                    label={`${h} h`}
+                    selected={hours === h}
+                    onPress={() => setHours(h)}
+                  />
+                ))}
+              </View>
+              {lot && (
+                <Text style={[styles.total, { color: theme.text }]}>
+                  Total {formatInr(lot.ratePerHour * hours)}
+                </Text>
+              )}
+              {error && <Text style={{ color: theme.danger }}>{error}</Text>}
+              <View style={styles.sheetButtons}>
+                <Button label="Cancel" variant="secondary" onPress={close} style={{ flex: 1 }} />
+                <Button label="Confirm" onPress={confirm} loading={busy} style={{ flex: 1 }} />
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1 },
+  header: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm },
+  title: { fontSize: 28, fontWeight: '800' },
+  subtitle: { fontSize: 14 },
+  searchWrap: { paddingHorizontal: Spacing.md, paddingTop: Spacing.md, zIndex: 10 },
+  chips: { gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md },
+  mapWrap: {
+    height: 220,
+    marginHorizontal: Spacing.md,
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+  },
+  list: { flex: 1 },
+  listContent: { padding: Spacing.md, gap: Spacing.sm },
+  lotTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  lotIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lotName: { fontSize: 16, fontWeight: '700' },
+  bar: { height: 6, borderRadius: 3, marginTop: Spacing.md, overflow: 'hidden' },
+  barFill: { height: 6, borderRadius: 3 },
+  lotBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.sm,
+  },
+  reserve: { minHeight: 40, paddingHorizontal: Spacing.md },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet: {
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    padding: Spacing.lg,
+    gap: Spacing.md,
+    alignItems: 'center',
+  },
+  sheetTitle: { fontSize: 20, fontWeight: '800', textAlign: 'center' },
+  hours: { flexDirection: 'row', gap: Spacing.sm },
+  total: { fontSize: 18, fontWeight: '700' },
+  sheetButtons: { flexDirection: 'row', gap: Spacing.sm, alignSelf: 'stretch' },
+  successIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reservationId: { fontSize: 28, fontWeight: '800', letterSpacing: 2 },
+});

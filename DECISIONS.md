@@ -40,3 +40,12 @@ These extend SPEC.md and take precedence over it where they conflict.
 - **Bookable modes:** train (10-digit PNR), flight (6-letter PNR), intercity bus, metro (QR ticket) and cab (pre-booked ride). Walks and street-hailed autos aren't bookable.
 - **Sarvam TTS replies are cached on disk** (`backend/.cache/tts`) because the key has ~100 credits.
 - **Cognee:** every memory is written to SQLite and to Cognee (fire and forget). Recall merges Cognee results (10 s timeout, measured ~9 s) with local keyword matches, so memory still works if Cognee is slow or down.
+
+## Phase 3
+
+- **Extra endpoints:** `GET/PATCH /api/me` (profile, language, battery %, which adapters are live), `GET /api/places?q=` (destination search for Parking) and `GET /api/chargers/:id` (detail with recent reports).
+- **The latest crowd report becomes the charger's status** and refreshes `lastVerified`. The EV tab reloads on focus, so the pin changes colour as soon as you come back from the detail screen.
+- **Parking predictions use deterministic ±10% noise** (hashed from lot, date and hour) instead of `Math.random()`, so numbers don't jump on every refresh.
+- **Reserving a lot predicted to be full returns 409.**
+- **Maps:** `react-native-maps` (works in Expo Go, no key needed). Pins are custom round views coloured by status. The EV map loads chargers within 150 km so the highway chargers show up.
+- **No GPS:** maps centre on the user's saved home (Kothrud) or the searched destination, so the demo needs no location permission.
