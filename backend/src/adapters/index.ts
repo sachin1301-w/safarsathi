@@ -45,7 +45,13 @@ export const memory: MemoryAdapter =
     : new LocalMemoryAdapter();
 
 export function describeAdapters() {
+  const llm =
+    process.env.DEMO_OFFLINE?.trim().toLowerCase() === 'true'
+      ? 'offline'
+      : process.env.LLM_PROVIDER?.trim() ||
+        (process.env.ANTHROPIC_API_KEY?.trim() ? 'claude' : sarvamKey ? 'sarvam' : 'offline');
   return {
+    llm,
     chargers: ocmKey ? 'open-charge-map' : 'mock',
     speech: sarvamKey ? 'sarvam' : 'on-device',
     memory: cogneeUrl && cogneeKey ? 'cognee' : 'local',

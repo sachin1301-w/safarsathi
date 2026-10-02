@@ -106,6 +106,47 @@ function deadline(text: string): string | undefined {
 const fmtCost = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 const fmtMins = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
 
+/** A short reply describing tool cards, for when an LLM returns cards but no text. */
+export function describeCards(cards: Card[], language: string): string {
+  const t = T[langOf(language)];
+  const its = cards.filter((c) => c.type === 'itinerary').map((c) => c.data as Itinerary);
+  if (its.length) {
+    const fastest = its.find((i) => i.badges.includes('FASTEST')) ?? its[0];
+    const cheapest = its.find((i) => i.badges.includes('CHEAPEST')) ?? fastest;
+    return t.plan({
+      from: fastest.legs[0].from.name,
+      to: fastest.legs.at(-1)!.to.name,
+      leave: formatIst(new Date(fastest.legs[0].departAt)),
+      arrive: formatIst(new Date(fastest.legs.at(-1)!.arriveAt)),
+      cost: fmtCost(fastest.totalCost),
+      cheap: fmtCost(cheapest.totalCost),
+    });
+  }
+  const chargers = cards.find((c) => c.type === 'chargers');
+  if (chargers && chargers.type === 'chargers' && chargers.data.length) {
+    const working = chargers.data.filter((c) => c.status === 'WORKING');
+    const best = working[0] ?? chargers.data[0];
+    return t.chargers({
+      near: 'you',
+      count: chargers.data.length,
+      working: working.length,
+      name: best.name,
+      kw: best.powerKw,
+    });
+  }
+  const parking = cards.find((c) => c.type === 'parking');
+  if (parking && parking.type === 'parking' && parking.data.length) {
+    const best = parking.data.find((p) => (p.predictedFreeSpots ?? 0) > 0) ?? parking.data[0];
+    return t.parking({
+      near: 'you',
+      name: best.name,
+      free: best.predictedFreeSpots ?? 0,
+      rate: best.ratePerHour,
+    });
+  }
+  return t.help({});
+}
+
 export async function runOfflineAgent(history: ChatTurn[], language: string): Promise<ChatResult> {
   const lang = langOf(language);
   const t = T[lang];
@@ -117,6 +158,7 @@ export async function runOfflineAgent(history: ChatTurn[], language: string): Pr
     reply,
     cards,
     mode: 'offline',
+    provider: 'offline',
   });
 
   // "Fix my trip" from the disruption banner carries the trip id.

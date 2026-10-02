@@ -53,8 +53,10 @@ Find your LAN IP with `ipconfig` (Windows, the Wi-Fi adapter's IPv4 address) or 
 
 | Variable | Needed for | Without it |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | The Claude copilot in Chat | The offline assistant answers the demo's requests from templates |
-| `SARVAM_API_KEY` | Voice input and natural Indian-language voices | Keyboard dictation and the phone's own text-to-speech |
+| `LLM_PROVIDER` | Which LLM runs the chat: `claude`, `sarvam` or `offline` | Claude if `ANTHROPIC_API_KEY` is set, else Sarvam, else offline |
+| `ANTHROPIC_API_KEY` | The Claude copilot (needs prepaid API credits) | Sarvam or the offline assistant |
+| `SARVAM_API_KEY` | Voice in and out, and the Sarvam copilot (`sarvam-105b-conversations`) | Keyboard dictation, the phone's own text-to-speech, and the offline assistant |
+| `SARVAM_CHAT_MODEL` | Override the Sarvam chat model | `sarvam-105b-conversations` |
 | `COGNEE_API_URL`, `COGNEE_API_KEY` | Long-term memory in Cognee | Memory is kept in the local database only |
 | `OPEN_CHARGE_MAP_KEY` | Real chargers from Open Charge Map | Seeded Pune chargers |
 | `DEMO_OFFLINE` | `true` forces the offline assistant (backup for the demo) | |
@@ -97,13 +99,13 @@ Before you start: `npm run db:seed` in `backend`, open the app, and check that H
 
 - **Home says Offline.** The phone and laptop must be on the same Wi-Fi, and `EXPO_PUBLIC_API_URL` must use the laptop's LAN IP (not `localhost`). On Windows, allow Node.js through the firewall for private networks. Restart `npx expo start` after changing `mobile/.env`.
 - **No voice input.** Voice needs `SARVAM_API_KEY` on the backend. Without it, use the keyboard's mic to dictate.
-- **Chat replies are tagged "Offline assistant".** `ANTHROPIC_API_KEY` is empty or rejected, or `DEMO_OFFLINE=true`. Check the backend log.
+- **Chat replies are tagged "Offline assistant".** No LLM is reachable (no key, no credits, or `DEMO_OFFLINE=true`). The backend log says which provider failed and why.
 
 ## How it's built
 
 - **Planner** (`backend/src/services/planner.ts`): builds candidate chains (walk/auto/bike taxi/cab, metro with line changes, PMPML bus, city leg → train/flight/bus → city leg, EV drive with charger stops), schedules them in India time with boarding buffers and peak-hour speeds, and picks Fastest, Cheapest and Greenest.
 - **Replanner** (`backend/src/services/replanner.ts`): applies a delay, checks every connection and the deadline, pushes an SSE alert, and plans from the user's current point without the delayed service.
-- **Copilot** (`backend/src/ai`): Claude Sonnet 5.5 tool-use loop with tools for planning, replanning, chargers, parking, booking, trips, geocoding and memory. Facts only come from tools.
+- **Copilot** (`backend/src/ai`): an LLM tool-use loop with tools for planning, replanning, chargers, parking, booking, trips, geocoding and memory; facts only come from tools. It runs on Claude Sonnet 5.5 or Sarvam (`sarvam-105b-conversations`) and falls back Claude → Sarvam → offline assistant if a provider fails.
 - **Adapters** (`backend/src/adapters`): one interface per data source, with offline mocks plus Open Charge Map, Sarvam and Cognee implementations.
 
 All prices, timings, PNRs and charger statuses are demo data.

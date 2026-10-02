@@ -108,3 +108,12 @@ These extend SPEC.md and take precedence over it where they conflict.
 - **App icon and splash:** a white "start dot → dotted route → destination pin" mark on the teal accent, rendered from SVG (`sharp`) into the icon, Android adaptive foreground/background/monochrome layers, splash image and favicon. The Expo template's iOS `expo.icon` was replaced with the PNG.
 - **Package ids** `com.safarsathi.app` and microphone permission text were added for future builds. `expo-asset` was installed as the peer `expo-audio` needs; `expo-doctor` passes 21/21.
 - **Not done here:** the full demo on a real Android phone (it needs your device). Everything else was checked with type-checks, lint, unit tests, HTTP tests of every endpoint, and an Android bundle build.
+
+## After Phase 8: Sarvam as the chatbot LLM
+
+- **The Anthropic account has no API credits** (the API has no free tier), so the copilot can also run on **Sarvam's chat API** with the same tools, prompt and cards. `LLM_PROVIDER=sarvam` is set in this project's `.env`.
+- **Provider chain:** `LLM_PROVIDER` picks the first provider; any failure falls through Claude → Sarvam → offline assistant. A "no credits" or "bad key" error from Claude skips Claude for 10 minutes so every chat doesn't pay for a failing call.
+- **Model `sarvam-105b-conversations`.** `sarvam-105b` (the agentic model) spent 9–29 s per chat on reasoning and once used its whole output budget on it, returning no text. The conversations model answered the same requests in 1–2 s with correct tool calls. `SARVAM_CHAT_MODEL` switches back.
+- **Empty LLM replies** are replaced by a short summary written from the cards (the offline assistant's templates), so a reply never says just "Here is what I found."
+- **Prompt fix:** `useEv` is set only when the user asks for an EV trip or to drive; Sarvam had been turning every trip into an EV drive.
+- **Measured on Sarvam (one call each):** Kothrud → Connaught Place by 8 PM in English (1.6 s) and Hindi (1.8 s), Marathi parking question (1.0 s), EV trip to Mahabaleshwar with the Khed Shivapur stop (1.0 s). Every time, place and price in the replies matched the tool results.
