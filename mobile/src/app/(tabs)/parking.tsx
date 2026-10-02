@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DemoFooter } from '@/components/demo-footer';
 import { LeafletMap } from '@/components/leaflet-map';
+import { TravelLoaderCard } from '@/components/travel-loader';
 import { PlaceSearch } from '@/components/place-search';
 import {
   Badge,
@@ -14,7 +15,6 @@ import {
   ErrorState,
   FadeIn,
   Icon,
-  LoadingPill,
   SkeletonCard,
   type IconName,
 } from '@/components/ui';
@@ -164,7 +164,7 @@ export default function ParkingScreen() {
           onMapPress={() => setSelected(null)}
         />
         {loadedKey !== reqKey && (
-          <LoadingPill label={t('parking.finding')} style={styles.mapPill} />
+          <TravelLoaderCard vehicle="car" label={t('parking.finding')} style={styles.mapPill} />
         )}
       </View>
 

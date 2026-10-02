@@ -12,12 +12,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TravelLoader } from '@/components/travel-loader';
 import { Button, FadeIn, Icon, type IconName } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
-
-/** Seeded by `npm run db:seed` in backend/. */
-const DEMO = { email: 'demo@safarsathi.app', password: 'demo1234' };
 
 type Mode = 'login' | 'signup';
 
@@ -62,9 +60,7 @@ export function AuthScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <FadeIn style={styles.brand}>
-            <View style={[styles.logo, { backgroundColor: theme.accent }]}>
-              <Icon name="bus-side" size={34} color={theme.onAccent} />
-            </View>
+            <TravelLoader vehicles={['bus', 'rickshaw', 'train', 'plane', 'ev']} cycleMs={2000} />
             <Text style={[styles.title, { color: theme.text }]}>SafarSathi</Text>
             <Text style={{ color: theme.textSecondary, fontSize: 15, textAlign: 'center' }}>
               {mode === 'login'
@@ -86,7 +82,7 @@ export function AuthScreen() {
                     styles.tabText,
                     { color: mode === m ? theme.text : theme.textSecondary },
                   ]}>
-                  {m === 'login' ? 'Log in' : 'Sign up'}
+                  {m === 'login' ? 'Log in' : 'Create account'}
                 </Text>
               </Pressable>
             ))}
@@ -146,19 +142,17 @@ export function AuthScreen() {
               disabled={busy}
             />
 
-            {mode === 'login' && (
-              <Button
-                label="Use demo account"
-                icon="account-star-outline"
-                variant="secondary"
-                disabled={busy}
-                onPress={() => {
-                  setEmail(DEMO.email);
-                  setPassword(DEMO.password);
-                  run(() => login(DEMO.email, DEMO.password));
-                }}
-              />
-            )}
+            <Pressable
+              onPress={() => switchMode(mode === 'login' ? 'signup' : 'login')}
+              accessibilityRole="button"
+              style={styles.switch}>
+              <Text style={{ color: theme.textSecondary, fontSize: 15 }}>
+                {mode === 'login' ? 'New to SafarSathi? ' : 'Already have an account? '}
+                <Text style={{ color: theme.accent, fontWeight: '700' }}>
+                  {mode === 'login' ? 'Create an account' : 'Log in'}
+                </Text>
+              </Text>
+            </Pressable>
           </FadeIn>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -214,7 +208,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   content: { flexGrow: 1, justifyContent: 'center', padding: Spacing.lg, gap: Spacing.lg },
   brand: { alignItems: 'center', gap: Spacing.sm },
-  logo: { width: 68, height: 68, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  switch: { alignItems: 'center', paddingVertical: Spacing.sm },
   title: { fontSize: 30, fontWeight: '800' },
   tabs: { flexDirection: 'row', borderRadius: Radius.pill, padding: 4 },
   tab: {

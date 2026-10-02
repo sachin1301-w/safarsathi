@@ -48,7 +48,7 @@ npm install
 npx expo start              # scan the QR code with Expo Go
 ```
 
-In Expo Go the app finds the backend on the same laptop by itself, so `EXPO_PUBLIC_API_URL` only matters for standalone builds. Sign up in the app, or tap **Use demo account** (`demo@safarsathi.app` / `demo1234`, created by `npm run db:seed`).
+In Expo Go the app finds the backend on the same laptop by itself, so `EXPO_PUBLIC_API_URL` only matters for standalone builds. Create an account in the app, or log in with the seeded account `demo@safarsathi.app` / `demo1234` (created by `npm run db:seed`).
 
 Find your LAN IP with `ipconfig` (Windows, the Wi-Fi adapter's IPv4 address) or `ipconfig getifaddr en0` (macOS).
 
@@ -86,7 +86,7 @@ Never commit `.env`; both apps ignore it.
 
 ## Demo script (4 minutes)
 
-Before you start: `npm run db:seed` in `backend`, open the app, tap **Use demo account**, and check that Home shows **Connected**.
+Before you start: `npm run db:seed` in `backend`, open the app, log in as `demo@safarsathi.app` / `demo1234`, and check that Home shows **Connected**.
 
 1. **Hook (30 s).** "Nearly 3 in 10 government-approved EV chargers in India don't work, and our metros are underused because nobody solves the last mile. Meet SafarSathi."
 2. **Plan (60 s).** On Home, tap the mic and say "I need to reach Connaught Place, Delhi by 8 PM today from Kothrud" (or type it). Chat shows three options. Open one with a flight, then tap **Book all**. The tickets appear in Trips.

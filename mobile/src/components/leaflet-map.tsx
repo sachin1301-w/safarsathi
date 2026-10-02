@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 
-import { LoadingPill } from '@/components/ui';
+import { TravelLoaderCard } from '@/components/travel-loader';
 import { useT } from '@/lib/i18n';
 
 export interface MapMarker {
@@ -182,7 +182,7 @@ export function LeafletMap({
           styles.cover,
           { opacity: cover, backgroundColor: dark ? '#0B0E0F' : '#E8EEEE' },
         ]}>
-        <LoadingPill label={t('map.loading')} />
+        <TravelLoaderCard vehicle="car" label={t('map.loading')} />
       </Animated.View>
     </View>
   );

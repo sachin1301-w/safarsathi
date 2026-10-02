@@ -15,7 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatCards } from '@/components/chat-cards';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
-import { Chip, FadeIn, Icon, TypingDots } from '@/components/ui';
+import { TravelLoader } from '@/components/travel-loader';
+import { Chip, FadeIn, Icon } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useCurrentOrigin } from '@/lib/location';
@@ -339,7 +340,7 @@ function Thinking() {
         styles.thinking,
         { backgroundColor: theme.surface, borderColor: theme.border },
       ]}>
-      <TypingDots />
+      <TravelLoader size="sm" width={170} vehicles={['bus', 'train', 'plane']} cycleMs={1500} />
       <Text style={{ color: theme.textSecondary }}>
         {slow ? t('chat.checking') : t('chat.planning')}
       </Text>
@@ -394,8 +395,7 @@ const styles = StyleSheet.create({
   tag: { fontSize: 11, fontWeight: '600' },
   speaker: { padding: 2 },
   thinking: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 10,
     borderWidth: StyleSheet.hairlineWidth,
     alignSelf: 'flex-start',

@@ -4,6 +4,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DemoFooter } from '@/components/demo-footer';
+import { TravelLoader } from '@/components/travel-loader';
 import { TripStatusChip } from '@/components/trip-status';
 import {
   Button,
@@ -86,7 +87,7 @@ export default function TripsScreen() {
           <ErrorState message={error} onRetry={load} />
         ) : !sections ? (
           <>
-            <SkeletonCard />
+            <TravelLoader vehicles={['bus', 'train', 'plane']} label="Loading your trips…" />
             <SkeletonCard />
           </>
         ) : total === 0 ? (

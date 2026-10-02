@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { JourneyCard } from '@/components/journey-card';
+import { TravelLoader } from '@/components/travel-loader';
 import { Chip, ErrorState, FadeIn, SkeletonCard } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -77,7 +78,11 @@ export default function PlanScreen() {
         <ErrorState message={error} onRetry={load} />
       ) : !result ? (
         <>
-          <SkeletonCard />
+          <TravelLoader
+            vehicles={['rickshaw', 'bus', 'train', 'plane']}
+            cycleMs={1600}
+            label="Comparing autos, buses, trains and flights…"
+          />
           <SkeletonCard />
           <SkeletonCard />
         </>

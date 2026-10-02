@@ -6,16 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChargerRow } from '@/components/charger-row';
 import { DemoFooter } from '@/components/demo-footer';
 import { LeafletMap } from '@/components/leaflet-map';
-import {
-  Button,
-  Chip,
-  EmptyState,
-  ErrorState,
-  FadeIn,
-  Icon,
-  LoadingPill,
-  SkeletonCard,
-} from '@/components/ui';
+import { TravelLoaderCard } from '@/components/travel-loader';
+import { Button, Chip, EmptyState, ErrorState, FadeIn, Icon, SkeletonCard } from '@/components/ui';
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
@@ -157,7 +149,9 @@ export default function EvScreen() {
             onMarkerPress={setSelectedId}
             onMapPress={() => setSelectedId(null)}
           />
-          {loadedKey !== reqKey && <LoadingPill label={t('ev.finding')} style={styles.mapPill} />}
+          {loadedKey !== reqKey && (
+            <TravelLoaderCard vehicle="ev" label={t('ev.finding')} style={styles.mapPill} />
+          )}
           {selected && (
             <View style={styles.sheet}>
               <ChargerRow charger={selected} onPress={() => openDetail(selected.id)} />
