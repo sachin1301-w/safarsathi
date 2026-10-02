@@ -1,0 +1,581 @@
+[
+  {
+    "id": "chg-001",
+    "name": "Glida – Kothrud Depot",
+    "operator": "Glida",
+    "lat": 18.5048,
+    "lng": 73.7935,
+    "powerKw": 15,
+    "connectors": [
+      "Bharat AC001",
+      "GBT"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 16,
+    "lastVerified": "2026-09-29T20:00:00.000Z"
+  },
+  {
+    "id": "chg-002",
+    "name": "Jio-bp pulse – Karve Road",
+    "operator": "Jio-bp pulse",
+    "lat": 18.5071,
+    "lng": 73.8155,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "BROKEN",
+    "pricePerKwh": 26,
+    "lastVerified": "2026-10-01T12:00:00.000Z"
+  },
+  {
+    "id": "chg-003",
+    "name": "Jio-bp pulse – Paud Road",
+    "operator": "Jio-bp pulse",
+    "lat": 18.5086,
+    "lng": 73.8012,
+    "powerKw": 30,
+    "connectors": [
+      "CCS2",
+      "Type2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 22,
+    "lastVerified": "2026-09-29T22:00:00.000Z"
+  },
+  {
+    "id": "chg-004",
+    "name": "Jio-bp pulse – Deccan Gymkhana",
+    "operator": "Jio-bp pulse",
+    "lat": 18.5172,
+    "lng": 73.8402,
+    "powerKw": 30,
+    "connectors": [
+      "CCS2",
+      "Type2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 20,
+    "lastVerified": "2026-09-30T20:00:00.000Z"
+  },
+  {
+    "id": "chg-005",
+    "name": "Zeon Charging – FC Road",
+    "operator": "Zeon Charging",
+    "lat": 18.5243,
+    "lng": 73.8411,
+    "powerKw": 22,
+    "connectors": [
+      "Type2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 18,
+    "lastVerified": "2026-09-29T22:00:00.000Z"
+  },
+  {
+    "id": "chg-006",
+    "name": "Jio-bp pulse – Shivajinagar",
+    "operator": "Jio-bp pulse",
+    "lat": 18.5303,
+    "lng": 73.8492,
+    "powerKw": 30,
+    "connectors": [
+      "CCS2",
+      "Type2"
+    ],
+    "status": "BROKEN",
+    "pricePerKwh": 19,
+    "lastVerified": "2026-09-29T13:00:00.000Z"
+  },
+  {
+    "id": "chg-007",
+    "name": "Glida – Model Colony",
+    "operator": "Glida",
+    "lat": 18.5333,
+    "lng": 73.8358,
+    "powerKw": 50,
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "status": "BUSY",
+    "pricePerKwh": 25,
+    "lastVerified": "2026-09-30T00:00:00.000Z"
+  },
+  {
+    "id": "chg-008",
+    "name": "Glida – Baner Road",
+    "operator": "Glida",
+    "lat": 18.5596,
+    "lng": 73.7899,
+    "powerKw": 7.4,
+    "connectors": [
+      "Type2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 16,
+    "lastVerified": "2026-10-01T20:00:00.000Z"
+  },
+  {
+    "id": "chg-009",
+    "name": "Statiq – Balewadi High Street",
+    "operator": "Statiq",
+    "lat": 18.5708,
+    "lng": 73.7788,
+    "powerKw": 50,
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 24,
+    "lastVerified": "2026-10-01T10:00:00.000Z"
+  },
+  {
+    "id": "chg-010",
+    "name": "Jio-bp pulse – Aundh ITI Road",
+    "operator": "Jio-bp pulse",
+    "lat": 18.5603,
+    "lng": 73.8104,
+    "powerKw": 30,
+    "connectors": [
+      "CCS2",
+      "Type2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 22,
+    "lastVerified": "2026-09-29T23:00:00.000Z"
+  },
+  {
+    "id": "chg-011",
+    "name": "ChargeZone – Hinjewadi Phase 1",
+    "operator": "ChargeZone",
+    "lat": 18.5918,
+    "lng": 73.7402,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 25,
+    "lastVerified": "2026-10-01T00:00:00.000Z"
+  },
+  {
+    "id": "chg-012",
+    "name": "Statiq – Hinjewadi Phase 2",
+    "operator": "Statiq",
+    "lat": 18.5867,
+    "lng": 73.7121,
+    "powerKw": 60,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 23,
+    "lastVerified": "2026-10-01T20:00:00.000Z"
+  },
+  {
+    "id": "chg-013",
+    "name": "Statiq – Hinjewadi Phase 3",
+    "operator": "Statiq",
+    "lat": 18.5831,
+    "lng": 73.6874,
+    "powerKw": 30,
+    "connectors": [
+      "CCS2",
+      "Type2"
+    ],
+    "status": "BUSY",
+    "pricePerKwh": 22,
+    "lastVerified": "2026-09-30T15:00:00.000Z"
+  },
+  {
+    "id": "chg-014",
+    "name": "Zeon Charging – Wakad",
+    "operator": "Zeon Charging",
+    "lat": 18.5995,
+    "lng": 73.7631,
+    "powerKw": 15,
+    "connectors": [
+      "Bharat AC001",
+      "GBT"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 16,
+    "lastVerified": "2026-09-30T07:00:00.000Z"
+  },
+  {
+    "id": "chg-015",
+    "name": "Jio-bp pulse – Pimple Saudagar",
+    "operator": "Jio-bp pulse",
+    "lat": 18.5947,
+    "lng": 73.7966,
+    "powerKw": 22,
+    "connectors": [
+      "Type2"
+    ],
+    "status": "BROKEN",
+    "pricePerKwh": 18,
+    "lastVerified": "2026-10-01T23:00:00.000Z"
+  },
+  {
+    "id": "chg-016",
+    "name": "Jio-bp pulse – Pimpri",
+    "operator": "Jio-bp pulse",
+    "lat": 18.6271,
+    "lng": 73.8023,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 24,
+    "lastVerified": "2026-09-30T01:00:00.000Z"
+  },
+  {
+    "id": "chg-017",
+    "name": "Glida – Chinchwad",
+    "operator": "Glida",
+    "lat": 18.6442,
+    "lng": 73.7859,
+    "powerKw": 30,
+    "connectors": [
+      "CCS2",
+      "Type2"
+    ],
+    "status": "BROKEN",
+    "pricePerKwh": 21,
+    "lastVerified": "2026-09-29T23:00:00.000Z"
+  },
+  {
+    "id": "chg-018",
+    "name": "ChargeZone – Nigdi",
+    "operator": "ChargeZone",
+    "lat": 18.6514,
+    "lng": 73.7693,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 24,
+    "lastVerified": "2026-10-01T00:00:00.000Z"
+  },
+  {
+    "id": "chg-019",
+    "name": "Jio-bp pulse – Koregaon Park",
+    "operator": "Jio-bp pulse",
+    "lat": 18.5371,
+    "lng": 73.8936,
+    "powerKw": 50,
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 23,
+    "lastVerified": "2026-10-01T16:00:00.000Z"
+  },
+  {
+    "id": "chg-020",
+    "name": "Zeon Charging – Kalyani Nagar",
+    "operator": "Zeon Charging",
+    "lat": 18.5491,
+    "lng": 73.9018,
+    "powerKw": 30,
+    "connectors": [
+      "CCS2",
+      "Type2"
+    ],
+    "status": "BROKEN",
+    "pricePerKwh": 20,
+    "lastVerified": "2026-10-01T17:00:00.000Z"
+  },
+  {
+    "id": "chg-021",
+    "name": "Glida – Viman Nagar",
+    "operator": "Glida",
+    "lat": 18.5672,
+    "lng": 73.9129,
+    "powerKw": 50,
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 25,
+    "lastVerified": "2026-09-30T04:00:00.000Z"
+  },
+  {
+    "id": "chg-022",
+    "name": "Tata Power EZ Charge – Pune Airport",
+    "operator": "Tata Power EZ Charge",
+    "lat": 18.5809,
+    "lng": 73.9186,
+    "powerKw": 50,
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 24,
+    "lastVerified": "2026-09-30T16:00:00.000Z"
+  },
+  {
+    "id": "chg-023",
+    "name": "Glida – Phoenix Marketcity",
+    "operator": "Glida",
+    "lat": 18.5617,
+    "lng": 73.9171,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 25,
+    "lastVerified": "2026-09-30T01:00:00.000Z"
+  },
+  {
+    "id": "chg-024",
+    "name": "Statiq – Kharadi",
+    "operator": "Statiq",
+    "lat": 18.5521,
+    "lng": 73.9437,
+    "powerKw": 7.4,
+    "connectors": [
+      "Type2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 15,
+    "lastVerified": "2026-09-29T11:00:00.000Z"
+  },
+  {
+    "id": "chg-025",
+    "name": "Zeon Charging – Magarpatta",
+    "operator": "Zeon Charging",
+    "lat": 18.5149,
+    "lng": 73.9281,
+    "powerKw": 60,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 22,
+    "lastVerified": "2026-10-01T06:00:00.000Z"
+  },
+  {
+    "id": "chg-026",
+    "name": "Glida – Amanora",
+    "operator": "Glida",
+    "lat": 18.5178,
+    "lng": 73.9339,
+    "powerKw": 60,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 21,
+    "lastVerified": "2026-10-01T22:00:00.000Z"
+  },
+  {
+    "id": "chg-027",
+    "name": "Jio-bp pulse – Hadapsar",
+    "operator": "Jio-bp pulse",
+    "lat": 18.5095,
+    "lng": 73.9248,
+    "powerKw": 60,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 23,
+    "lastVerified": "2026-09-30T11:00:00.000Z"
+  },
+  {
+    "id": "chg-028",
+    "name": "MSEDCL – Camp",
+    "operator": "MSEDCL",
+    "lat": 18.5162,
+    "lng": 73.8781,
+    "powerKw": 60,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "BUSY",
+    "pricePerKwh": 23,
+    "lastVerified": "2026-10-01T23:00:00.000Z"
+  },
+  {
+    "id": "chg-029",
+    "name": "Statiq – Pune Station",
+    "operator": "Statiq",
+    "lat": 18.5294,
+    "lng": 73.8751,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 26,
+    "lastVerified": "2026-09-29T20:00:00.000Z"
+  },
+  {
+    "id": "chg-030",
+    "name": "MSEDCL – Swargate",
+    "operator": "MSEDCL",
+    "lat": 18.5011,
+    "lng": 73.8642,
+    "powerKw": 15,
+    "connectors": [
+      "Bharat AC001",
+      "GBT"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 16,
+    "lastVerified": "2026-10-01T10:00:00.000Z"
+  },
+  {
+    "id": "chg-031",
+    "name": "Statiq – Katraj",
+    "operator": "Statiq",
+    "lat": 18.4583,
+    "lng": 73.8667,
+    "powerKw": 22,
+    "connectors": [
+      "Type2"
+    ],
+    "status": "BROKEN",
+    "pricePerKwh": 19,
+    "lastVerified": "2026-09-30T15:00:00.000Z"
+  },
+  {
+    "id": "chg-032",
+    "name": "Statiq – Kondhwa",
+    "operator": "Statiq",
+    "lat": 18.4712,
+    "lng": 73.8893,
+    "powerKw": 15,
+    "connectors": [
+      "Bharat AC001",
+      "GBT"
+    ],
+    "status": "BUSY",
+    "pricePerKwh": 18,
+    "lastVerified": "2026-10-01T00:00:00.000Z"
+  },
+  {
+    "id": "chg-033",
+    "name": "Glida – Warje",
+    "operator": "Glida",
+    "lat": 18.4839,
+    "lng": 73.8011,
+    "powerKw": 15,
+    "connectors": [
+      "Bharat AC001",
+      "GBT"
+    ],
+    "status": "BUSY",
+    "pricePerKwh": 16,
+    "lastVerified": "2026-10-01T04:00:00.000Z"
+  },
+  {
+    "id": "chg-034",
+    "name": "ChargeZone – Khed Shivapur (NH48)",
+    "operator": "ChargeZone",
+    "lat": 18.322,
+    "lng": 73.853,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 26,
+    "lastVerified": "2026-09-30T12:00:00.000Z"
+  },
+  {
+    "id": "chg-035",
+    "name": "MSEDCL – Shirwal (NH48)",
+    "operator": "MSEDCL",
+    "lat": 18.153,
+    "lng": 73.979,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 27,
+    "lastVerified": "2026-09-29T14:00:00.000Z"
+  },
+  {
+    "id": "chg-036",
+    "name": "Jio-bp pulse – Wai",
+    "operator": "Jio-bp pulse",
+    "lat": 17.953,
+    "lng": 73.891,
+    "powerKw": 15,
+    "connectors": [
+      "Bharat AC001",
+      "GBT"
+    ],
+    "status": "BUSY",
+    "pricePerKwh": 18,
+    "lastVerified": "2026-10-02T00:00:00.000Z"
+  },
+  {
+    "id": "chg-037",
+    "name": "ChargeZone – Panchgani",
+    "operator": "ChargeZone",
+    "lat": 17.9251,
+    "lng": 73.8012,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 25,
+    "lastVerified": "2026-09-30T13:00:00.000Z"
+  },
+  {
+    "id": "chg-038",
+    "name": "ChargeZone – Mahabaleshwar",
+    "operator": "ChargeZone",
+    "lat": 17.9241,
+    "lng": 73.6579,
+    "powerKw": 60,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 23,
+    "lastVerified": "2026-10-02T00:00:00.000Z"
+  },
+  {
+    "id": "chg-039",
+    "name": "MSEDCL – Talegaon",
+    "operator": "MSEDCL",
+    "lat": 18.735,
+    "lng": 73.676,
+    "powerKw": 30,
+    "connectors": [
+      "CCS2",
+      "Type2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 20,
+    "lastVerified": "2026-09-30T21:00:00.000Z"
+  },
+  {
+    "id": "chg-040",
+    "name": "ChargeZone – Lonavala Expressway Food Mall",
+    "operator": "ChargeZone",
+    "lat": 18.77,
+    "lng": 73.395,
+    "powerKw": 120,
+    "connectors": [
+      "CCS2"
+    ],
+    "status": "WORKING",
+    "pricePerKwh": 26,
+    "lastVerified": "2026-10-01T12:00:00.000Z"
+  }
+]

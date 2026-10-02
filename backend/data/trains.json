@@ -1,0 +1,158 @@
+[
+  {
+    "serviceNo": "12124",
+    "name": "Deccan Queen",
+    "from": "pune-station",
+    "to": "mumbai-csmt",
+    "departs": "07:15",
+    "durationMins": 195,
+    "classes": [
+      {
+        "code": "2S",
+        "fare": 105
+      },
+      {
+        "code": "CC",
+        "fare": 390
+      }
+    ]
+  },
+  {
+    "serviceNo": "12126",
+    "name": "Pragati Express",
+    "from": "pune-station",
+    "to": "mumbai-csmt",
+    "departs": "07:50",
+    "durationMins": 200,
+    "classes": [
+      {
+        "code": "2S",
+        "fare": 100
+      },
+      {
+        "code": "CC",
+        "fare": 375
+      }
+    ]
+  },
+  {
+    "serviceNo": "11008",
+    "name": "Deccan Express",
+    "from": "pune-station",
+    "to": "mumbai-csmt",
+    "departs": "15:15",
+    "durationMins": 230,
+    "classes": [
+      {
+        "code": "2S",
+        "fare": 95
+      },
+      {
+        "code": "CC",
+        "fare": 350
+      }
+    ]
+  },
+  {
+    "serviceNo": "12128",
+    "name": "Intercity Express",
+    "from": "pune-station",
+    "to": "mumbai-csmt",
+    "departs": "17:55",
+    "durationMins": 190,
+    "classes": [
+      {
+        "code": "2S",
+        "fare": 105
+      },
+      {
+        "code": "CC",
+        "fare": 390
+      }
+    ]
+  },
+  {
+    "serviceNo": "12263",
+    "name": "Pune – Nizamuddin Duronto",
+    "from": "pune-station",
+    "to": "nizamuddin",
+    "departs": "11:10",
+    "durationMins": 1185,
+    "classes": [
+      {
+        "code": "3A",
+        "fare": 2640
+      },
+      {
+        "code": "2A",
+        "fare": 3720
+      },
+      {
+        "code": "1A",
+        "fare": 6250
+      }
+    ]
+  },
+  {
+    "serviceNo": "12779",
+    "name": "Goa Express",
+    "from": "pune-station",
+    "to": "nizamuddin",
+    "departs": "15:55",
+    "durationMins": 1500,
+    "classes": [
+      {
+        "code": "SL",
+        "fare": 790
+      },
+      {
+        "code": "3A",
+        "fare": 2085
+      },
+      {
+        "code": "2A",
+        "fare": 2990
+      }
+    ]
+  },
+  {
+    "serviceNo": "11077",
+    "name": "Jhelum Express",
+    "from": "pune-station",
+    "to": "new-delhi-station",
+    "departs": "17:20",
+    "durationMins": 1650,
+    "classes": [
+      {
+        "code": "SL",
+        "fare": 745
+      },
+      {
+        "code": "3A",
+        "fare": 1990
+      },
+      {
+        "code": "2A",
+        "fare": 2870
+      }
+    ]
+  },
+  {
+    "serviceNo": "22685",
+    "name": "Pune – Delhi SF Express",
+    "from": "pune-station",
+    "to": "new-delhi-station",
+    "departs": "20:30",
+    "durationMins": 1420,
+    "classes": [
+      {
+        "code": "SL",
+        "fare": 810
+      },
+      {
+        "code": "3A",
+        "fare": 2150
+      }
+    ]
+  }
+]

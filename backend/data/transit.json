@@ -1,0 +1,775 @@
+{
+  "pune": {
+    "city": "Pune",
+    "metro": {
+      "provider": "Pune Metro",
+      "speedKmh": 35,
+      "headwayMins": 10,
+      "fareSlabs": [
+        [
+          2,
+          10
+        ],
+        [
+          4,
+          15
+        ],
+        [
+          12,
+          20
+        ],
+        [
+          18,
+          25
+        ],
+        [
+          24,
+          30
+        ],
+        [
+          999,
+          35
+        ]
+      ],
+      "lines": [
+        {
+          "id": "purple",
+          "name": "Purple Line",
+          "color": "#7B2D8E",
+          "stations": [
+            {
+              "id": "pcmc",
+              "name": "PCMC",
+              "lat": 18.6298,
+              "lng": 73.8031
+            },
+            {
+              "id": "sant-tukaram-nagar",
+              "name": "Sant Tukaram Nagar",
+              "lat": 18.6205,
+              "lng": 73.8091
+            },
+            {
+              "id": "bhosari",
+              "name": "Bhosari (Nashik Phata)",
+              "lat": 18.6127,
+              "lng": 73.8197
+            },
+            {
+              "id": "kasarwadi",
+              "name": "Kasarwadi",
+              "lat": 18.6037,
+              "lng": 73.8226
+            },
+            {
+              "id": "phugewadi",
+              "name": "Phugewadi",
+              "lat": 18.5933,
+              "lng": 73.8297
+            },
+            {
+              "id": "dapodi",
+              "name": "Dapodi",
+              "lat": 18.5826,
+              "lng": 73.834
+            },
+            {
+              "id": "bopodi",
+              "name": "Bopodi",
+              "lat": 18.572,
+              "lng": 73.8378
+            },
+            {
+              "id": "khadki",
+              "name": "Khadki",
+              "lat": 18.5634,
+              "lng": 73.8429
+            },
+            {
+              "id": "range-hill",
+              "name": "Range Hill",
+              "lat": 18.5498,
+              "lng": 73.8381
+            },
+            {
+              "id": "shivaji-nagar",
+              "name": "Shivaji Nagar",
+              "lat": 18.5313,
+              "lng": 73.851
+            },
+            {
+              "id": "civil-court",
+              "name": "Civil Court",
+              "lat": 18.5276,
+              "lng": 73.8562
+            },
+            {
+              "id": "budhwar-peth",
+              "name": "Budhwar Peth",
+              "lat": 18.5168,
+              "lng": 73.8565
+            },
+            {
+              "id": "mandai",
+              "name": "Mandai",
+              "lat": 18.512,
+              "lng": 73.856
+            },
+            {
+              "id": "swargate-metro",
+              "name": "Swargate",
+              "lat": 18.5018,
+              "lng": 73.8636
+            }
+          ]
+        },
+        {
+          "id": "aqua",
+          "name": "Aqua Line",
+          "color": "#00A3C4",
+          "stations": [
+            {
+              "id": "vanaz",
+              "name": "Vanaz",
+              "lat": 18.5074,
+              "lng": 73.8053
+            },
+            {
+              "id": "anand-nagar",
+              "name": "Anand Nagar",
+              "lat": 18.51,
+              "lng": 73.8135
+            },
+            {
+              "id": "ideal-colony",
+              "name": "Ideal Colony",
+              "lat": 18.5126,
+              "lng": 73.8222
+            },
+            {
+              "id": "nal-stop",
+              "name": "Nal Stop",
+              "lat": 18.5115,
+              "lng": 73.8302
+            },
+            {
+              "id": "garware-college",
+              "name": "Garware College",
+              "lat": 18.5146,
+              "lng": 73.8381
+            },
+            {
+              "id": "deccan-gymkhana",
+              "name": "Deccan Gymkhana",
+              "lat": 18.519,
+              "lng": 73.843
+            },
+            {
+              "id": "sambhaji-udyan",
+              "name": "Chhatrapati Sambhaji Udyan",
+              "lat": 18.5222,
+              "lng": 73.8478
+            },
+            {
+              "id": "pmc",
+              "name": "PMC",
+              "lat": 18.5256,
+              "lng": 73.8536
+            },
+            {
+              "id": "civil-court",
+              "name": "Civil Court",
+              "lat": 18.5276,
+              "lng": 73.8562
+            },
+            {
+              "id": "mangalwar-peth",
+              "name": "Mangalwar Peth",
+              "lat": 18.5296,
+              "lng": 73.868
+            },
+            {
+              "id": "pune-railway-station",
+              "name": "Pune Railway Station",
+              "lat": 18.5289,
+              "lng": 73.8744
+            },
+            {
+              "id": "ruby-hall",
+              "name": "Ruby Hall Clinic",
+              "lat": 18.533,
+              "lng": 73.879
+            },
+            {
+              "id": "bund-garden",
+              "name": "Bund Garden",
+              "lat": 18.5385,
+              "lng": 73.8858
+            },
+            {
+              "id": "yerawada-metro",
+              "name": "Yerawada",
+              "lat": 18.548,
+              "lng": 73.893
+            },
+            {
+              "id": "kalyani-nagar-metro",
+              "name": "Kalyani Nagar",
+              "lat": 18.548,
+              "lng": 73.903
+            },
+            {
+              "id": "ramwadi",
+              "name": "Ramwadi",
+              "lat": 18.5525,
+              "lng": 73.9127
+            }
+          ]
+        }
+      ]
+    },
+    "bus": {
+      "provider": "PMPML",
+      "speedKmh": 18,
+      "minFare": 10,
+      "farePerKm": 2,
+      "maxFare": 35,
+      "routes": [
+        {
+          "id": "2",
+          "name": "Katraj – Shivajinagar",
+          "frequencyMins": 12,
+          "stops": [
+            {
+              "id": "katraj-bus",
+              "name": "Katraj",
+              "lat": 18.4575,
+              "lng": 73.8679
+            },
+            {
+              "id": "padmavati",
+              "name": "Padmavati",
+              "lat": 18.487,
+              "lng": 73.858
+            },
+            {
+              "id": "swargate-bus",
+              "name": "Swargate",
+              "lat": 18.5018,
+              "lng": 73.8636
+            },
+            {
+              "id": "mandai-bus",
+              "name": "Mandai",
+              "lat": 18.512,
+              "lng": 73.856
+            },
+            {
+              "id": "deccan-bus",
+              "name": "Deccan",
+              "lat": 18.5167,
+              "lng": 73.8414
+            },
+            {
+              "id": "shivajinagar-stop",
+              "name": "Shivajinagar",
+              "lat": 18.5308,
+              "lng": 73.8475
+            }
+          ]
+        },
+        {
+          "id": "94",
+          "name": "Kothrud Depot – Pune Station",
+          "frequencyMins": 15,
+          "stops": [
+            {
+              "id": "kothrud-depot",
+              "name": "Kothrud Depot",
+              "lat": 18.505,
+              "lng": 73.793
+            },
+            {
+              "id": "karve-putala",
+              "name": "Karve Putala",
+              "lat": 18.5073,
+              "lng": 73.8077
+            },
+            {
+              "id": "paud-phata",
+              "name": "Paud Phata",
+              "lat": 18.5094,
+              "lng": 73.827
+            },
+            {
+              "id": "deccan-bus",
+              "name": "Deccan",
+              "lat": 18.5167,
+              "lng": 73.8414
+            },
+            {
+              "id": "shivajinagar-stop",
+              "name": "Shivajinagar",
+              "lat": 18.5308,
+              "lng": 73.8475
+            },
+            {
+              "id": "pune-station-bus",
+              "name": "Pune Station",
+              "lat": 18.5289,
+              "lng": 73.8744
+            }
+          ]
+        },
+        {
+          "id": "103",
+          "name": "Kothrud Depot – Hadapsar",
+          "frequencyMins": 20,
+          "stops": [
+            {
+              "id": "kothrud-depot",
+              "name": "Kothrud Depot",
+              "lat": 18.505,
+              "lng": 73.793
+            },
+            {
+              "id": "nal-stop-bus",
+              "name": "Nal Stop",
+              "lat": 18.5115,
+              "lng": 73.8302
+            },
+            {
+              "id": "swargate-bus",
+              "name": "Swargate",
+              "lat": 18.5018,
+              "lng": 73.8636
+            },
+            {
+              "id": "pulgate",
+              "name": "Pulgate",
+              "lat": 18.502,
+              "lng": 73.89
+            },
+            {
+              "id": "hadapsar-bus",
+              "name": "Hadapsar Gadital",
+              "lat": 18.5089,
+              "lng": 73.926
+            }
+          ]
+        },
+        {
+          "id": "115P",
+          "name": "Hinjewadi Phase 3 – Pune Station",
+          "frequencyMins": 15,
+          "stops": [
+            {
+              "id": "hinjewadi-3-bus",
+              "name": "Hinjewadi Phase 3",
+              "lat": 18.5826,
+              "lng": 73.6862
+            },
+            {
+              "id": "hinjewadi-1-bus",
+              "name": "Hinjewadi Phase 1",
+              "lat": 18.5913,
+              "lng": 73.7389
+            },
+            {
+              "id": "wakad-bus",
+              "name": "Wakad Chowk",
+              "lat": 18.5987,
+              "lng": 73.765
+            },
+            {
+              "id": "aundh-bus",
+              "name": "Aundh",
+              "lat": 18.558,
+              "lng": 73.8075
+            },
+            {
+              "id": "university-bus",
+              "name": "Pune University",
+              "lat": 18.5541,
+              "lng": 73.8248
+            },
+            {
+              "id": "shivajinagar-stop",
+              "name": "Shivajinagar",
+              "lat": 18.5308,
+              "lng": 73.8475
+            },
+            {
+              "id": "pune-station-bus",
+              "name": "Pune Station",
+              "lat": 18.5289,
+              "lng": 73.8744
+            }
+          ]
+        },
+        {
+          "id": "148",
+          "name": "Pune Station – Pune Airport",
+          "frequencyMins": 20,
+          "stops": [
+            {
+              "id": "pune-station-bus",
+              "name": "Pune Station",
+              "lat": 18.5289,
+              "lng": 73.8744
+            },
+            {
+              "id": "bund-garden-bus",
+              "name": "Bund Garden",
+              "lat": 18.5385,
+              "lng": 73.8858
+            },
+            {
+              "id": "yerawada-bus",
+              "name": "Yerawada",
+              "lat": 18.5528,
+              "lng": 73.889
+            },
+            {
+              "id": "viman-nagar-bus",
+              "name": "Viman Nagar",
+              "lat": 18.5679,
+              "lng": 73.9143
+            },
+            {
+              "id": "airport-bus",
+              "name": "Pune Airport",
+              "lat": 18.5821,
+              "lng": 73.9197
+            }
+          ]
+        },
+        {
+          "id": "158",
+          "name": "Swargate – Kharadi",
+          "frequencyMins": 18,
+          "stops": [
+            {
+              "id": "swargate-bus",
+              "name": "Swargate",
+              "lat": 18.5018,
+              "lng": 73.8636
+            },
+            {
+              "id": "camp-bus",
+              "name": "Camp",
+              "lat": 18.5158,
+              "lng": 73.879
+            },
+            {
+              "id": "koregaon-park-bus",
+              "name": "Koregaon Park",
+              "lat": 18.5362,
+              "lng": 73.894
+            },
+            {
+              "id": "kalyani-nagar-bus",
+              "name": "Kalyani Nagar",
+              "lat": 18.5486,
+              "lng": 73.902
+            },
+            {
+              "id": "kharadi-bus",
+              "name": "Kharadi",
+              "lat": 18.5515,
+              "lng": 73.945
+            }
+          ]
+        },
+        {
+          "id": "201",
+          "name": "Pimpri – Swargate",
+          "frequencyMins": 15,
+          "stops": [
+            {
+              "id": "pimpri-bus",
+              "name": "Pimpri",
+              "lat": 18.6279,
+              "lng": 73.8009
+            },
+            {
+              "id": "dapodi-bus",
+              "name": "Dapodi",
+              "lat": 18.5826,
+              "lng": 73.834
+            },
+            {
+              "id": "shivajinagar-stop",
+              "name": "Shivajinagar",
+              "lat": 18.5308,
+              "lng": 73.8475
+            },
+            {
+              "id": "swargate-bus",
+              "name": "Swargate",
+              "lat": 18.5018,
+              "lng": 73.8636
+            }
+          ]
+        },
+        {
+          "id": "11",
+          "name": "Balewadi – Deccan",
+          "frequencyMins": 20,
+          "stops": [
+            {
+              "id": "balewadi-bus",
+              "name": "Balewadi High Street",
+              "lat": 18.5704,
+              "lng": 73.7796
+            },
+            {
+              "id": "baner-bus",
+              "name": "Baner",
+              "lat": 18.559,
+              "lng": 73.7868
+            },
+            {
+              "id": "university-bus",
+              "name": "Pune University",
+              "lat": 18.5541,
+              "lng": 73.8248
+            },
+            {
+              "id": "sb-road-bus",
+              "name": "SB Road",
+              "lat": 18.5302,
+              "lng": 73.829
+            },
+            {
+              "id": "deccan-bus",
+              "name": "Deccan",
+              "lat": 18.5167,
+              "lng": 73.8414
+            }
+          ]
+        },
+        {
+          "id": "226",
+          "name": "Kothrud Depot – Hinjewadi Phase 1",
+          "frequencyMins": 25,
+          "stops": [
+            {
+              "id": "kothrud-depot",
+              "name": "Kothrud Depot",
+              "lat": 18.505,
+              "lng": 73.793
+            },
+            {
+              "id": "chandni-chowk",
+              "name": "Chandni Chowk",
+              "lat": 18.511,
+              "lng": 73.775
+            },
+            {
+              "id": "bavdhan-bus",
+              "name": "Bavdhan",
+              "lat": 18.5156,
+              "lng": 73.7774
+            },
+            {
+              "id": "wakad-bridge",
+              "name": "Wakad Bridge",
+              "lat": 18.5915,
+              "lng": 73.756
+            },
+            {
+              "id": "hinjewadi-1-bus",
+              "name": "Hinjewadi Phase 1",
+              "lat": 18.5913,
+              "lng": 73.7389
+            }
+          ]
+        },
+        {
+          "id": "64",
+          "name": "Katraj – Magarpatta",
+          "frequencyMins": 20,
+          "stops": [
+            {
+              "id": "katraj-bus",
+              "name": "Katraj",
+              "lat": 18.4575,
+              "lng": 73.8679
+            },
+            {
+              "id": "kondhwa-bus",
+              "name": "Kondhwa",
+              "lat": 18.47,
+              "lng": 73.89
+            },
+            {
+              "id": "fatimanagar",
+              "name": "Fatimanagar",
+              "lat": 18.5015,
+              "lng": 73.902
+            },
+            {
+              "id": "hadapsar-bus",
+              "name": "Hadapsar Gadital",
+              "lat": 18.5089,
+              "lng": 73.926
+            },
+            {
+              "id": "magarpatta-bus",
+              "name": "Magarpatta",
+              "lat": 18.5158,
+              "lng": 73.9272
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "delhi": {
+    "city": "Delhi",
+    "metro": {
+      "provider": "Delhi Metro",
+      "speedKmh": 40,
+      "headwayMins": 8,
+      "fareSlabs": [
+        [
+          2,
+          11
+        ],
+        [
+          5,
+          21
+        ],
+        [
+          12,
+          32
+        ],
+        [
+          21,
+          43
+        ],
+        [
+          32,
+          54
+        ],
+        [
+          999,
+          64
+        ]
+      ],
+      "lines": [
+        {
+          "id": "airport-express",
+          "name": "Airport Express",
+          "color": "#E96F1E",
+          "stations": [
+            {
+              "id": "igi-t3-metro",
+              "name": "IGI Airport T3",
+              "lat": 28.5562,
+              "lng": 77.087
+            },
+            {
+              "id": "aerocity-metro",
+              "name": "Delhi Aerocity",
+              "lat": 28.5488,
+              "lng": 77.1205
+            },
+            {
+              "id": "dhaula-kuan",
+              "name": "Dhaula Kuan",
+              "lat": 28.5918,
+              "lng": 77.1615
+            },
+            {
+              "id": "shivaji-stadium",
+              "name": "Shivaji Stadium",
+              "lat": 28.629,
+              "lng": 77.2112
+            },
+            {
+              "id": "new-delhi-metro",
+              "name": "New Delhi",
+              "lat": 28.6431,
+              "lng": 77.2223
+            }
+          ]
+        },
+        {
+          "id": "yellow",
+          "name": "Yellow Line",
+          "color": "#F2C200",
+          "stations": [
+            {
+              "id": "kashmere-gate",
+              "name": "Kashmere Gate",
+              "lat": 28.6675,
+              "lng": 77.2282
+            },
+            {
+              "id": "chandni-chowk-metro",
+              "name": "Chandni Chowk",
+              "lat": 28.6578,
+              "lng": 77.2301
+            },
+            {
+              "id": "chawri-bazar",
+              "name": "Chawri Bazar",
+              "lat": 28.6492,
+              "lng": 77.2263
+            },
+            {
+              "id": "new-delhi-metro",
+              "name": "New Delhi",
+              "lat": 28.6431,
+              "lng": 77.2223
+            },
+            {
+              "id": "rajiv-chowk",
+              "name": "Rajiv Chowk",
+              "lat": 28.6328,
+              "lng": 77.2197
+            },
+            {
+              "id": "patel-chowk",
+              "name": "Patel Chowk",
+              "lat": 28.6229,
+              "lng": 77.2141
+            },
+            {
+              "id": "central-secretariat",
+              "name": "Central Secretariat",
+              "lat": 28.6148,
+              "lng": 77.2118
+            },
+            {
+              "id": "udyog-bhawan",
+              "name": "Udyog Bhawan",
+              "lat": 28.6113,
+              "lng": 77.2118
+            },
+            {
+              "id": "lok-kalyan-marg",
+              "name": "Lok Kalyan Marg",
+              "lat": 28.5975,
+              "lng": 77.2108
+            },
+            {
+              "id": "ina",
+              "name": "INA",
+              "lat": 28.5753,
+              "lng": 77.2096
+            },
+            {
+              "id": "hauz-khas",
+              "name": "Hauz Khas",
+              "lat": 28.5433,
+              "lng": 77.2066
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

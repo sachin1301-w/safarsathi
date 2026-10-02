@@ -1,0 +1,655 @@
+[
+  {
+    "id": "kothrud",
+    "name": "Kothrud",
+    "city": "Pune",
+    "lat": 18.5074,
+    "lng": 73.8077,
+    "type": "AREA",
+    "aliases": [
+      "kothrud",
+      "karve road"
+    ]
+  },
+  {
+    "id": "hinjewadi",
+    "name": "Hinjewadi Phase 1",
+    "city": "Pune",
+    "lat": 18.5913,
+    "lng": 73.7389,
+    "type": "OFFICE",
+    "aliases": [
+      "hinjewadi",
+      "hinjawadi",
+      "rajiv gandhi infotech park",
+      "infotech park"
+    ]
+  },
+  {
+    "id": "hinjewadi-3",
+    "name": "Hinjewadi Phase 3",
+    "city": "Pune",
+    "lat": 18.5826,
+    "lng": 73.6862,
+    "type": "OFFICE",
+    "aliases": [
+      "hinjewadi phase 3",
+      "megapolis"
+    ]
+  },
+  {
+    "id": "shivajinagar",
+    "name": "Shivajinagar",
+    "city": "Pune",
+    "lat": 18.5308,
+    "lng": 73.8475,
+    "type": "AREA",
+    "aliases": [
+      "shivajinagar",
+      "shivaji nagar"
+    ]
+  },
+  {
+    "id": "deccan",
+    "name": "Deccan Gymkhana",
+    "city": "Pune",
+    "lat": 18.5167,
+    "lng": 73.8414,
+    "type": "AREA",
+    "aliases": [
+      "deccan",
+      "deccan gymkhana"
+    ]
+  },
+  {
+    "id": "fc-road",
+    "name": "FC Road",
+    "city": "Pune",
+    "lat": 18.5236,
+    "lng": 73.8416,
+    "type": "LANDMARK",
+    "aliases": [
+      "fc road",
+      "fergusson college road",
+      "fergusson college"
+    ]
+  },
+  {
+    "id": "koregaon-park",
+    "name": "Koregaon Park",
+    "city": "Pune",
+    "lat": 18.5362,
+    "lng": 73.894,
+    "type": "AREA",
+    "aliases": [
+      "koregaon park",
+      "kp"
+    ]
+  },
+  {
+    "id": "kalyani-nagar",
+    "name": "Kalyani Nagar",
+    "city": "Pune",
+    "lat": 18.5486,
+    "lng": 73.902,
+    "type": "AREA",
+    "aliases": [
+      "kalyani nagar"
+    ]
+  },
+  {
+    "id": "viman-nagar",
+    "name": "Viman Nagar",
+    "city": "Pune",
+    "lat": 18.5679,
+    "lng": 73.9143,
+    "type": "AREA",
+    "aliases": [
+      "viman nagar"
+    ]
+  },
+  {
+    "id": "pune-airport",
+    "name": "Pune Airport (PNQ)",
+    "city": "Pune",
+    "lat": 18.5821,
+    "lng": 73.9197,
+    "type": "AIRPORT",
+    "aliases": [
+      "pune airport",
+      "lohegaon airport",
+      "pnq",
+      "lohegaon"
+    ]
+  },
+  {
+    "id": "pune-station",
+    "name": "Pune Railway Station",
+    "city": "Pune",
+    "lat": 18.5289,
+    "lng": 73.8744,
+    "type": "STATION",
+    "aliases": [
+      "pune station",
+      "pune junction",
+      "pune railway station",
+      "railway station"
+    ]
+  },
+  {
+    "id": "swargate",
+    "name": "Swargate Bus Stand",
+    "city": "Pune",
+    "lat": 18.5018,
+    "lng": 73.8636,
+    "type": "BUS_STAND",
+    "aliases": [
+      "swargate"
+    ]
+  },
+  {
+    "id": "shivajinagar-bus",
+    "name": "Shivajinagar Bus Stand (Wakdewadi)",
+    "city": "Pune",
+    "lat": 18.5378,
+    "lng": 73.8505,
+    "type": "BUS_STAND",
+    "aliases": [
+      "shivajinagar bus stand",
+      "wakdewadi"
+    ]
+  },
+  {
+    "id": "hadapsar",
+    "name": "Hadapsar",
+    "city": "Pune",
+    "lat": 18.5089,
+    "lng": 73.926,
+    "type": "AREA",
+    "aliases": [
+      "hadapsar"
+    ]
+  },
+  {
+    "id": "magarpatta",
+    "name": "Magarpatta City",
+    "city": "Pune",
+    "lat": 18.5158,
+    "lng": 73.9272,
+    "type": "OFFICE",
+    "aliases": [
+      "magarpatta",
+      "magarpatta city"
+    ]
+  },
+  {
+    "id": "kharadi",
+    "name": "Kharadi (EON IT Park)",
+    "city": "Pune",
+    "lat": 18.5515,
+    "lng": 73.945,
+    "type": "OFFICE",
+    "aliases": [
+      "kharadi",
+      "eon it park",
+      "eon"
+    ]
+  },
+  {
+    "id": "baner",
+    "name": "Baner",
+    "city": "Pune",
+    "lat": 18.559,
+    "lng": 73.7868,
+    "type": "AREA",
+    "aliases": [
+      "baner"
+    ]
+  },
+  {
+    "id": "aundh",
+    "name": "Aundh",
+    "city": "Pune",
+    "lat": 18.558,
+    "lng": 73.8075,
+    "type": "AREA",
+    "aliases": [
+      "aundh"
+    ]
+  },
+  {
+    "id": "wakad",
+    "name": "Wakad",
+    "city": "Pune",
+    "lat": 18.5987,
+    "lng": 73.765,
+    "type": "AREA",
+    "aliases": [
+      "wakad"
+    ]
+  },
+  {
+    "id": "pimpri",
+    "name": "Pimpri",
+    "city": "Pune",
+    "lat": 18.6279,
+    "lng": 73.8009,
+    "type": "AREA",
+    "aliases": [
+      "pimpri",
+      "pcmc",
+      "pimpri chinchwad"
+    ]
+  },
+  {
+    "id": "chinchwad",
+    "name": "Chinchwad",
+    "city": "Pune",
+    "lat": 18.6447,
+    "lng": 73.7846,
+    "type": "AREA",
+    "aliases": [
+      "chinchwad"
+    ]
+  },
+  {
+    "id": "katraj",
+    "name": "Katraj",
+    "city": "Pune",
+    "lat": 18.4575,
+    "lng": 73.8679,
+    "type": "AREA",
+    "aliases": [
+      "katraj"
+    ]
+  },
+  {
+    "id": "camp",
+    "name": "Camp (MG Road)",
+    "city": "Pune",
+    "lat": 18.5158,
+    "lng": 73.879,
+    "type": "AREA",
+    "aliases": [
+      "camp",
+      "pune camp",
+      "mg road pune"
+    ]
+  },
+  {
+    "id": "phoenix",
+    "name": "Phoenix Marketcity",
+    "city": "Pune",
+    "lat": 18.5622,
+    "lng": 73.9167,
+    "type": "MALL",
+    "aliases": [
+      "phoenix marketcity",
+      "phoenix mall",
+      "phoenix"
+    ]
+  },
+  {
+    "id": "amanora",
+    "name": "Amanora Mall",
+    "city": "Pune",
+    "lat": 18.5185,
+    "lng": 73.9346,
+    "type": "MALL",
+    "aliases": [
+      "amanora",
+      "amanora mall"
+    ]
+  },
+  {
+    "id": "sb-road",
+    "name": "Senapati Bapat Road",
+    "city": "Pune",
+    "lat": 18.5302,
+    "lng": 73.829,
+    "type": "AREA",
+    "aliases": [
+      "sb road",
+      "senapati bapat road"
+    ]
+  },
+  {
+    "id": "bavdhan",
+    "name": "Bavdhan",
+    "city": "Pune",
+    "lat": 18.5156,
+    "lng": 73.7774,
+    "type": "AREA",
+    "aliases": [
+      "bavdhan"
+    ]
+  },
+  {
+    "id": "warje",
+    "name": "Warje",
+    "city": "Pune",
+    "lat": 18.4834,
+    "lng": 73.8024,
+    "type": "AREA",
+    "aliases": [
+      "warje"
+    ]
+  },
+  {
+    "id": "yerawada",
+    "name": "Yerawada",
+    "city": "Pune",
+    "lat": 18.5528,
+    "lng": 73.889,
+    "type": "AREA",
+    "aliases": [
+      "yerawada",
+      "yerwada"
+    ]
+  },
+  {
+    "id": "pune-university",
+    "name": "Savitribai Phule Pune University",
+    "city": "Pune",
+    "lat": 18.5541,
+    "lng": 73.8248,
+    "type": "LANDMARK",
+    "aliases": [
+      "pune university",
+      "sppu",
+      "university"
+    ]
+  },
+  {
+    "id": "balewadi",
+    "name": "Balewadi High Street",
+    "city": "Pune",
+    "lat": 18.5704,
+    "lng": 73.7796,
+    "type": "LANDMARK",
+    "aliases": [
+      "balewadi",
+      "balewadi high street"
+    ]
+  },
+  {
+    "id": "shaniwar-wada",
+    "name": "Shaniwar Wada",
+    "city": "Pune",
+    "lat": 18.5195,
+    "lng": 73.8553,
+    "type": "LANDMARK",
+    "aliases": [
+      "shaniwar wada",
+      "shaniwarwada"
+    ]
+  },
+  {
+    "id": "lonavala",
+    "name": "Lonavala",
+    "city": "Lonavala",
+    "lat": 18.7546,
+    "lng": 73.4062,
+    "type": "AREA",
+    "aliases": [
+      "lonavala",
+      "lonavla"
+    ]
+  },
+  {
+    "id": "mahabaleshwar",
+    "name": "Mahabaleshwar",
+    "city": "Mahabaleshwar",
+    "lat": 17.9237,
+    "lng": 73.6586,
+    "type": "AREA",
+    "aliases": [
+      "mahabaleshwar"
+    ]
+  },
+  {
+    "id": "panchgani",
+    "name": "Panchgani",
+    "city": "Panchgani",
+    "lat": 17.9244,
+    "lng": 73.8007,
+    "type": "AREA",
+    "aliases": [
+      "panchgani"
+    ]
+  },
+  {
+    "id": "satara",
+    "name": "Satara",
+    "city": "Satara",
+    "lat": 17.6805,
+    "lng": 74.0183,
+    "type": "AREA",
+    "aliases": [
+      "satara"
+    ]
+  },
+  {
+    "id": "nashik",
+    "name": "Nashik",
+    "city": "Nashik",
+    "lat": 19.9975,
+    "lng": 73.7898,
+    "type": "AREA",
+    "aliases": [
+      "nashik",
+      "nasik"
+    ]
+  },
+  {
+    "id": "kolhapur",
+    "name": "Kolhapur",
+    "city": "Kolhapur",
+    "lat": 16.705,
+    "lng": 74.2433,
+    "type": "AREA",
+    "aliases": [
+      "kolhapur"
+    ]
+  },
+  {
+    "id": "panaji",
+    "name": "Panaji, Goa",
+    "city": "Goa",
+    "lat": 15.4909,
+    "lng": 73.8278,
+    "type": "AREA",
+    "aliases": [
+      "goa",
+      "panaji",
+      "panjim"
+    ]
+  },
+  {
+    "id": "hyderabad",
+    "name": "Hyderabad",
+    "city": "Hyderabad",
+    "lat": 17.385,
+    "lng": 78.4867,
+    "type": "AREA",
+    "aliases": [
+      "hyderabad"
+    ]
+  },
+  {
+    "id": "connaught-place",
+    "name": "Connaught Place",
+    "city": "Delhi",
+    "lat": 28.6315,
+    "lng": 77.2167,
+    "type": "LANDMARK",
+    "aliases": [
+      "connaught place",
+      "cp",
+      "rajiv chowk",
+      "connaught place delhi"
+    ]
+  },
+  {
+    "id": "igi-t1",
+    "name": "IGI Airport T1",
+    "city": "Delhi",
+    "lat": 28.5654,
+    "lng": 77.121,
+    "type": "AIRPORT",
+    "aliases": [
+      "igi t1",
+      "terminal 1",
+      "delhi airport t1"
+    ]
+  },
+  {
+    "id": "igi-t3",
+    "name": "IGI Airport T3",
+    "city": "Delhi",
+    "lat": 28.5562,
+    "lng": 77.1,
+    "type": "AIRPORT",
+    "aliases": [
+      "igi t3",
+      "igi airport",
+      "delhi airport",
+      "del",
+      "indira gandhi airport"
+    ]
+  },
+  {
+    "id": "new-delhi-station",
+    "name": "New Delhi Railway Station",
+    "city": "Delhi",
+    "lat": 28.643,
+    "lng": 77.2194,
+    "type": "STATION",
+    "aliases": [
+      "new delhi station",
+      "new delhi railway station",
+      "ndls"
+    ]
+  },
+  {
+    "id": "nizamuddin",
+    "name": "Hazrat Nizamuddin Station",
+    "city": "Delhi",
+    "lat": 28.5884,
+    "lng": 77.2539,
+    "type": "STATION",
+    "aliases": [
+      "nizamuddin",
+      "hazrat nizamuddin"
+    ]
+  },
+  {
+    "id": "india-gate",
+    "name": "India Gate",
+    "city": "Delhi",
+    "lat": 28.6129,
+    "lng": 77.2295,
+    "type": "LANDMARK",
+    "aliases": [
+      "india gate"
+    ]
+  },
+  {
+    "id": "aerocity",
+    "name": "Aerocity",
+    "city": "Delhi",
+    "lat": 28.5488,
+    "lng": 77.1205,
+    "type": "AREA",
+    "aliases": [
+      "aerocity"
+    ]
+  },
+  {
+    "id": "karol-bagh",
+    "name": "Karol Bagh",
+    "city": "Delhi",
+    "lat": 28.6519,
+    "lng": 77.1909,
+    "type": "AREA",
+    "aliases": [
+      "karol bagh"
+    ]
+  },
+  {
+    "id": "mumbai-csmt",
+    "name": "Mumbai CSMT",
+    "city": "Mumbai",
+    "lat": 18.9398,
+    "lng": 72.8355,
+    "type": "STATION",
+    "aliases": [
+      "csmt",
+      "cst",
+      "mumbai cst",
+      "chhatrapati shivaji terminus"
+    ]
+  },
+  {
+    "id": "dadar",
+    "name": "Dadar",
+    "city": "Mumbai",
+    "lat": 19.0178,
+    "lng": 72.8478,
+    "type": "AREA",
+    "aliases": [
+      "dadar"
+    ]
+  },
+  {
+    "id": "mumbai-airport",
+    "name": "Mumbai Airport T2",
+    "city": "Mumbai",
+    "lat": 19.0974,
+    "lng": 72.8742,
+    "type": "AIRPORT",
+    "aliases": [
+      "mumbai airport",
+      "bom"
+    ]
+  },
+  {
+    "id": "bkc",
+    "name": "Bandra Kurla Complex",
+    "city": "Mumbai",
+    "lat": 19.066,
+    "lng": 72.8679,
+    "type": "OFFICE",
+    "aliases": [
+      "bkc",
+      "bandra kurla complex"
+    ]
+  },
+  {
+    "id": "blr-airport",
+    "name": "Kempegowda Airport (BLR)",
+    "city": "Bengaluru",
+    "lat": 13.1989,
+    "lng": 77.7068,
+    "type": "AIRPORT",
+    "aliases": [
+      "bengaluru airport",
+      "bangalore airport",
+      "blr",
+      "kempegowda airport"
+    ]
+  },
+  {
+    "id": "mg-road-blr",
+    "name": "MG Road, Bengaluru",
+    "city": "Bengaluru",
+    "lat": 12.9756,
+    "lng": 77.6066,
+    "type": "AREA",
+    "aliases": [
+      "bengaluru",
+      "bangalore",
+      "mg road bengaluru"
+    ]
+  }
+]

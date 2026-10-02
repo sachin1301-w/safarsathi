@@ -1,0 +1,83 @@
+[
+  {
+    "serviceNo": "MSRTC-SHV-DDR",
+    "operator": "MSRTC Shivneri",
+    "from": "shivajinagar-bus",
+    "to": "dadar",
+    "departures": [
+      "06:00",
+      "08:00",
+      "10:00",
+      "13:00",
+      "16:00",
+      "19:00",
+      "22:00"
+    ],
+    "durationMins": 210,
+    "fare": 525
+  },
+  {
+    "serviceNo": "MSRTC-MBL",
+    "operator": "MSRTC",
+    "from": "swargate",
+    "to": "mahabaleshwar",
+    "departures": [
+      "07:00",
+      "09:30",
+      "13:00",
+      "16:30"
+    ],
+    "durationMins": 210,
+    "fare": 260
+  },
+  {
+    "serviceNo": "PP-NSK",
+    "operator": "Prasanna Purple",
+    "from": "shivajinagar-bus",
+    "to": "nashik",
+    "departures": [
+      "07:30",
+      "14:00",
+      "23:00"
+    ],
+    "durationMins": 270,
+    "fare": 450
+  },
+  {
+    "serviceNo": "NT-KOP",
+    "operator": "Neeta Travels",
+    "from": "swargate",
+    "to": "kolhapur",
+    "departures": [
+      "06:30",
+      "12:30",
+      "22:30"
+    ],
+    "durationMins": 240,
+    "fare": 550
+  },
+  {
+    "serviceNo": "VRL-GOA",
+    "operator": "VRL Travels",
+    "from": "swargate",
+    "to": "panaji",
+    "departures": [
+      "19:30",
+      "21:00"
+    ],
+    "durationMins": 660,
+    "fare": 1150
+  },
+  {
+    "serviceNo": "IC-HYD",
+    "operator": "IntrCity SmartBus",
+    "from": "wakad",
+    "to": "hyderabad",
+    "departures": [
+      "18:00",
+      "21:30"
+    ],
+    "durationMins": 690,
+    "fare": 1350
+  }
+]

@@ -1,0 +1,101 @@
+[
+  {
+    "serviceNo": "6E-2141",
+    "airline": "IndiGo",
+    "from": "pune-airport",
+    "to": "igi-t3",
+    "departs": "06:05",
+    "durationMins": 130,
+    "fare": 5420
+  },
+  {
+    "serviceNo": "AI-852",
+    "airline": "Air India",
+    "from": "pune-airport",
+    "to": "igi-t3",
+    "departs": "08:40",
+    "durationMins": 130,
+    "fare": 6180
+  },
+  {
+    "serviceNo": "QP-1342",
+    "airline": "Akasa Air",
+    "from": "pune-airport",
+    "to": "igi-t3",
+    "departs": "11:15",
+    "durationMins": 130,
+    "fare": 4890
+  },
+  {
+    "serviceNo": "6E-6172",
+    "airline": "IndiGo",
+    "from": "pune-airport",
+    "to": "igi-t3",
+    "departs": "13:40",
+    "durationMins": 130,
+    "fare": 5150
+  },
+  {
+    "serviceNo": "6E-512",
+    "airline": "IndiGo",
+    "from": "pune-airport",
+    "to": "igi-t3",
+    "departs": "15:30",
+    "durationMins": 130,
+    "fare": 5680
+  },
+  {
+    "serviceNo": "QP-1406",
+    "airline": "Akasa Air",
+    "from": "pune-airport",
+    "to": "igi-t3",
+    "departs": "16:10",
+    "durationMins": 125,
+    "fare": 6240
+  },
+  {
+    "serviceNo": "SG-8169",
+    "airline": "SpiceJet",
+    "from": "pune-airport",
+    "to": "igi-t3",
+    "departs": "18:45",
+    "durationMins": 130,
+    "fare": 4620
+  },
+  {
+    "serviceNo": "AI-2496",
+    "airline": "Air India",
+    "from": "pune-airport",
+    "to": "igi-t3",
+    "departs": "21:20",
+    "durationMins": 130,
+    "fare": 4350
+  },
+  {
+    "serviceNo": "6E-6327",
+    "airline": "IndiGo",
+    "from": "pune-airport",
+    "to": "blr-airport",
+    "departs": "07:00",
+    "durationMins": 95,
+    "fare": 3980
+  },
+  {
+    "serviceNo": "QP-1525",
+    "airline": "Akasa Air",
+    "from": "pune-airport",
+    "to": "blr-airport",
+    "departs": "12:20",
+    "durationMins": 95,
+    "fare": 4120
+  },
+  {
+    "serviceNo": "AI-2731",
+    "airline": "Air India",
+    "from": "pune-airport",
+    "to": "blr-airport",
+    "departs": "19:05",
+    "durationMins": 100,
+    "fare": 4450
+  }
+]
