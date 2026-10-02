@@ -1,0 +1,295 @@
+// Tool schemas (Zod, also used to generate the JSON Schema sent to Claude) and their handlers.
+import type Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
+
+import { chargers, geocode, memory, parking } from '../adapters';
+import { DEMO_USER_ID, prisma } from '../lib/db';
+import { formatIst, parseTime } from '../lib/time';
+import { withPrediction } from '../services/parkingPredictor';
+import { PlanError } from '../services/planner';
+import { getTrip, planForUser } from '../services/trips';
+import type { Card, Itinerary, Place } from '../types';
+import { rememberOption } from './planCache';
+
+export interface ToolOutput {
+  /** What Claude sees: compact JSON, no coordinates it doesn't need. */
+  result: unknown;
+  /** What the app renders under the reply. */
+  cards?: Card[];
+}
+
+export class ToolInputError extends Error {}
+
+interface ToolDef<S extends z.ZodType> {
+  name: string;
+  description: string;
+  schema: S;
+  run: (input: z.infer<S>) => Promise<ToolOutput>;
+}
+
+const tool = <S extends z.ZodType>(def: ToolDef<S>) => def;
+
+const isoTime = z
+  .string()
+  .describe('ISO 8601 date-time with +05:30 offset, e.g. 2026-10-02T20:00:00+05:30');
+
+function parseOptionalTime(s: string | undefined, field: string): Date | undefined {
+  if (!s) return undefined;
+  const d = parseTime(s);
+  if (!d) throw new ToolInputError(`${field} is not a valid time: ${s}`);
+  return d;
+}
+
+async function resolveNear(near: string | undefined): Promise<Place> {
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: DEMO_USER_ID } });
+  const q = (near ?? 'home').trim().toLowerCase();
+  const savedId = q === 'home' ? user.homePlaceId : q === 'office' ? user.officePlaceId : null;
+  const place = (savedId && geocode.byId(savedId)) || geocode.resolve(near ?? 'Kothrud');
+  if (!place) throw new ToolInputError(`Unknown place "${near}". Try geocode_place first.`);
+  return place;
+}
+
+/** Itinerary as Claude sees it: times in IST, no coordinates. */
+function summarizeItinerary(it: Itinerary, optionId: string) {
+  return {
+    optionId,
+    badges: it.badges,
+    title: it.title,
+    leave: formatIst(new Date(it.legs[0].departAt)),
+    arrive: formatIst(new Date(it.legs.at(-1)!.arriveAt)),
+    totalMins: it.totalMins,
+    totalCostInr: it.totalCost,
+    co2SavedKg: it.co2SavedKg,
+    onTime: it.onTime,
+    legs: it.legs.map((l) => ({
+      mode: l.mode,
+      from: l.from.name,
+      to: l.to.name,
+      depart: formatIst(new Date(l.departAt)),
+      arrive: formatIst(new Date(l.arriveAt)),
+      service: l.serviceNo,
+      provider: l.provider,
+      costInr: l.cost,
+      notes: l.notes,
+    })),
+  };
+}
+
+export const TOOLS = [
+  tool({
+    name: 'plan_journey',
+    description:
+      'Plan a door-to-door journey and get up to three options (fastest, cheapest, greenest) with every leg, time and price. Places can be names ("Kothrud", "Connaught Place, Delhi", "Pune Airport") or "home"/"office".',
+    schema: z.object({
+      from: z
+        .string()
+        .describe(
+          'Start place name, or "home"/"office". Default to "home" if the user did not say.',
+        ),
+      to: z.string().describe('Destination place name, or "home"/"office"'),
+      arriveBy: isoTime.optional().describe('Latest arrival time, if the user has a deadline'),
+      departAt: isoTime.optional().describe('Earliest departure time, if the user gave one'),
+      preference: z
+        .enum(['FASTEST', 'CHEAPEST', 'GREENEST'])
+        .optional()
+        .describe('Show this option first'),
+      useEv: z
+        .boolean()
+        .optional()
+        .describe("true to plan with the user's own EV (adds charger stops)"),
+    }),
+    async run(input) {
+      const result = await planForUser({
+        from: input.from,
+        to: input.to,
+        arriveBy: parseOptionalTime(input.arriveBy, 'arriveBy'),
+        departAt: parseOptionalTime(input.departAt, 'departAt'),
+        preference: input.preference,
+        useEv: input.useEv,
+      });
+      const options = result.options.map((it) => ({ it, optionId: rememberOption(it) }));
+      return {
+        result: {
+          from: result.from.name,
+          to: result.to.name,
+          options: options.map(({ it, optionId }) => summarizeItinerary(it, optionId)),
+        },
+        cards: options.map(({ it }) => ({ type: 'itinerary', data: it })),
+      };
+    },
+  }),
+
+  tool({
+    name: 'find_chargers',
+    description:
+      'Find public EV chargers near a place, with live status (WORKING, BUSY, BROKEN), power, connectors and price.',
+    schema: z.object({
+      near: z.string().optional().describe('Place name, or "home"/"office". Defaults to home.'),
+      radiusKm: z.number().positive().max(100).optional().describe('Search radius, default 5 km'),
+      connector: z.string().optional().describe('CCS2, Type2, GBT, Bharat AC001 or CHAdeMO'),
+      minKw: z.number().nonnegative().optional().describe('Minimum charging power in kW'),
+    }),
+    async run(input) {
+      const place = await resolveNear(input.near);
+      const list = await chargers.findNear({
+        lat: place.lat,
+        lng: place.lng,
+        radiusKm: input.radiusKm ?? 5,
+        connector: input.connector,
+        minKw: input.minKw,
+      });
+      const top = list.slice(0, 8);
+      return {
+        result: {
+          near: place.name,
+          count: list.length,
+          chargers: top.map((c) => ({
+            id: c.id,
+            name: c.name,
+            status: c.status,
+            powerKw: c.powerKw,
+            connectors: c.connectors,
+            pricePerKwh: c.pricePerKwh,
+            distanceKm: c.distanceKm,
+          })),
+        },
+        cards: top.length ? [{ type: 'chargers', data: top }] : [],
+      };
+    },
+  }),
+
+  tool({
+    name: 'find_parking',
+    description:
+      'Find parking lots near a place with predicted free spots at the arrival time, rate per hour and EV charging.',
+    schema: z.object({
+      near: z.string().optional().describe('Place name, or "home"/"office". Defaults to home.'),
+      arriveAt: isoTime.optional().describe('When the user will arrive; defaults to now'),
+    }),
+    async run(input) {
+      const place = await resolveNear(input.near);
+      const at = parseOptionalTime(input.arriveAt, 'arriveAt') ?? new Date();
+      const lots = (await parking.findNear(place.lat, place.lng, 3))
+        .map((l) => withPrediction(l, at))
+        .slice(0, 6);
+      return {
+        result: {
+          near: place.name,
+          arriveAt: formatIst(at),
+          lots: lots.map((l) => ({
+            name: l.name,
+            distanceKm: l.distanceKm,
+            predictedFreeSpots: l.predictedFreeSpots,
+            totalSpots: l.totalSpots,
+            ratePerHourInr: l.ratePerHour,
+            hasEvCharging: l.hasEvCharging,
+          })),
+        },
+        cards: lots.length ? [{ type: 'parking', data: lots }] : [],
+      };
+    },
+  }),
+
+  tool({
+    name: 'get_trip',
+    description:
+      "Get one of the user's saved trips by id, with leg status, delays and booking references.",
+    schema: z.object({ tripId: z.string() }),
+    async run({ tripId }) {
+      const trip = await getTrip(tripId);
+      if (!trip) throw new ToolInputError(`No trip with id ${tripId}`);
+      return {
+        result: {
+          title: trip.title,
+          totalMins: trip.totalMins,
+          totalCostInr: trip.totalCost,
+          co2SavedKg: trip.co2SavedKg,
+          tripId: trip.id,
+          status: trip.status,
+          arriveBy: trip.arriveBy ? formatIst(new Date(trip.arriveBy)) : null,
+          legs: trip.legs.map((l) => ({
+            legId: l.id,
+            mode: l.mode,
+            from: l.from.name,
+            to: l.to.name,
+            depart: formatIst(new Date(l.departAt)),
+            arrive: formatIst(new Date(l.arriveAt)),
+            service: l.serviceNo,
+            status: l.status,
+            delayMins: l.delayMins,
+            bookingRef: l.bookingRef,
+          })),
+        },
+      };
+    },
+  }),
+
+  tool({
+    name: 'geocode_place',
+    description:
+      'Look up a place by name to check it exists and see its city. Returns up to 3 matches.',
+    schema: z.object({ query: z.string() }),
+    async run({ query }) {
+      const matches = geocode.search(query, 3);
+      return { result: matches.map((p) => ({ name: p.name, city: p.city, type: p.type })) };
+    },
+  }),
+
+  tool({
+    name: 'remember',
+    description:
+      'Save a lasting fact or preference about the user to long-term memory (e.g. "Gym is at Balewadi High Street", "Avoids bike taxis").',
+    schema: z.object({
+      fact: z.string().min(3).max(300).describe('One self-contained sentence, in English'),
+      kind: z.enum(['PLACE', 'PREFERENCE', 'NOTE']),
+    }),
+    async run({ fact, kind }) {
+      await memory.remember(DEMO_USER_ID, kind, fact);
+      return { result: { saved: true } };
+    },
+  }),
+
+  tool({
+    name: 'recall_memory',
+    description: 'Search long-term memory for things the user told you before.',
+    schema: z.object({ query: z.string() }),
+    async run({ query }) {
+      return { result: { memories: await memory.recall(DEMO_USER_ID, query) } };
+    },
+  }),
+];
+
+/** Tool definitions in the shape the Messages API expects. Order is fixed so the cache prefix stays stable. */
+export const TOOL_DEFINITIONS: Anthropic.Beta.BetaTool[] = TOOLS.map((t) => {
+  const { $schema: _ignored, ...schema } = z.toJSONSchema(t.schema) as Record<string, unknown>;
+  return {
+    name: t.name,
+    description: t.description,
+    input_schema: schema as Anthropic.Beta.BetaTool.InputSchema,
+  };
+});
+
+/** Validates the model's input and runs the tool. Errors come back as text for the model. */
+export async function runTool(
+  name: string,
+  input: unknown,
+): Promise<ToolOutput & { isError?: boolean }> {
+  const def = TOOLS.find((t) => t.name === name);
+  if (!def) return { result: { error: `Unknown tool ${name}` }, isError: true };
+  const parsed = def.schema.safeParse(input);
+  if (!parsed.success) {
+    return { result: { error: `Invalid input: ${parsed.error.message}` }, isError: true };
+  }
+  try {
+    return await (def.run as (i: unknown) => Promise<ToolOutput>)(parsed.data);
+  } catch (err) {
+    if (err instanceof ToolInputError || err instanceof PlanError) {
+      return { result: { error: err.message }, isError: true };
+    }
+    console.error(`Tool ${name} failed:`, err);
+    return {
+      result: { error: 'The tool failed unexpectedly. Try again or rephrase.' },
+      isError: true,
+    };
+  }
+}

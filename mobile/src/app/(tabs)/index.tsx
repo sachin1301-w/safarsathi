@@ -41,9 +41,13 @@ export default function HomeScreen() {
   const goTo = (to: string, from?: string) =>
     router.push({ pathname: '/plan', params: { to, ...(from ? { from } : {}) } });
 
+  // Free text goes to the copilot; the nonce makes a repeated query run again.
   const submit = () => {
-    if (query.trim()) goTo(query.trim());
+    if (!query.trim()) return;
+    router.navigate({ pathname: '/chat', params: { q: query.trim(), n: String(Date.now()) } });
+    setQuery('');
   };
+  const voice = () => router.navigate({ pathname: '/chat', params: { voice: String(Date.now()) } });
 
   const dot =
     status === 'connected' ? theme.success : status === 'offline' ? theme.danger : theme.muted;
@@ -93,6 +97,13 @@ export default function HomeScreen() {
             style={[styles.searchInput, { color: theme.text }]}
             accessibilityLabel="Where to?"
           />
+          <Pressable
+            onPress={voice}
+            accessibilityRole="button"
+            accessibilityLabel="Speak your trip"
+            style={[styles.goButton, { backgroundColor: theme.surfaceAlt }]}>
+            <Icon name="microphone" size={24} color={theme.accent} />
+          </Pressable>
           <Pressable
             onPress={submit}
             accessibilityRole="button"

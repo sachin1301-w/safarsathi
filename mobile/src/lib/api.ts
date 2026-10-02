@@ -1,5 +1,7 @@
 import type {
   Charger,
+  ChatResponse,
+  ChatTurn,
   ChargerReport,
   ChargerStatus,
   Itinerary,
@@ -78,4 +80,19 @@ export const api = {
   }) => post<PlanResult>('/journeys/plan', body, 20_000),
   saveTrip: (itinerary: Itinerary) => post<Trip>('/trips', itinerary),
   trip: (id: string) => request<Trip>(`/trips/${id}`),
+
+  chat: (messages: ChatTurn[], language: string) =>
+    post<ChatResponse>('/chat', { messages, language }, 45_000),
+  transcribe: (audioBase64: string, mimeType: string, languageCode?: string) =>
+    post<{ text: string; languageCode: string }>(
+      '/speech/transcribe',
+      { audioBase64, mimeType, languageCode },
+      30_000,
+    ),
+  synthesize: (text: string, languageCode: string) =>
+    post<{ audioBase64: string; mimeType: string }>(
+      '/speech/synthesize',
+      { text, languageCode },
+      30_000,
+    ),
 };

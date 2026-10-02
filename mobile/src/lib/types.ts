@@ -145,3 +145,14 @@ export interface PlanResult {
   to: Place;
   options: Itinerary[];
 }
+
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatResponse {
+  reply: string;
+  cards: Card[];
+  mode: 'ai' | 'offline';
+}

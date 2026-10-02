@@ -63,3 +63,19 @@ These extend SPEC.md and take precedence over it where they conflict.
 - **Tapping an itinerary saves it as a PLANNED trip** (`POST /api/trips`) so the Journey detail screen, bookings and replanning all work on a trip id.
 - **Route choice screen (`/plan`)** shows the three options for the Home quick chips and search box. Phase 5 routes free-text queries through the chatbot instead.
 - **`npm run plan -- <from> <to> [HH:MM] [--ev]`** prints planner output for quick checks.
+
+## Phase 5
+
+- **Model `claude-sonnet-5-5` (as the spec says) at `effort: "low"`**, the documented starting point for chat. Adaptive thinking is left on (the default); `max_tokens` 8000.
+- **Server-side refusal fallback is on** (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`), so eligible declines are retried on a fallback model inside the same call. A remaining refusal returns a polite "can't help" reply.
+- **Manual tool loop** (not the beta Tool Runner): up to 5 tool rounds, then one last call with `tool_choice: none` so Claude must answer with what it has. Tools in one turn run in parallel and all results go back in one message.
+- **Prompt caching:** tools + the stable rules are a cached prefix; language, profile, memories and the current time go in a second, uncached system block.
+- **Tool schemas are generated from the Zod schemas** (`z.toJSONSchema`) and every input is re-validated with Zod before running. Errors go back to Claude as `is_error` tool results.
+- **`find_chargers` / `find_parking` take a place name (`near`)** as well as the spec's lat/lng idea, so Claude doesn't need a geocode round first. `geocode_place` still exists.
+- **Memory tools:** `remember` and `recall_memory` (Cognee + local mirror). The 10 latest memories are also put in the prompt so "home"/"office" and preferences work without a tool call.
+- **`book_leg` and `replan_trip` tools arrive in Phases 6 and 7** with the services they call.
+- **Offline assistant** (`ai/offline.ts`) answers when `ANTHROPIC_API_KEY` is empty, `DEMO_OFFLINE=true`, or the API is unreachable. It recognises the demo's requests (trip with deadline, EV trip, chargers, parking), runs the same tools, and replies from templates in English, Hindi and Marathi (English for other languages). Replies are tagged "Offline assistant" in the app. This is the spec's `DEMO_OFFLINE` backup.
+- **Chat history is sent by the app as plain text turns** (last 20). Thinking blocks are never replayed between requests, so there is no history to keep byte-identical.
+- **Voice:** the mic records with `expo-audio` and transcribes with Sarvam `saaras:v4` (auto-detects the language when English is selected, since people code-mix). Replies to voice questions are read aloud automatically; every reply has a speaker button. Sarvam `bulbul:v3` (speaker "priya") is used when configured, the phone's TTS otherwise. Without the Sarvam key the mic suggests keyboard dictation (the spec's original plan).
+- **Measured:** Sarvam TTS ~9 s for a fresh phrase and ~10 ms from cache; STT ~0.2 s. Verification used 2 Sarvam calls.
+- **Home "Where to?"** opens Chat with the query and sends it; the quick chips still go straight to the route-choice screen (no LLM needed).
