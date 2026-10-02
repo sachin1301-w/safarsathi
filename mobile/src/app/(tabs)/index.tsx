@@ -8,7 +8,7 @@ import { DemoFooter } from '@/components/demo-footer';
 import { JourneyCard } from '@/components/journey-card';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
 import { TripStatusChip } from '@/components/trip-status';
-import { Chip, Icon, SectionTitle, type IconName } from '@/components/ui';
+import { Button, Card, Chip, FadeIn, Icon, SectionTitle, type IconName } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAlerts } from '@/lib/alerts';
@@ -70,12 +70,19 @@ export default function HomeScreen() {
   // A new alert can change the next trip's status.
   useEffect(loadTrips, [alerts, loadTrips]);
 
-  useEffect(() => {
+  const checkHealth = useCallback(() => {
     api
       .health()
       .then((r) => setStatus(r.ok ? 'connected' : 'offline'))
       .catch(() => setStatus('offline'));
   }, []);
+  useEffect(checkHealth, [checkHealth]);
+  const recheck = () => {
+    setStatus('checking');
+    checkHealth();
+    refresh();
+    loadTrips();
+  };
 
   const goTo = (to: string, from?: string) =>
     router.push({ pathname: '/plan', params: { to, ...(from ? { from } : {}) } });
@@ -112,7 +119,10 @@ export default function HomeScreen() {
               {nativeName(profile?.language ?? 'en-IN')}
             </Text>
           </Pressable>
-          <View
+          <Pressable
+            onPress={recheck}
+            accessibilityRole="button"
+            accessibilityLabel="Check connection again"
             style={[styles.status, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <View style={[styles.dot, { backgroundColor: dot }]} />
             <Text style={[styles.statusText, { color: theme.textSecondary }]}>
@@ -122,8 +132,31 @@ export default function HomeScreen() {
                   ? t('status.offline')
                   : t('status.connecting')}
             </Text>
-          </View>
+          </Pressable>
         </View>
+
+        {status === 'offline' && (
+          <FadeIn>
+            <Card style={{ borderColor: theme.danger, gap: Spacing.sm }}>
+              <View style={styles.offlineRow}>
+                <Icon name="lan-disconnect" size={22} color={theme.danger} />
+                <Text style={[styles.offlineTitle, { color: theme.text }]}>
+                  {t('status.offline')}
+                </Text>
+              </View>
+              <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
+                Can&apos;t reach the SafarSathi server at {api.baseUrl}. Make sure npm run dev is running
+                in backend/ on the laptop that runs Expo.
+              </Text>
+              <Button
+                label={t('common.retry')}
+                icon="refresh"
+                variant="secondary"
+                onPress={recheck}
+              />
+            </Card>
+          </FadeIn>
+        )}
 
         {alerts.map((a) => (
           <AlertBanner
@@ -230,6 +263,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
+  offlineRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  offlineTitle: { fontSize: 17, fontWeight: '700' },
   statusText: { fontSize: 12, fontWeight: '600' },
   hello: { fontSize: 16, fontWeight: '600' },
   headline: { fontSize: 32, fontWeight: '800', marginTop: 2 },

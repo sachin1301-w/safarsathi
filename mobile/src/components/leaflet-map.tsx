@@ -4,8 +4,18 @@
  * this works in Expo Go, needs no API key, and supports pins, labels, routes and dark mode.
  */
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, useColorScheme, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Animated,
+  StyleSheet,
+  useColorScheme,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
+
+import { LoadingPill } from '@/components/ui';
+import { useT } from '@/lib/i18n';
 
 export interface MapMarker {
   id: string;
@@ -69,10 +79,10 @@ html,body,#map{margin:0;height:100%;background:${bg}}
 .msg{font:14px sans-serif;color:#555;padding:24px;text-align:center}
 </style></head><body><div id="map"></div><script>
 var send=function(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify(m))};
-if(!window.L){document.body.innerHTML='<div class="msg">The map needs an internet connection.</div>';}
+if(!window.L){document.body.innerHTML='<div class="msg">The map needs an internet connection.</div>';send({type:'tiles'});}
 else{
 var map=L.map('map',{zoomControl:false}).setView([${center.lat},${center.lng}],${zoom});
-L.tileLayer('${tiles}',{maxZoom:19,subdomains:'abcd',attribution:'${CARTO_KEY ? '&copy; OpenStreetMap &copy; CARTO' : '&copy; OpenStreetMap'}'}).addTo(map);
+L.tileLayer('${tiles}',{maxZoom:19,subdomains:'abcd',attribution:'${CARTO_KEY ? '&copy; OpenStreetMap &copy; CARTO' : '&copy; OpenStreetMap'}'}).on('load',function(){send({type:'tiles'})}).addTo(map);
 map.on('click',function(){send({type:'map'})});
 var layer=L.layerGroup().addTo(map);
 var BOLT='<svg viewBox="0 0 24 24" width="62%" height="62%"><path fill="#fff" d="M13 2 4 14h7l-1 8 10-12h-7z"/></svg>';
@@ -114,7 +124,11 @@ export function LeafletMap({
 }: LeafletMapProps) {
   const ref = useRef<WebView>(null);
   const dark = useColorScheme() === 'dark';
+  const t = useT();
   const [ready, setReady] = useState(false);
+  // Covers the map until the first tiles arrive, then fades out.
+  const [cover] = useState(() => new Animated.Value(1));
+  const [loaded, setLoaded] = useState(false);
   // The page is built once (per colour scheme); later changes are pushed into it.
   const [html] = useState(() => buildHtml(center, zoom, dark));
 
@@ -137,7 +151,10 @@ export function LeafletMap({
     try {
       const msg = JSON.parse(e.nativeEvent.data) as { type: string; id?: string };
       if (msg.type === 'ready') setReady(true);
-      else if (msg.type === 'marker' && msg.id) onMarkerPress?.(msg.id);
+      else if (msg.type === 'tiles' && !loaded) {
+        setLoaded(true);
+        Animated.timing(cover, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+      } else if (msg.type === 'marker' && msg.id) onMarkerPress?.(msg.id);
       else if (msg.type === 'map') onMapPress?.();
     } catch {
       // ignore non-JSON messages
@@ -158,6 +175,15 @@ export function LeafletMap({
         // Let the map own pan gestures inside scroll views.
         nestedScrollEnabled
       />
+      <Animated.View
+        pointerEvents={loaded ? 'none' : 'auto'}
+        style={[
+          StyleSheet.absoluteFill,
+          styles.cover,
+          { opacity: cover, backgroundColor: dark ? '#0B0E0F' : '#E8EEEE' },
+        ]}>
+        <LoadingPill label={t('map.loading')} />
+      </Animated.View>
     </View>
   );
 }
@@ -165,4 +191,5 @@ export function LeafletMap({
 const styles = StyleSheet.create({
   wrap: { overflow: 'hidden' },
   web: { flex: 1, backgroundColor: 'transparent' },
+  cover: { alignItems: 'center', justifyContent: 'center' },
 });

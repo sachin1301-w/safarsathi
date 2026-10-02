@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { JourneyCard } from '@/components/journey-card';
-import { Chip, ErrorState, SkeletonCard } from '@/components/ui';
+import { Chip, ErrorState, FadeIn, SkeletonCard } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-context';
@@ -83,7 +83,9 @@ export default function PlanScreen() {
         </>
       ) : (
         result.options.map((it, i) => (
-          <JourneyCard key={i} itinerary={it} onPress={() => open(i)} />
+          <FadeIn key={i} delay={i * 70}>
+            <JourneyCard itinerary={it} onPress={() => open(i)} />
+          </FadeIn>
         ))
       )}
     </ScrollView>

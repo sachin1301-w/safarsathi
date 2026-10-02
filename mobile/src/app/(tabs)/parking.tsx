@@ -12,7 +12,9 @@ import {
   Chip,
   EmptyState,
   ErrorState,
+  FadeIn,
   Icon,
+  LoadingPill,
   SkeletonCard,
   type IconName,
 } from '@/components/ui';
@@ -69,6 +71,10 @@ export default function ParkingScreen() {
   const center = destination ?? here ?? profile?.home ?? DEFAULT_CENTER;
   const centerName = destination?.name ?? (here ? 'you' : (profile?.home?.name ?? 'Kothrud'));
 
+  // Which search the shown lots belong to; differs from reqKey while a new one loads.
+  const reqKey = `${center.lat},${center.lng},${offsetMins}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+
   const load = useCallback(() => {
     const query = (radiusKm: number) =>
       api.parking({
@@ -84,8 +90,9 @@ export default function ParkingScreen() {
         setFallback(!!far?.length);
         setError(null);
       })
-      .catch((e: Error) => setError(e.message));
-  }, [center.lat, center.lng, offsetMins]);
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoadedKey(reqKey));
+  }, [center.lat, center.lng, offsetMins, reqKey]);
 
   // Zoom the map to the closest lots (and the search point) so the pins are in view.
   const focus = useMemo(
@@ -156,6 +163,9 @@ export default function ParkingScreen() {
           onMarkerPress={(id) => setSelected(lots?.find((l) => l.id === id) ?? null)}
           onMapPress={() => setSelected(null)}
         />
+        {loadedKey !== reqKey && (
+          <LoadingPill label={t('parking.finding')} style={styles.mapPill} />
+        )}
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
@@ -175,16 +185,17 @@ export default function ParkingScreen() {
         ) : (
           [...lots]
             .sort((a, b) => (a.id === selected?.id ? -1 : b.id === selected?.id ? 1 : 0))
-            .map((lot) => (
-              <LotCard
-                key={lot.id}
-                lot={lot}
-                highlighted={lot.id === selected?.id}
-                onPress={() => setSelected(lot)}
-                onReserve={() =>
-                  setReserving({ lot, arriveAt: new Date(Date.now() + offsetMins * 60_000) })
-                }
-              />
+            .map((lot, i) => (
+              <FadeIn key={lot.id} delay={Math.min(i, 8) * 40}>
+                <LotCard
+                  lot={lot}
+                  highlighted={lot.id === selected?.id}
+                  onPress={() => setSelected(lot)}
+                  onReserve={() =>
+                    setReserving({ lot, arriveAt: new Date(Date.now() + offsetMins * 60_000) })
+                  }
+                />
+              </FadeIn>
             ))
         )}
         <DemoFooter />
@@ -354,6 +365,7 @@ const styles = StyleSheet.create({
   chipBar: { flexGrow: 0 },
   nearRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: Spacing.sm },
   chips: { gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md },
+  mapPill: { position: 'absolute', top: Spacing.sm, alignSelf: 'center' },
   mapWrap: {
     height: 220,
     marginHorizontal: Spacing.md,

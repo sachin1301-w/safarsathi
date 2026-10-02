@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatCards } from '@/components/chat-cards';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
-import { Chip, Icon } from '@/components/ui';
+import { Chip, FadeIn, Icon, TypingDots } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useCurrentOrigin } from '@/lib/location';
@@ -212,7 +212,7 @@ export default function ChatScreen() {
           )}
 
           {messages.map((m) => (
-            <View key={m.id} style={m.role === 'user' ? styles.userRow : styles.botRow}>
+            <FadeIn key={m.id} style={m.role === 'user' ? styles.userRow : styles.botRow}>
               <View
                 style={[
                   styles.bubble,
@@ -260,20 +260,10 @@ export default function ChatScreen() {
                 )}
               </View>
               {m.cards && <ChatCards cards={m.cards} />}
-            </View>
+            </FadeIn>
           ))}
 
-          {busy && (
-            <View
-              style={[
-                styles.bubble,
-                styles.thinking,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-              ]}>
-              <ActivityIndicator color={theme.accent} />
-              <Text style={{ color: theme.textSecondary }}>{t('chat.planning')}</Text>
-            </View>
-          )}
+          {busy && <Thinking />}
         </ScrollView>
 
         {(hint || voice.error) && (
@@ -333,6 +323,30 @@ export default function ChatScreen() {
   );
 }
 
+/** "Typing" bubble while the copilot works; the text changes if it takes a while. */
+function Thinking() {
+  const theme = useTheme();
+  const t = useT();
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), 2500);
+    return () => clearTimeout(timer);
+  }, []);
+  return (
+    <FadeIn
+      style={[
+        styles.bubble,
+        styles.thinking,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+      ]}>
+      <TypingDots />
+      <Text style={{ color: theme.textSecondary }}>
+        {slow ? t('chat.checking') : t('chat.planning')}
+      </Text>
+    </FadeIn>
+  );
+}
+
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
@@ -382,9 +396,10 @@ const styles = StyleSheet.create({
   thinking: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     borderWidth: StyleSheet.hairlineWidth,
     alignSelf: 'flex-start',
+    paddingVertical: 14,
   },
   hint: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.xs, fontSize: 13 },
   inputBar: {

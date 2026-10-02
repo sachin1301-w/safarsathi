@@ -6,7 +6,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChargerRow } from '@/components/charger-row';
 import { DemoFooter } from '@/components/demo-footer';
 import { LeafletMap } from '@/components/leaflet-map';
-import { Button, Chip, EmptyState, ErrorState, Icon, SkeletonCard } from '@/components/ui';
+import {
+  Button,
+  Chip,
+  EmptyState,
+  ErrorState,
+  FadeIn,
+  Icon,
+  LoadingPill,
+  SkeletonCard,
+} from '@/components/ui';
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
@@ -41,6 +50,10 @@ export default function EvScreen() {
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // Which search the shown results belong to; differs from reqKey while a new one loads.
+  const reqKey = `${center.lat},${center.lng},${connector},${minKw}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+
   const load = useCallback(() => {
     api
       .chargers({
@@ -54,8 +67,9 @@ export default function EvScreen() {
         setChargers(list);
         setError(null);
       })
-      .catch((e: Error) => setError(e.message));
-  }, [center.lat, center.lng, connector, minKw]);
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoadedKey(reqKey));
+  }, [center.lat, center.lng, connector, minKw, reqKey]);
 
   // Reload whenever the tab regains focus, so a report made on the detail screen shows at once.
   useFocusEffect(load);
@@ -143,6 +157,7 @@ export default function EvScreen() {
             onMarkerPress={setSelectedId}
             onMapPress={() => setSelectedId(null)}
           />
+          {loadedKey !== reqKey && <LoadingPill label={t('ev.finding')} style={styles.mapPill} />}
           {selected && (
             <View style={styles.sheet}>
               <ChargerRow charger={selected} onPress={() => openDetail(selected.id)} />
@@ -159,8 +174,10 @@ export default function EvScreen() {
           data={chargers ?? []}
           keyExtractor={(c) => c.id}
           contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <ChargerRow charger={item} onPress={() => openDetail(item.id)} />
+          renderItem={({ item, index }) => (
+            <FadeIn delay={Math.min(index, 8) * 40}>
+              <ChargerRow charger={item} onPress={() => openDetail(item.id)} />
+            </FadeIn>
           )}
           ListFooterComponent={<DemoFooter />}
           ListEmptyComponent={
@@ -222,6 +239,7 @@ const styles = StyleSheet.create({
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   legendText: { fontSize: 13, fontWeight: '600' },
   mapWrap: { flex: 1, overflow: 'hidden' },
+  mapPill: { position: 'absolute', top: Spacing.md, alignSelf: 'center' },
   sheet: {
     position: 'absolute',
     left: Spacing.md,

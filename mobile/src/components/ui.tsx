@@ -254,6 +254,98 @@ export function Skeleton({
   );
 }
 
+/** Three bouncing dots, like a "typing…" indicator. */
+export function TypingDots({ color }: { color?: string }) {
+  const theme = useTheme();
+  const [dots] = useState(() => [0, 1, 2].map(() => new Animated.Value(0)));
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.stagger(
+        150,
+        dots.map((d) =>
+          Animated.sequence([
+            Animated.timing(d, { toValue: 1, duration: 300, useNativeDriver: true }),
+            Animated.timing(d, { toValue: 0, duration: 300, useNativeDriver: true }),
+            Animated.delay(150),
+          ]),
+        ),
+      ),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [dots]);
+  return (
+    <View style={styles.dots}>
+      {dots.map((d, i) => (
+        <Animated.View
+          key={i}
+          style={[
+            styles.dot,
+            {
+              backgroundColor: color ?? theme.accent,
+              opacity: d.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
+              transform: [
+                { translateY: d.interpolate({ inputRange: [0, 1], outputRange: [0, -5] }) },
+              ],
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+/** Fades and slides its children in when first shown; `delay` staggers lists. */
+export function FadeIn({
+  children,
+  delay = 0,
+  style,
+}: {
+  children: ReactNode;
+  delay?: number;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const [progress] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 260,
+      delay,
+      useNativeDriver: true,
+    }).start();
+  }, [progress, delay]);
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          opacity: progress,
+          transform: [
+            { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) },
+          ],
+        },
+      ]}>
+      {children}
+    </Animated.View>
+  );
+}
+
+/** Small floating pill with a spinner, e.g. over a map while results load. */
+export function LoadingPill({ label, style }: { label: string; style?: StyleProp<ViewStyle> }) {
+  const theme = useTheme();
+  return (
+    <FadeIn
+      style={[
+        styles.loadingPill,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+        style,
+      ]}>
+      <ActivityIndicator size="small" color={theme.accent} />
+      <Text style={{ color: theme.text, fontWeight: '600', fontSize: 13 }}>{label}</Text>
+    </FadeIn>
+  );
+}
+
 export function SkeletonCard() {
   const theme = useTheme();
   return (
@@ -270,6 +362,22 @@ export function SkeletonCard() {
 }
 
 const styles = StyleSheet.create({
+  dots: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 16 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  loadingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
   card: {
     borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth,

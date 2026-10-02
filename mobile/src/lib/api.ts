@@ -1,3 +1,5 @@
+import Constants from 'expo-constants';
+
 import type {
   Charger,
   ChatResponse,
@@ -13,7 +15,18 @@ import type {
   Trip,
 } from './types';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
+/**
+ * The backend runs on the same laptop as the Expo dev server, so in Expo Go use the address
+ * the app itself was loaded from. That follows the laptop when its IP changes (Wi-Fi vs
+ * phone hotspot) without editing .env. EXPO_PUBLIC_API_URL is the fallback, e.g. for builds.
+ */
+function apiUrl() {
+  const host = Constants.expoConfig?.hostUri?.split(':')[0];
+  if (host && host !== 'localhost' && host !== '127.0.0.1') return `http://${host}:4000`;
+  return process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
+}
+
+const API_URL = apiUrl();
 
 async function request<T>(path: string, init?: RequestInit & { timeoutMs?: number }): Promise<T> {
   let res: Response;
@@ -23,9 +36,11 @@ async function request<T>(path: string, init?: RequestInit & { timeoutMs?: numbe
       headers: { 'Content-Type': 'application/json', ...init?.headers },
       signal: AbortSignal.timeout(init?.timeoutMs ?? 15_000),
     });
-  } catch {
+  } catch (e) {
     throw new Error(
-      `Can't reach SafarSathi at ${API_URL}. Is the backend running on the same Wi-Fi?`,
+      (e as Error).name === 'TimeoutError'
+        ? `SafarSathi at ${API_URL} took too long to answer. Check the backend terminal is running, then try again.`
+        : `Can't reach SafarSathi at ${API_URL}. Start the backend (npm run dev) on the laptop that runs Expo.`,
     );
   }
   const body = await res.json().catch(() => ({}));
