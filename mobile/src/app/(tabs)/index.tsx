@@ -1,12 +1,17 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Chip, Icon, type IconName } from '@/components/ui';
+import { AlertBanner } from '@/components/alert-banner';
+import { JourneyCard } from '@/components/journey-card';
+import { TripStatusChip } from '@/components/trip-status';
+import { Chip, Icon, SectionTitle, type IconName } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
+import { useAlerts } from '@/lib/alerts';
 import { useApp } from '@/lib/app-context';
+import type { Trip } from '@/lib/types';
 
 type Status = 'checking' | 'connected' | 'offline';
 
@@ -30,6 +35,35 @@ export default function HomeScreen() {
   const [status, setStatus] = useState<Status>('checking');
   const [query, setQuery] = useState('');
   const [hello] = useState(greeting);
+  const { alerts, dismiss, refresh } = useAlerts();
+  const [nextTrip, setNextTrip] = useState<Trip | null>(null);
+
+  // The next booked or disrupted trip that hasn't finished yet.
+  const loadTrips = useCallback(() => {
+    api
+      .trips()
+      .then((trips) => {
+        const now = Date.now();
+        const active = trips
+          .filter((t) => ['BOOKED', 'IN_PROGRESS', 'DISRUPTED'].includes(t.status))
+          .filter((t) => new Date(t.legs[t.legs.length - 1].arriveAt).getTime() > now)
+          .sort(
+            (a, b) =>
+              new Date(a.legs[0].departAt).getTime() - new Date(b.legs[0].departAt).getTime(),
+          );
+        setNextTrip(active[0] ?? null);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+      loadTrips();
+    }, [refresh, loadTrips]),
+  );
+  // A new alert can change the next trip's status.
+  useEffect(loadTrips, [alerts, loadTrips]);
 
   useEffect(() => {
     api
@@ -72,6 +106,14 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
+
+        {alerts.map((a) => (
+          <AlertBanner
+            key={a.tripId}
+            alert={a}
+            onDismiss={a.broken ? undefined : () => dismiss(a.tripId)}
+          />
+        ))}
 
         <View>
           <Text style={[styles.hello, { color: theme.textSecondary }]}>
@@ -118,6 +160,25 @@ export default function HomeScreen() {
             <Chip key={q.label} label={q.label} icon={q.icon} onPress={() => goTo(q.to, q.from)} />
           ))}
         </View>
+
+        {nextTrip && (
+          <View style={styles.section}>
+            <SectionTitle action={<TripStatusChip status={nextTrip.status} />}>
+              Your next trip
+            </SectionTitle>
+            <JourneyCard
+              itinerary={{
+                ...nextTrip,
+                label: nextTrip.option,
+                badges: [nextTrip.option],
+                arriveBy: nextTrip.arriveBy ?? undefined,
+              }}
+              onPress={() =>
+                router.push({ pathname: '/journey/[id]', params: { id: nextTrip.id } })
+              }
+            />
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -166,4 +227,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  section: { gap: Spacing.sm },
 });

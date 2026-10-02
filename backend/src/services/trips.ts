@@ -18,6 +18,7 @@ export function toTrip(row: TripRow): Trip {
     totalCost: row.totalCost,
     co2SavedKg: row.co2SavedKg,
     arriveBy: row.arriveBy?.toISOString() ?? null,
+    alertMessage: row.alertMessage,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -43,8 +44,17 @@ export async function planForUser(req: Omit<PlanRequest, 'ev' | 'savedPlaces'>) 
   return planJourney({ ...req, ...(await userPlanningContext()) }, plannerDeps);
 }
 
-/** Saves an itinerary as a PLANNED trip so it can be opened, booked and tracked. */
+/**
+ * Saves an itinerary as a PLANNED trip so it can be opened, booked and tracked.
+ * A replan option (replacesTripId) also retires the disrupted trip it replaces.
+ */
 export async function saveItinerary(it: Itinerary): Promise<Trip> {
+  if (it.replacesTripId) {
+    await prisma.trip.updateMany({
+      where: { id: it.replacesTripId, userId: DEMO_USER_ID },
+      data: { status: 'REPLACED', alertMessage: null },
+    });
+  }
   const row = await prisma.trip.create({
     data: {
       userId: DEMO_USER_ID,

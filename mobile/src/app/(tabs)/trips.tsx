@@ -27,7 +27,9 @@ interface Sections {
 
 function group(trips: Trip[], now: number): Sections {
   const ended = (t: Trip) =>
-    t.status === 'DONE' || new Date(t.legs[t.legs.length - 1].arriveAt).getTime() < now;
+    t.status === 'DONE' ||
+    t.status === 'REPLACED' ||
+    new Date(t.legs[t.legs.length - 1].arriveAt).getTime() < now;
   const byDeparture = (a: Trip, b: Trip) =>
     new Date(a.legs[0].departAt).getTime() - new Date(b.legs[0].departAt).getTime();
   return {

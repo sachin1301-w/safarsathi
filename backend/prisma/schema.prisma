@@ -9,14 +9,14 @@ datasource db {
 }
 
 model User {
-  id           String  @id @default(cuid())
-  name         String
-  language     String  @default("en-IN") // BCP-47, e.g. en-IN | hi-IN | mr-IN | ta-IN
-  hasEv        Boolean @default(false)
-  evRangeKm    Int? // full-battery range
-  evConnector  String? // CCS2 | Type2 | GBT | Bharat AC001
-  evBatteryPct Int? // current state of charge, 0..100
-  homePlaceId  String?
+  id            String  @id @default(cuid())
+  name          String
+  language      String  @default("en-IN") // BCP-47, e.g. en-IN | hi-IN | mr-IN | ta-IN
+  hasEv         Boolean @default(false)
+  evRangeKm     Int? // full-battery range
+  evConnector   String? // CCS2 | Type2 | GBT | Bharat AC001
+  evBatteryPct  Int? // current state of charge, 0..100
+  homePlaceId   String?
   officePlaceId String?
 
   trips        Trip[]
@@ -80,17 +80,18 @@ model ParkingReservation {
 }
 
 model Trip {
-  id         String   @id @default(cuid())
-  userId     String
-  title      String
-  status     String // PLANNED | BOOKED | IN_PROGRESS | DISRUPTED | DONE
-  option     String // FASTEST | CHEAPEST | GREENEST
-  legs       String // JSON array of Leg
-  totalMins  Int
-  totalCost  Float
-  co2SavedKg Float
-  arriveBy   DateTime? // the user's deadline, used when replanning
-  createdAt  DateTime @default(now())
+  id           String    @id @default(cuid())
+  userId       String
+  title        String
+  status       String // PLANNED | BOOKED | IN_PROGRESS | DISRUPTED | DONE | REPLACED
+  option       String // FASTEST | CHEAPEST | GREENEST
+  legs         String // JSON array of Leg
+  totalMins    Int
+  totalCost    Float
+  co2SavedKg   Float
+  arriveBy     DateTime? // the user's deadline, used when replanning
+  alertMessage String? // latest disruption alert, shown until the trip is fixed
+  createdAt    DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id])
 }

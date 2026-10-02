@@ -87,3 +87,15 @@ These extend SPEC.md and take precedence over it where they conflict.
 - **`book_leg` tool** takes a saved `tripId` or an `optionId` from `plan_journey` (saving it as a trip first), and books one leg or, without `legId`, every bookable leg. The system prompt still requires confirming with the user first.
 - **Booked trips are written to memory (Cognee + local)**, e.g. "Booked trip Kothrud → Connaught Place on Sat 3 Oct … flight QP-1406 (PNR …)", so the copilot can answer "what's my PNR?" later.
 - **Trips tab sections:** Upcoming (booked/active), Saved plans (opened but not booked) and Past, with pull to refresh and reload on focus.
+
+## Phase 7
+
+- **Connection checks:** after a delay, scheduled services (flight, train, intercity bus) keep their departure time and are "missed" if the previous leg arrives inside their minimum buffer (flight 60, train 20, bus 15 min). Metro, cabs, autos and walks just start later, keeping their original gap (e.g. 15 min to exit the airport). The spec's 5-minute metro buffer is used only as the gap, since metros are frequent.
+- **A trip is broken** when it misses a scheduled connection or its new arrival is past `arriveBy`. Broken trips become DISRUPTED and the alert offers "Fix my trip". A delay that still arrives on time sends an amber "you'll still arrive by …" alert that can be dismissed.
+- **Replanning starts from the user's current point by simulated progress:** the first leg that hasn't departed yet (no later than the disrupted leg). For a trip that hasn't started, that's the origin, which is what lets the copilot suggest "an earlier flight plus a cab". The delayed service is excluded and the original deadline kept. Options are ranked on-time first, then cheapest.
+- **Accepting a replan option** saves it as a new trip and marks the old one REPLACED (a status added to the spec's list) so it moves to Past trips.
+- **`Trip.alertMessage`** stores the latest alert so banners survive app restarts; `GET /api/alerts/active` and `POST /api/alerts/:tripId/dismiss` were added.
+- **SSE on the phone:** React Native has no `EventSource`, so `lib/alerts.tsx` reads the stream through XHR's incremental `responseText` (the approach `react-native-sse` uses), reconnecting after 3 s. A 20-second poll of `/alerts/active` is a safety net.
+- **"Fix my trip"** opens Chat showing "Fix my trip: <title>" while sending the trip id to the copilot, which calls `replan_trip` (the offline assistant does too).
+- **Simulate delay** is hidden behind a long-press on the Journey detail title and lets you pick the leg and 30/60/90/120 minutes (defaults: the flight/train, 90 min).
+- **Measured:** the SSE alert reached a listener 14 ms after `POST /demo/disrupt`.

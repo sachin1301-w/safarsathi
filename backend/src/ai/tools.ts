@@ -8,6 +8,7 @@ import { formatIst, parseTime } from '../lib/time';
 import { withPrediction } from '../services/parkingPredictor';
 import { PlanError } from '../services/planner';
 import { bookAll, BookingError, bookLeg } from '../services/bookings';
+import { ReplanError, replanTrip } from '../services/replanner';
 import { getTrip, planForUser, saveItinerary } from '../services/trips';
 import type { Card, Itinerary, Place } from '../types';
 import { getOption, rememberOption } from './planCache';
@@ -234,6 +235,36 @@ export const TOOLS = [
         };
       } catch (err) {
         if (err instanceof BookingError) throw new ToolInputError(err.message);
+        throw err;
+      }
+    },
+  }),
+
+  tool({
+    name: 'replan_trip',
+    description:
+      "Fix a disrupted trip: returns what happened and new options from the user's current point to the destination, keeping the original deadline. On-time options come first.",
+    schema: z.object({
+      tripId: z.string(),
+      disruptedLegId: z
+        .string()
+        .optional()
+        .describe('Defaults to the first delayed or cancelled leg'),
+    }),
+    async run({ tripId, disruptedLegId }) {
+      try {
+        const { trip, message, options } = await replanTrip(tripId, disruptedLegId);
+        const withIds = options.map((it) => ({ it, optionId: rememberOption(it) }));
+        return {
+          result: {
+            disruption: message,
+            deadline: trip.arriveBy ? formatIst(new Date(trip.arriveBy)) : null,
+            options: withIds.map(({ it, optionId }) => summarizeItinerary(it, optionId)),
+          },
+          cards: withIds.map(({ it }) => ({ type: 'itinerary', data: it })),
+        };
+      } catch (err) {
+        if (err instanceof ReplanError) throw new ToolInputError(err.message);
         throw err;
       }
     },

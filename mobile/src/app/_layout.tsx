@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 
 import { useTheme } from '@/constants/theme';
+import { AlertsProvider } from '@/lib/alerts';
 import { AppProvider } from '@/lib/app-context';
 
 export default function RootLayout() {
@@ -21,18 +22,20 @@ export default function RootLayout() {
         },
       }}>
       <AppProvider>
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: theme.surface },
-            headerTintColor: theme.text,
-            headerTitleStyle: { fontWeight: '700' },
-            contentStyle: { backgroundColor: theme.background },
-          }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="charger/[id]" options={{ title: 'Charger' }} />
-          <Stack.Screen name="plan" options={{ title: 'Choose your route' }} />
-          <Stack.Screen name="journey/[id]" options={{ title: 'Your journey' }} />
-        </Stack>
+        <AlertsProvider>
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: theme.surface },
+              headerTintColor: theme.text,
+              headerTitleStyle: { fontWeight: '700' },
+              contentStyle: { backgroundColor: theme.background },
+            }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="charger/[id]" options={{ title: 'Charger' }} />
+            <Stack.Screen name="plan" options={{ title: 'Choose your route' }} />
+            <Stack.Screen name="journey/[id]" options={{ title: 'Your journey' }} />
+          </Stack>
+        </AlertsProvider>
       </AppProvider>
       <StatusBar style="auto" />
     </ThemeProvider>

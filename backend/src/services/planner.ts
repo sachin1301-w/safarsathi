@@ -40,6 +40,8 @@ export interface PlanRequest {
   ev?: EvProfile | null;
   /** Names like "home" / "office" mapped to place ids. */
   savedPlaces?: Record<string, string>;
+  /** Service numbers to leave out, e.g. a delayed flight when replanning. */
+  excludeServices?: string[];
   now?: Date;
 }
 
@@ -565,9 +567,11 @@ function intercityCandidates(
   to: Place,
   earliest: Date,
   arriveBy: Date | undefined,
+  exclude: string[] = [],
 ): Candidate[] {
   const anchor = arriveBy ?? earliest;
   const services = deps.schedules.services().filter((s) => {
+    if (exclude.includes(s.serviceNo)) return false;
     const a = deps.geocode.byId(s.fromPlaceId);
     const b = deps.geocode.byId(s.toPlaceId);
     return a?.city === from.city && b?.city === to.city;
@@ -732,7 +736,7 @@ export async function planJourney(req: PlanRequest, deps: PlannerDeps): Promise<
       .filter((c) => c.length)
       .map((segs) => toCandidate(scheduleChain(segs, earliest, arriveBy), arriveBy));
   } else {
-    candidates = intercityCandidates(deps, from, to, earliest, arriveBy);
+    candidates = intercityCandidates(deps, from, to, earliest, arriveBy, req.excludeServices);
     if (road <= 400) {
       const cab = directSegment('CAB', point(from), point(to), at);
       candidates.push(

@@ -84,6 +84,7 @@ const itinerarySchema = z.object({
   co2SavedKg: z.number(),
   arriveBy: z.string().optional(),
   onTime: z.boolean().optional(),
+  replacesTripId: z.string().optional(),
 });
 
 /** Saves a planned itinerary as a trip (status PLANNED). */

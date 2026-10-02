@@ -1,13 +1,16 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
+import { AlertBanner } from '@/components/alert-banner';
 import { OptionBadges } from '@/components/journey-card';
 import { LegRow } from '@/components/leg-row';
+import { SimulateDelaySheet } from '@/components/simulate-delay';
 import { TripStatusChip } from '@/components/trip-status';
 import { Button, Card, ErrorState, Icon } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
+import { useAlerts } from '@/lib/alerts';
 import { api } from '@/lib/api';
 import { formatDuration, formatInr, formatTime } from '@/lib/format';
 import { BOOKABLE_MODES, MODE_INFO } from '@/lib/modes';
@@ -20,6 +23,9 @@ export default function JourneyDetailScreen() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [booking, setBooking] = useState<'all' | string | null>(null);
+  const [simulating, setSimulating] = useState(false);
+  const { alerts, dismiss } = useAlerts();
+  const alert = alerts.find((a) => a.tripId === id);
 
   const load = useCallback(() => {
     api
@@ -32,6 +38,10 @@ export default function JourneyDetailScreen() {
   }, [id]);
 
   useEffect(load, [load]);
+  // A disruption alert for this trip means its legs changed: reload.
+  useEffect(() => {
+    if (alert) load();
+  }, [alert, load]);
 
   async function bookAll() {
     setBooking('all');
@@ -85,7 +95,14 @@ export default function JourneyDetailScreen() {
 
       <View>
         <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: theme.text }]}>{trip.title}</Text>
+          {/* Long-press the title: hidden "Simulate delay" control for the demo. */}
+          <Pressable
+            onLongPress={() => setSimulating(true)}
+            delayLongPress={600}
+            accessibilityHint="Long press to simulate a delay (demo)"
+            style={{ flexShrink: 1 }}>
+            <Text style={[styles.title, { color: theme.text }]}>{trip.title}</Text>
+          </Pressable>
           <TripStatusChip status={trip.status} />
         </View>
         <Text style={{ color: theme.textSecondary }}>
@@ -93,6 +110,13 @@ export default function JourneyDetailScreen() {
           {trip.arriveBy ? ` · Deadline ${formatTime(trip.arriveBy)}` : ''}
         </Text>
       </View>
+
+      {alert && (
+        <AlertBanner
+          alert={alert}
+          onDismiss={alert.broken ? undefined : () => dismiss(alert.tripId)}
+        />
+      )}
 
       <View style={[styles.mapWrap, { borderColor: theme.border }]}>
         <MapView
@@ -183,6 +207,12 @@ export default function JourneyDetailScreen() {
           />
         ))}
       </View>
+      <SimulateDelaySheet
+        key={trip.id}
+        trip={trip}
+        visible={simulating}
+        onClose={() => setSimulating(false)}
+      />
     </ScrollView>
   );
 }

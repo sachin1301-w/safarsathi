@@ -26,6 +26,8 @@ interface Message {
   id: number;
   role: 'user' | 'assistant';
   text: string;
+  /** What goes to the copilot when it differs from what's shown (e.g. a hidden trip id). */
+  content?: string;
   cards?: Card[];
   offline?: boolean;
   error?: boolean;
@@ -43,7 +45,13 @@ let nextId = 1;
 export default function ChatScreen() {
   const theme = useTheme();
   const { profile, setLanguage } = useApp();
-  const params = useLocalSearchParams<{ q?: string; n?: string; voice?: string }>();
+  const params = useLocalSearchParams<{
+    q?: string;
+    n?: string;
+    voice?: string;
+    fix?: string;
+    title?: string;
+  }>();
   const language = profile?.language ?? 'en-IN';
   const sarvam = profile?.services?.speech === 'sarvam';
 
@@ -65,18 +73,18 @@ export default function ChatScreen() {
   );
 
   const send = useCallback(
-    async (text: string, opts: { speakReply?: boolean } = {}) => {
+    async (text: string, opts: { speakReply?: boolean; content?: string } = {}) => {
       const trimmed = text.trim();
       if (!trimmed || busy) return;
       setInput('');
       setHint(null);
-      const userMsg: Message = { id: nextId++, role: 'user', text: trimmed };
+      const userMsg: Message = { id: nextId++, role: 'user', text: trimmed, content: opts.content };
       const history = [...messages.filter((m) => !m.error), userMsg];
       setMessages((prev) => [...prev, userMsg]);
       setBusy(true);
       try {
         const res = await api.chat(
-          history.map((m) => ({ role: m.role, content: m.text })),
+          history.map((m) => ({ role: m.role, content: m.content ?? m.text })),
           language,
         );
         const reply: Message = {
@@ -114,6 +122,17 @@ export default function ChatScreen() {
       send(params.q!);
     }
   }, [params.q, params.n, send]);
+
+  // "Fix my trip" from an alert banner.
+  useEffect(() => {
+    const key = params.fix ? `${params.fix}|${params.n ?? ''}` : null;
+    if (key && handledParam.current !== key) {
+      handledParam.current = key;
+      send(`Fix my trip: ${params.title ?? 'my disrupted trip'}`, {
+        content: `My trip "${params.title ?? ''}" is disrupted. Fix my trip (trip id: ${params.fix}). Explain the impact in one sentence and give me the best new plan.`,
+      });
+    }
+  }, [params.fix, params.title, params.n, send]);
 
   // The mic on Home lands here and starts listening straight away.
   const handledVoice = useRef<string | null>(null);

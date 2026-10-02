@@ -25,6 +25,8 @@ const T: Record<Lang, Record<string, (v: Record<string, string | number>) => str
     parking: (v) =>
       `Nearest parking to ${v.near}: ${v.name}, about ${v.free} spots free, ₹${v.rate} an hour.`,
     noParking: (v) => `I couldn't find parking near ${v.near}.`,
+    replan: (v) =>
+      `${v.message} Best new plan: leave ${v.leave}, arrive ${v.arrive}, ${v.cost}${v.onTime ? ', still on time' : ''}. Tap it to switch.`,
     help: () =>
       'I can plan trips, find EV chargers and parking. Try "Kothrud to Pune Airport by 6 pm" or "chargers near Baner".',
     error: (v) => `${v.message}`,
@@ -41,6 +43,8 @@ const T: Record<Lang, Record<string, (v: Record<string, string | number>) => str
     parking: (v) =>
       `${v.near} के पास सबसे नज़दीकी पार्किंग: ${v.name}, लगभग ${v.free} जगह खाली, ₹${v.rate} प्रति घंटा।`,
     noParking: (v) => `${v.near} के पास पार्किंग नहीं मिली।`,
+    replan: (v) =>
+      `${v.message} नई योजना: ${v.leave} पर निकलें, ${v.arrive} तक पहुँचें, ${v.cost}${v.onTime ? ', समय पर' : ''}। बदलने के लिए उस पर टैप करें।`,
     help: () =>
       'मैं यात्रा की योजना, EV चार्जर और पार्किंग ढूँढने में मदद कर सकता हूँ। जैसे: "Kothrud to Pune Airport by 6 pm"।',
     error: (v) => `${v.message}`,
@@ -57,6 +61,8 @@ const T: Record<Lang, Record<string, (v: Record<string, string | number>) => str
     parking: (v) =>
       `${v.near} जवळचे पार्किंग: ${v.name}, सुमारे ${v.free} जागा मोकळ्या, ₹${v.rate} प्रति तास.`,
     noParking: (v) => `${v.near} जवळ पार्किंग सापडले नाही.`,
+    replan: (v) =>
+      `${v.message} नवीन योजना: ${v.leave} ला निघा, ${v.arrive} ला पोहोचा, ${v.cost}${v.onTime ? ', वेळेत' : ''}. बदलण्यासाठी त्यावर टॅप करा.`,
     help: () =>
       'मी प्रवासाचे नियोजन, EV चार्जर आणि पार्किंग शोधण्यात मदत करू शकतो. उदा.: "Kothrud to Pune Airport by 6 pm".',
     error: (v) => `${v.message}`,
@@ -112,6 +118,26 @@ export async function runOfflineAgent(history: ChatTurn[], language: string): Pr
     cards,
     mode: 'offline',
   });
+
+  // "Fix my trip" from the disruption banner carries the trip id.
+  const tripId = text.match(/trip id[:\s]+([a-z0-9]+)/i)?.[1];
+  if (tripId) {
+    const out = await runTool('replan_trip', { tripId });
+    if (out.isError) return done(t.error({ message: (out.result as { error: string }).error }));
+    const r = out.result as { disruption: string };
+    const best = (out.cards ?? []).map((c) => c.data as Itinerary)[0];
+    if (!best) return done(r.disruption);
+    return done(
+      t.replan({
+        message: r.disruption.replace(/ Tap to see[^.]*\./, ''),
+        leave: formatIst(new Date(best.legs[0].departAt)),
+        arrive: formatIst(new Date(best.legs.at(-1)!.arriveAt)),
+        cost: fmtCost(best.totalCost),
+        onTime: best.onTime === false ? '' : 'yes',
+      }),
+      out.cards,
+    );
+  }
 
   const wantsParking = /park|पार्क/.test(lower);
   const wantsChargers = /charg|चार्ज/.test(lower) && !/\btrip\b|यात्रा|प्रवास/.test(lower);

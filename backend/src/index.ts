@@ -4,6 +4,7 @@ import express from 'express';
 
 import { describeAdapters } from './adapters';
 import { errorHandler } from './lib/http';
+import { alertsRouter } from './routes/alerts';
 import { bookingsRouter } from './routes/bookings';
 import { chargersRouter } from './routes/chargers';
 import { chatRouter } from './routes/chat';
@@ -24,6 +25,7 @@ app.use(
   parkingRouter,
   journeysRouter,
   bookingsRouter,
+  alertsRouter,
   chatRouter,
 );
 

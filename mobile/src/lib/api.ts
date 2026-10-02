@@ -84,6 +84,17 @@ export const api = {
   bookLeg: (tripId: string, legId: string) =>
     post<{ bookingRef: string }>('/bookings', { tripId, legId }),
   bookAll: (tripId: string) => post<Trip>(`/trips/${tripId}/book-all`, {}),
+  disrupt: (tripId: string, legId: string, delayMins: number) =>
+    post<{ ok: boolean; broken: boolean; message: string }>('/demo/disrupt', {
+      tripId,
+      legId,
+      delayMins,
+    }),
+  activeAlerts: () =>
+    request<{ tripId: string; title: string; message: string; broken: boolean }[]>(
+      '/alerts/active',
+    ),
+  dismissAlert: (tripId: string) => post<{ ok: boolean }>(`/alerts/${tripId}/dismiss`, {}),
 
   chat: (messages: ChatTurn[], language: string) =>
     post<ChatResponse>('/chat', { messages, language }, 45_000),

@@ -51,6 +51,8 @@ export interface Itinerary {
   arriveBy?: string;
   onTime?: boolean;
   tripId?: string;
+  /** Set on replan options: accepting one replaces the disrupted trip. */
+  replacesTripId?: string;
 }
 
 export type ChargerStatus = 'WORKING' | 'BUSY' | 'BROKEN' | 'UNKNOWN';
@@ -90,7 +92,7 @@ export interface ParkingLot {
   distanceKm?: number;
 }
 
-export type TripStatus = 'PLANNED' | 'BOOKED' | 'IN_PROGRESS' | 'DISRUPTED' | 'DONE';
+export type TripStatus = 'PLANNED' | 'BOOKED' | 'IN_PROGRESS' | 'DISRUPTED' | 'DONE' | 'REPLACED';
 
 export interface Trip {
   id: string;
@@ -102,6 +104,7 @@ export interface Trip {
   totalCost: number;
   co2SavedKg: number;
   arriveBy?: string | null;
+  alertMessage?: string | null;
   createdAt: string;
 }
 

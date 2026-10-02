@@ -8,6 +8,7 @@ const LABEL: Record<TripStatus, string> = {
   IN_PROGRESS: 'On the way',
   DISRUPTED: 'Disrupted',
   DONE: 'Completed',
+  REPLACED: 'Replaced',
 };
 
 export function TripStatusChip({ status }: { status: TripStatus }) {
@@ -18,6 +19,7 @@ export function TripStatusChip({ status }: { status: TripStatus }) {
     IN_PROGRESS: ['#DBEAFE', '#1E3A8A'],
     DISRUPTED: [theme.danger, '#FFFFFF'],
     DONE: [theme.surfaceAlt, theme.textSecondary],
+    REPLACED: [theme.surfaceAlt, theme.textSecondary],
   };
   const [bg, fg] = colors[status];
   return <Badge label={LABEL[status]} color={bg} textColor={fg} />;
