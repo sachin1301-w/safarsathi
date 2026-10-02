@@ -16,11 +16,14 @@ import type {
 } from './types';
 
 /**
- * The backend runs on the same laptop as the Expo dev server, so in Expo Go use the address
- * the app itself was loaded from. That follows the laptop when its IP changes (Wi-Fi vs
- * phone hotspot) without editing .env. EXPO_PUBLIC_API_URL is the fallback, e.g. for builds.
+ * A public https EXPO_PUBLIC_API_URL (a tunnel or cloud backend) always wins, so any phone
+ * anywhere can use it. Otherwise the backend runs on the same laptop as the Expo dev server,
+ * so in Expo Go use the address the app was loaded from; that follows the laptop when its IP
+ * changes (Wi-Fi vs phone hotspot) without editing .env.
  */
 function apiUrl() {
+  const configured = process.env.EXPO_PUBLIC_API_URL;
+  if (configured?.startsWith('https://')) return configured.replace(/\/$/, '');
   const host = Constants.expoConfig?.hostUri?.split(':')[0];
   if (host && host !== 'localhost' && host !== '127.0.0.1') return `http://${host}:4000`;
   return process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
