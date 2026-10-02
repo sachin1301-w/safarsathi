@@ -36,5 +36,7 @@ chargersRouter.post('/chargers/:id/report', async (req, res) => {
   const body = validate(reportBody, req.body);
   const exists = await prisma.charger.findUnique({ where: { id: req.params.id } });
   if (!exists) throw notFound('Charger');
-  res.json(await chargers.report(req.params.id, currentUserId(), body.status, body.note || undefined));
+  res.json(
+    await chargers.report(req.params.id, currentUserId(), body.status, body.note || undefined),
+  );
 });

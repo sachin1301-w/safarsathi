@@ -24,6 +24,9 @@ type ChargerRow = { id: string; lat: number; lng: number; lastVerified: string }
 >;
 type LotRow = { id: string; lat: number; lng: number } & Record<string, unknown>;
 
+const chunks = <T>(xs: T[], n: number) =>
+  Array.from({ length: Math.ceil(xs.length / n) }, (_, i) => xs.slice(i * n, i * n + n));
+
 export async function importOsmIndia(prisma: PrismaClient) {
   // Curated (non-OSM) entries win over OSM duplicates at the same spot.
   const curatedChargers = await prisma.charger.findMany({
@@ -32,15 +35,17 @@ export async function importOsmIndia(prisma: PrismaClient) {
   const chargers = optionalData<ChargerRow>('chargers.india.json').filter(
     (c) => !curatedChargers.some((p) => haversineKm(p, c) < DUPLICATE_KM),
   );
-  for (const { id, ...c } of chargers) {
-    const data = { ...c, lastVerified: new Date(c.lastVerified) } as never;
-    // Keep crowd-reported status on chargers that are already there.
-    await prisma.charger.upsert({
-      where: { id },
-      create: { id, ...(data as object) } as never,
-      update: {},
+  // Only add chargers that aren't there yet, so crowd-reported status survives a re-import.
+  const savedChargers = new Set(
+    (
+      await prisma.charger.findMany({ where: { id: { startsWith: 'osm-' } }, select: { id: true } })
+    ).map((r) => r.id),
+  );
+  const newChargers = chargers.filter((c) => !savedChargers.has(c.id));
+  for (const batch of chunks(newChargers, 500))
+    await prisma.charger.createMany({
+      data: batch.map((c) => ({ ...c, lastVerified: new Date(c.lastVerified) })) as never,
     });
-  }
 
   const curatedLots = await prisma.parkingLot.findMany({
     where: { NOT: { id: { startsWith: 'osm-' } } },
@@ -48,14 +53,18 @@ export async function importOsmIndia(prisma: PrismaClient) {
   const lots = optionalData<LotRow>('parking.india.json').filter(
     (l) => !curatedLots.some((p) => haversineKm(p, l) < DUPLICATE_KM),
   );
-  for (const { id, ...l } of lots) {
-    await prisma.parkingLot.upsert({
-      where: { id },
-      create: { id, ...l } as never,
-      update: l as never,
-    });
-  }
-  return { chargers: chargers.length, lots: lots.length };
+  const savedLots = new Set(
+    (
+      await prisma.parkingLot.findMany({
+        where: { id: { startsWith: 'osm-' } },
+        select: { id: true },
+      })
+    ).map((r) => r.id),
+  );
+  const newLots = lots.filter((l) => !savedLots.has(l.id));
+  for (const batch of chunks(newLots, 500))
+    await prisma.parkingLot.createMany({ data: batch as never });
+  return { chargers: newChargers.length, lots: newLots.length };
 }
 
 // Run directly: npx tsx scripts/import-osm-india.ts
@@ -63,6 +72,6 @@ if (process.argv[1]?.replace(/\\/g, '/').endsWith('scripts/import-osm-india.ts')
   const { PrismaClient } = await import('@prisma/client');
   const prisma = new PrismaClient();
   const n = await importOsmIndia(prisma);
-  console.log(`Imported ${n.chargers} chargers and ${n.lots} parking lots from OpenStreetMap.`);
+  console.log(`Added ${n.chargers} chargers and ${n.lots} parking lots from OpenStreetMap.`);
   await prisma.$disconnect();
 }

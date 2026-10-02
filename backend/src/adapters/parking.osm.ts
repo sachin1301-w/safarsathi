@@ -1,6 +1,13 @@
 import { prisma } from '../lib/db';
-import { haversineKm } from '../lib/geo';
-import { elementPoint, overpassAmenity, type OsmElement } from '../lib/osm';
+import { boxAround, haversineKm } from '../lib/geo';
+import {
+  elementPoint,
+  ENOUGH_SAVED,
+  MAX_WAIT_MS,
+  overpassAmenity,
+  settleWithin,
+  type OsmElement,
+} from '../lib/osm';
 import type { ParkingLot, ParkingType } from '../types';
 import { MockParkingAdapter } from './parking.mock';
 
@@ -45,10 +52,19 @@ const DEFAULT_SPOTS: Record<ParkingType, number> = {
 /**
  * Public parking anywhere in India from OpenStreetMap, plus the Pune demo lots. OSM rarely has
  * capacity or prices, so spots are estimated and an unknown rate is stored as -1. Lots are saved
- * to SQLite (ids start with "osm-") so reservations work.
+ * to the database (ids start with "osm-") so reservations work.
  */
 export class OsmParkingAdapter extends MockParkingAdapter {
   async findNear(lat: number, lng: number, radiusKm: number): Promise<ParkingLot[]> {
+    const saved = await super.findNear(lat, lng, radiusKm);
+    const refresh = this.refresh(lat, lng, radiusKm);
+    if (saved.length >= ENOUGH_SAVED) return saved;
+    await settleWithin(refresh, MAX_WAIT_MS);
+    return super.findNear(lat, lng, radiusKm);
+  }
+
+  /** Fetches the area from OpenStreetMap and saves lots not seen before. Never throws. */
+  private async refresh(lat: number, lng: number, radiusKm: number) {
     try {
       const elements = await overpassAmenity(
         'parking',
@@ -58,19 +74,26 @@ export class OsmParkingAdapter extends MockParkingAdapter {
         120,
       );
       const demo = await prisma.parkingLot.findMany({
-        where: { NOT: { id: { startsWith: 'osm-' } } },
+        where: {
+          NOT: { id: { startsWith: 'osm-' } },
+          ...boxAround({ lat, lng }, FETCH_RADIUS_KM + 1),
+        },
       });
-      for (const e of elements) {
-        const lot = osmParkingRow(e);
-        if (!lot) continue;
-        const { id, ...row } = lot;
-        if (!row.lat || demo.some((d) => haversineKm(d, row) < DUPLICATE_KM)) continue;
-        await prisma.parkingLot.upsert({ where: { id }, create: { id, ...row }, update: row });
-      }
+      const rows = elements
+        .map(osmParkingRow)
+        .filter((r): r is NonNullable<typeof r> => !!r?.lat)
+        .filter((r) => !demo.some((d) => haversineKm(d, r) < DUPLICATE_KM));
+      // Insert only new lots, in one batch.
+      const saved = await prisma.parkingLot.findMany({
+        where: { id: { in: rows.map((r) => r.id) } },
+        select: { id: true },
+      });
+      const known = new Set(saved.map((r) => r.id));
+      const fresh = rows.filter((r) => !known.has(r.id));
+      if (fresh.length) await prisma.parkingLot.createMany({ data: fresh });
     } catch (err) {
       console.warn('OpenStreetMap parking unavailable, using saved lots:', (err as Error).message);
     }
-    return super.findNear(lat, lng, radiusKm);
   }
 }
 

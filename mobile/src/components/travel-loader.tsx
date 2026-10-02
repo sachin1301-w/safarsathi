@@ -22,6 +22,7 @@ const ICONS: Record<Vehicle, IconName> = {
 const SIZES = {
   sm: { height: 54, icon: 30, road: 10, dash: 12 },
   md: { height: 112, icon: 64, road: 20, dash: 26 },
+  lg: { height: 190, icon: 104, road: 30, dash: 34 },
 };
 
 export function TravelLoader({
@@ -248,40 +249,63 @@ const styles = StyleSheet.create({
   label: { textAlign: 'center', fontWeight: '600' },
 });
 
-/** A small floating card with a running vehicle, e.g. over a map while results load. */
-export function TravelLoaderCard({
-  vehicle,
-  label,
-  style,
+/**
+ * Full-screen loading scene (like the boot screen) laid over the current screen while
+ * something loads. Fades in, and out again when `visible` turns false.
+ */
+export function FullScreenLoader({
+  visible,
+  vehicles = ['bus'],
+  title,
+  subtitle,
+  cycleMs = 1800,
 }: {
-  vehicle: Vehicle;
-  label: string;
-  style?: import('react-native').StyleProp<import('react-native').ViewStyle>;
+  visible: boolean;
+  vehicles?: Vehicle[];
+  title: string;
+  subtitle?: string;
+  cycleMs?: number;
 }) {
   const theme = useTheme();
+  const [opacity] = useState(() => new Animated.Value(visible ? 1 : 0));
+
+  // Stays mounted and just fades, so showing it again is instant.
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: visible ? 1 : 0,
+      duration: visible ? 180 : 320,
+      useNativeDriver: true,
+    }).start();
+  }, [visible, opacity]);
+
   return (
-    <View
-      style={[
-        cardStyles.card,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-        style,
-      ]}>
-      <TravelLoader size="sm" width={150} vehicles={[vehicle]} label={label} />
-    </View>
+    <Animated.View
+      pointerEvents={visible ? 'auto' : 'none'}
+      style={[fullStyles.overlay, { backgroundColor: theme.background, opacity }]}>
+      <TravelLoader size="lg" vehicles={vehicles} cycleMs={cycleMs} />
+      <View style={fullStyles.text}>
+        <Text style={[fullStyles.title, { color: theme.text }]}>{title}</Text>
+        {subtitle && (
+          <Text style={[fullStyles.subtitle, { color: theme.textSecondary }]}>{subtitle}</Text>
+        )}
+      </View>
+    </Animated.View>
   );
 }
 
-const cardStyles = StyleSheet.create({
-  card: {
-    paddingHorizontal: 12,
-    paddingTop: 6,
-    paddingBottom: 10,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
+const fullStyles = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    justifyContent: 'center',
+    gap: 28,
+    zIndex: 50,
+    elevation: 50,
   },
+  text: { alignItems: 'center', gap: 6, paddingHorizontal: 32 },
+  title: { fontSize: 22, fontWeight: '800', textAlign: 'center' },
+  subtitle: { fontSize: 15, textAlign: 'center' },
 });

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DemoFooter } from '@/components/demo-footer';
 import { LeafletMap } from '@/components/leaflet-map';
-import { TravelLoaderCard } from '@/components/travel-loader';
+import { FullScreenLoader } from '@/components/travel-loader';
 import { PlaceSearch } from '@/components/place-search';
 import {
   Badge,
@@ -163,9 +163,6 @@ export default function ParkingScreen() {
           onMarkerPress={(id) => setSelected(lots?.find((l) => l.id === id) ?? null)}
           onMapPress={() => setSelected(null)}
         />
-        {loadedKey !== reqKey && (
-          <TravelLoaderCard vehicle="car" label={t('parking.finding')} style={styles.mapPill} />
-        )}
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
@@ -205,6 +202,12 @@ export default function ParkingScreen() {
         lot={reserving?.lot ?? null}
         arriveAt={reserving?.arriveAt ?? null}
         onClose={() => setReserving(null)}
+      />
+      <FullScreenLoader
+        visible={loadedKey !== reqKey}
+        vehicles={['car', 'rickshaw']}
+        title={t('parking.finding')}
+        subtitle="Predicting free spots for your arrival time"
       />
     </SafeAreaView>
   );
@@ -252,7 +255,7 @@ function LotCard({
         />
       </View>
       <View style={styles.lotBottom}>
-        <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+        <Text style={[styles.spots, { color: theme.textSecondary }]}>
           {lot.estimated ? '~' : ''}
           {free} of {lot.estimated ? '~' : ''}
           {lot.totalSpots} spots predicted free{lot.estimated ? ' (estimate)' : ''}
@@ -370,7 +373,6 @@ const styles = StyleSheet.create({
   chipBar: { flexGrow: 0 },
   nearRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: Spacing.sm },
   chips: { gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md },
-  mapPill: { position: 'absolute', top: Spacing.sm, alignSelf: 'center' },
   mapWrap: {
     height: 220,
     marginHorizontal: Spacing.md,
@@ -378,7 +380,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   list: { flex: 1 },
-  listContent: { padding: Spacing.md, gap: Spacing.sm },
+  listContent: { padding: Spacing.md, paddingBottom: Spacing.xl * 2, gap: Spacing.sm },
   lotTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   lotIcon: {
     width: 40,
@@ -393,10 +395,12 @@ const styles = StyleSheet.create({
   lotBottom: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: Spacing.sm,
     marginTop: Spacing.sm,
   },
-  reserve: { minHeight: 40, paddingHorizontal: Spacing.md },
+  // The text wraps; the button keeps its full size.
+  spots: { flex: 1, fontSize: 13 },
+  reserve: { minHeight: 42, paddingHorizontal: Spacing.md, flexShrink: 0 },
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: {
     borderTopLeftRadius: Radius.lg,

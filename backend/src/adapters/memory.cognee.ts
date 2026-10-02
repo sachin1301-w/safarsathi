@@ -27,7 +27,7 @@ const tokens = (s: string) =>
     .split(/[^\p{L}\p{N}]+/u)
     .filter((t) => t.length > 1 && !STOPWORDS.has(t));
 
-/** Memories in SQLite with simple keyword scoring. Works offline. */
+/** Memories in the database with simple keyword scoring. Works offline. */
 export class LocalMemoryAdapter implements MemoryAdapter {
   async remember(userId: string, kind: MemoryKind, text: string) {
     const exists = await prisma.memory.findFirst({ where: { userId, text } });

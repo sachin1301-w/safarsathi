@@ -1,6 +1,13 @@
 import { prisma } from '../lib/db';
-import { haversineKm } from '../lib/geo';
-import { elementPoint, overpassAmenity, type OsmElement } from '../lib/osm';
+import { boxAround, haversineKm } from '../lib/geo';
+import {
+  elementPoint,
+  ENOUGH_SAVED,
+  MAX_WAIT_MS,
+  overpassAmenity,
+  settleWithin,
+  type OsmElement,
+} from '../lib/osm';
 import type { Charger } from '../types';
 import { MockChargerAdapter } from './chargers.mock';
 import type { ChargerQuery } from './types';
@@ -22,10 +29,19 @@ const SOCKETS: [string, string][] = [
 /**
  * Chargers anywhere in India from OpenStreetMap (used without an Open Charge Map key), plus the
  * Pune demo chargers. OSM has no live status, price or (often) power, so those are UNKNOWN / 0
- * until someone reports. Results are saved to SQLite so reports and the detail screen work.
+ * until someone reports. Results are saved to the database so reports and the detail screen work.
  */
 export class OsmChargerAdapter extends MockChargerAdapter {
   async findNear(q: ChargerQuery): Promise<Charger[]> {
+    const saved = await super.findNear(q);
+    const refresh = this.refresh(q);
+    if (saved.length >= ENOUGH_SAVED) return saved;
+    await settleWithin(refresh, MAX_WAIT_MS);
+    return super.findNear(q);
+  }
+
+  /** Fetches the area from OpenStreetMap and saves chargers not seen before. Never throws. */
+  private async refresh(q: ChargerQuery) {
     try {
       const elements = await overpassAmenity(
         'charging_station',
@@ -35,27 +51,25 @@ export class OsmChargerAdapter extends MockChargerAdapter {
         150,
       );
       const demo = await prisma.charger.findMany({
-        where: { NOT: { id: { startsWith: 'osm-' } } },
+        where: {
+          NOT: { id: { startsWith: 'osm-' } },
+          ...boxAround(q, FETCH_RADIUS_KM + 1),
+        },
       });
-      for (const e of elements) {
-        const { id, ...row } = osmChargerRow(e);
-        if (!row.lat || demo.some((d) => haversineKm(d, row) < DUPLICATE_KM)) continue;
-        // Keep crowd-reported status and verification time across refreshes.
-        await prisma.charger.upsert({
-          where: { id },
-          create: { id, ...row },
-          update: {
-            name: row.name,
-            operator: row.operator,
-            powerKw: row.powerKw,
-            connectors: row.connectors,
-          },
-        });
-      }
+      const rows = elements
+        .map(osmChargerRow)
+        .filter((r) => r.lat && !demo.some((d) => haversineKm(d, r) < DUPLICATE_KM));
+      // Insert only new ones (one round trip each way): saved chargers keep crowd reports.
+      const saved = await prisma.charger.findMany({
+        where: { id: { in: rows.map((r) => r.id) } },
+        select: { id: true },
+      });
+      const known = new Set(saved.map((r) => r.id));
+      const fresh = rows.filter((r) => !known.has(r.id));
+      if (fresh.length) await prisma.charger.createMany({ data: fresh });
     } catch (err) {
       console.warn('OpenStreetMap chargers unavailable, using saved ones:', (err as Error).message);
     }
-    return super.findNear(q);
   }
 }
 

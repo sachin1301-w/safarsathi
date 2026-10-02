@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 
-import { TravelLoaderCard } from '@/components/travel-loader';
+import { TravelLoader } from '@/components/travel-loader';
 import { useT } from '@/lib/i18n';
 
 export interface MapMarker {
@@ -82,7 +82,8 @@ var send=function(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMe
 if(!window.L){document.body.innerHTML='<div class="msg">The map needs an internet connection.</div>';send({type:'tiles'});}
 else{
 var map=L.map('map',{zoomControl:false}).setView([${center.lat},${center.lng}],${zoom});
-L.tileLayer('${tiles}',{maxZoom:19,subdomains:'abcd',attribution:'${CARTO_KEY ? '&copy; OpenStreetMap &copy; CARTO' : '&copy; OpenStreetMap'}'}).on('load',function(){send({type:'tiles'})}).addTo(map);
+var tiles=L.tileLayer('${tiles}',{maxZoom:19,subdomains:'abcd',attribution:'${CARTO_KEY ? '&copy; OpenStreetMap &copy; CARTO' : '&copy; OpenStreetMap'}'}).on('load',function(){send({type:'tiles'})}).addTo(map);
+window.setTiles=function(url,bg){tiles.setUrl(url);document.body.style.background=bg;document.getElementById('map').style.background=bg};
 map.on('click',function(){send({type:'map'})});
 var layer=L.layerGroup().addTo(map);
 var BOLT='<svg viewBox="0 0 24 24" width="62%" height="62%"><path fill="#fff" d="M13 2 4 14h7l-1 8 10-12h-7z"/></svg>';
@@ -129,13 +130,21 @@ export function LeafletMap({
   // Covers the map until the first tiles arrive, then fades out.
   const [cover] = useState(() => new Animated.Value(1));
   const [loaded, setLoaded] = useState(false);
-  // The page is built once (per colour scheme); later changes are pushed into it.
+  // The page is built once; later changes (pins, centre, light/dark tiles) are pushed into it.
   const [html] = useState(() => buildHtml(center, zoom, dark));
 
   const state = JSON.stringify({ markers, polylines, user: user ?? null, fit: !!fit });
   useEffect(() => {
     if (ready) ref.current?.injectJavaScript(`window.render(${state});true;`);
   }, [ready, state]);
+
+  // Follow the app's light/dark switch without reloading the map.
+  useEffect(() => {
+    if (!ready) return;
+    ref.current?.injectJavaScript(
+      `window.setTiles('${tileUrl(dark)}','${dark ? '#0B0E0F' : '#E8EEEE'}');true;`,
+    );
+  }, [ready, dark]);
 
   const focusPts = focus?.length ? JSON.stringify(focus.map((p) => [p.lat, p.lng])) : null;
   useEffect(() => {
@@ -182,7 +191,7 @@ export function LeafletMap({
           styles.cover,
           { opacity: cover, backgroundColor: dark ? '#0B0E0F' : '#E8EEEE' },
         ]}>
-        <TravelLoaderCard vehicle="car" label={t('map.loading')} />
+        <TravelLoader vehicles={['car']} label={t('map.loading')} />
       </Animated.View>
     </View>
   );

@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChargerRow } from '@/components/charger-row';
 import { DemoFooter } from '@/components/demo-footer';
 import { LeafletMap } from '@/components/leaflet-map';
-import { TravelLoaderCard } from '@/components/travel-loader';
+import { FullScreenLoader } from '@/components/travel-loader';
 import { Button, Chip, EmptyState, ErrorState, FadeIn, Icon, SkeletonCard } from '@/components/ui';
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -149,9 +149,6 @@ export default function EvScreen() {
             onMarkerPress={setSelectedId}
             onMapPress={() => setSelectedId(null)}
           />
-          {loadedKey !== reqKey && (
-            <TravelLoaderCard vehicle="ev" label={t('ev.finding')} style={styles.mapPill} />
-          )}
           {selected && (
             <View style={styles.sheet}>
               <ChargerRow charger={selected} onPress={() => openDetail(selected.id)} />
@@ -191,6 +188,12 @@ export default function EvScreen() {
           }
         />
       )}
+      <FullScreenLoader
+        visible={loadedKey !== reqKey}
+        vehicles={['ev', 'car']}
+        title={t('ev.finding')}
+        subtitle="Checking live status and connectors near you"
+      />
     </SafeAreaView>
   );
 }
@@ -233,7 +236,6 @@ const styles = StyleSheet.create({
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   legendText: { fontSize: 13, fontWeight: '600' },
   mapWrap: { flex: 1, overflow: 'hidden' },
-  mapPill: { position: 'absolute', top: Spacing.md, alignSelf: 'center' },
   sheet: {
     position: 'absolute',
     left: Spacing.md,

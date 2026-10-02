@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { JourneyCard } from '@/components/journey-card';
-import { TravelLoader } from '@/components/travel-loader';
+import { FullScreenLoader } from '@/components/travel-loader';
 import { Chip, ErrorState, FadeIn, SkeletonCard } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -51,49 +51,58 @@ export default function PlanScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Choose your route' }} />
-      <View>
-        <Text style={[styles.route, { color: theme.text }]}>
-          {result ? `${result.from.name} → ${result.to.name}` : `To ${params.to}`}
-        </Text>
-        {params.arriveBy && (
-          <Text style={{ color: theme.textSecondary }}>
-            Arrive by {formatTime(params.arriveBy)}
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Stack.Screen options={{ title: 'Choose your route' }} />
+        <View>
+          <Text style={[styles.route, { color: theme.text }]}>
+            {result ? `${result.from.name} → ${result.to.name}` : `To ${params.to}`}
           </Text>
-        )}
-      </View>
-      {profile?.hasEv && (
-        <View style={styles.chips}>
-          <Chip
-            label="Public transport"
-            icon="bus"
-            selected={!useEv}
-            onPress={() => setUseEv(false)}
-          />
-          <Chip label="My EV" icon="car-electric" selected={useEv} onPress={() => setUseEv(true)} />
+          {params.arriveBy && (
+            <Text style={{ color: theme.textSecondary }}>
+              Arrive by {formatTime(params.arriveBy)}
+            </Text>
+          )}
         </View>
-      )}
-      {error ? (
-        <ErrorState message={error} onRetry={load} />
-      ) : !result ? (
-        <>
-          <TravelLoader
-            vehicles={['rickshaw', 'bus', 'train', 'plane']}
-            cycleMs={1600}
-            label="Comparing autos, buses, trains and flights…"
-          />
-          <SkeletonCard />
-          <SkeletonCard />
-        </>
-      ) : (
-        result.options.map((it, i) => (
-          <FadeIn key={i} delay={i * 70}>
-            <JourneyCard itinerary={it} onPress={() => open(i)} />
-          </FadeIn>
-        ))
-      )}
-    </ScrollView>
+        {profile?.hasEv && (
+          <View style={styles.chips}>
+            <Chip
+              label="Public transport"
+              icon="bus"
+              selected={!useEv}
+              onPress={() => setUseEv(false)}
+            />
+            <Chip
+              label="My EV"
+              icon="car-electric"
+              selected={useEv}
+              onPress={() => setUseEv(true)}
+            />
+          </View>
+        )}
+        {error ? (
+          <ErrorState message={error} onRetry={load} />
+        ) : !result ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : (
+          result.options.map((it, i) => (
+            <FadeIn key={i} delay={i * 70}>
+              <JourneyCard itinerary={it} onPress={() => open(i)} />
+            </FadeIn>
+          ))
+        )}
+      </ScrollView>
+      <FullScreenLoader
+        visible={!result && !error}
+        vehicles={['rickshaw', 'bus', 'train', 'plane']}
+        title={params.to ? `Finding the best way to ${params.to}` : 'Finding your best routes'}
+        subtitle="Comparing autos, metro, buses, trains and flights"
+      />
+    </View>
   );
 }
 

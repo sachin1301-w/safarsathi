@@ -1,7 +1,7 @@
 import type { Charger as ChargerRow } from '@prisma/client';
 
 import { prisma } from '../lib/db';
-import { haversineKm } from '../lib/geo';
+import { boxAround, haversineKm } from '../lib/geo';
 import type { Charger, ChargerStatus } from '../types';
 import type { ChargerAdapter, ChargerQuery } from './types';
 
@@ -20,10 +20,10 @@ export function toCharger(row: ChargerRow): Charger {
   };
 }
 
-/** Chargers seeded from data/chargers.pune.json into SQLite, with crowd reports. */
+/** Chargers seeded from data/chargers.pune.json into the database, with crowd reports. */
 export class MockChargerAdapter implements ChargerAdapter {
   async findNear(q: ChargerQuery): Promise<Charger[]> {
-    const rows = await prisma.charger.findMany();
+    const rows = await prisma.charger.findMany({ where: boxAround(q, q.radiusKm) });
     return rows
       .map(toCharger)
       .map((c) => ({ ...c, distanceKm: Math.round(haversineKm(q, c) * 10) / 10 }))

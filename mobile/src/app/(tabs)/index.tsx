@@ -1,8 +1,9 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AccountSheet } from '@/components/account-sheet';
 import { AlertBanner } from '@/components/alert-banner';
 import { DemoFooter } from '@/components/demo-footer';
 import { JourneyCard } from '@/components/journey-card';
@@ -12,7 +13,6 @@ import { Button, Card, Chip, FadeIn, Icon, SectionTitle, type IconName } from '@
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAlerts } from '@/lib/alerts';
-import { useAuth } from '@/lib/auth';
 import { useT, type StringKey } from '@/lib/i18n';
 import { useApp } from '@/lib/app-context';
 import type { Trip } from '@/lib/types';
@@ -36,7 +36,7 @@ function greeting(): StringKey {
 export default function HomeScreen() {
   const theme = useTheme();
   const { profile, setLanguage } = useApp();
-  const { logout } = useAuth();
+  const [accountOpen, setAccountOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [status, setStatus] = useState<Status>('checking');
   const [query, setQuery] = useState('');
@@ -97,15 +97,6 @@ export default function HomeScreen() {
   };
   const voice = () => router.navigate({ pathname: '/chat', params: { voice: String(Date.now()) } });
 
-  const account = () =>
-    Alert.alert(profile?.name ?? 'Account', profile?.email ?? undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log out', style: 'destructive', onPress: () => logout() },
-    ]);
-
-  const dot =
-    status === 'connected' ? theme.success : status === 'offline' ? theme.danger : theme.muted;
-
   return (
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -113,7 +104,9 @@ export default function HomeScreen() {
           <View style={[styles.logo, { backgroundColor: theme.accent }]}>
             <Icon name="map-marker-path" size={22} color={theme.onAccent} />
           </View>
-          <Text style={[styles.brand, { color: theme.text }]}>SafarSathi</Text>
+          <Text style={[styles.brand, { color: theme.text }]} numberOfLines={1}>
+            SafarSathi
+          </Text>
           <Pressable
             onPress={() => setPickerOpen(true)}
             accessibilityRole="button"
@@ -128,23 +121,9 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
           <Pressable
-            onPress={recheck}
+            onPress={() => setAccountOpen(true)}
             accessibilityRole="button"
-            accessibilityLabel="Check connection again"
-            style={[styles.status, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <View style={[styles.dot, { backgroundColor: dot }]} />
-            <Text style={[styles.statusText, { color: theme.textSecondary }]}>
-              {status === 'connected'
-                ? t('status.connected')
-                : status === 'offline'
-                  ? t('status.offline')
-                  : t('status.connecting')}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={account}
-            accessibilityRole="button"
-            accessibilityLabel="Account and log out"
+            accessibilityLabel="Account and settings"
             style={[styles.avatar, { backgroundColor: theme.accent }]}>
             <Text style={[styles.avatarText, { color: theme.onAccent }]}>
               {(profile?.name ?? '?').trim().charAt(0).toUpperCase()}
@@ -254,6 +233,11 @@ export default function HomeScreen() {
         )}
         <DemoFooter />
       </ScrollView>
+      <AccountSheet
+        visible={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        onChangeLanguage={() => setPickerOpen(true)}
+      />
       <LanguagePicker
         visible={pickerOpen}
         value={profile?.language ?? 'en-IN'}
@@ -268,8 +252,8 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   content: { padding: Spacing.md, gap: Spacing.lg },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  logo: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  brand: { fontSize: 20, fontWeight: '800', flex: 1 },
+  logo: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  brand: { fontSize: 24, fontWeight: '800', flex: 1, letterSpacing: 0.2 },
   status: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -279,7 +263,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  dot: { width: 8, height: 8, borderRadius: 4 },
   avatar: {
     width: 34,
     height: 34,

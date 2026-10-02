@@ -2,35 +2,16 @@
  * Login state. The session token lives in the phone's secure storage (localStorage on web), is
  * attached to every API call, and is dropped when the server says it's no longer valid.
  */
-import * as SecureStore from 'expo-secure-store';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Platform } from 'react-native';
 
 import { api, setAuthToken, setOnUnauthorized, type AuthResponse } from './api';
+import { getItem, setItem } from './secure-storage';
 
 const TOKEN_KEY = 'safarsathi.token';
 
 const storage = {
-  get: async (): Promise<string | null> => {
-    try {
-      return Platform.OS === 'web'
-        ? (globalThis.localStorage?.getItem(TOKEN_KEY) ?? null)
-        : await SecureStore.getItemAsync(TOKEN_KEY);
-    } catch {
-      return null;
-    }
-  },
-  set: async (token: string | null) => {
-    try {
-      if (Platform.OS === 'web') {
-        if (token) globalThis.localStorage?.setItem(TOKEN_KEY, token);
-        else globalThis.localStorage?.removeItem(TOKEN_KEY);
-      } else if (token) await SecureStore.setItemAsync(TOKEN_KEY, token);
-      else await SecureStore.deleteItemAsync(TOKEN_KEY);
-    } catch {
-      // The session still works for this run; the user just logs in again next time.
-    }
-  },
+  get: () => getItem(TOKEN_KEY),
+  set: (token: string | null) => setItem(TOKEN_KEY, token),
 };
 
 interface AuthState {

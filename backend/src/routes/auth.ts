@@ -15,11 +15,7 @@ import { LANGUAGE_CODES } from '../lib/languages';
 
 export const authRouter = Router();
 
-const email = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .email('Enter a valid email address');
+const email = z.string().trim().toLowerCase().email('Enter a valid email address');
 const password = z.string().min(6, 'Password must be at least 6 characters').max(128);
 
 const signupBody = z.object({
@@ -41,7 +37,9 @@ authRouter.post('/auth/signup', async (req, res) => {
       language: body.language ?? 'en-IN',
     },
   });
-  res.status(201).json({ token: await createSession(user.id), user: { id: user.id, name: user.name } });
+  res
+    .status(201)
+    .json({ token: await createSession(user.id), user: { id: user.id, name: user.name } });
 });
 
 const loginBody = z.object({ email, password: z.string().min(1, 'Enter your password') });

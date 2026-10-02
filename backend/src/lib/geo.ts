@@ -16,6 +16,16 @@ export function haversineKm(a: LatLng, b: LatLng): number {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
 }
 
+/** A lat/lng box around a point, as a Prisma filter: a cheap pre-filter before haversine. */
+export function boxAround(p: LatLng, radiusKm: number) {
+  const dLat = radiusKm / 111;
+  const dLng = radiusKm / (111 * Math.max(0.1, Math.cos(toRad(p.lat))));
+  return {
+    lat: { gte: p.lat - dLat, lte: p.lat + dLat },
+    lng: { gte: p.lng - dLng, lte: p.lng + dLng },
+  };
+}
+
 /** Roads wind; straight-line distance times this factor approximates road distance. */
 export const ROAD_FACTOR = 1.3;
 

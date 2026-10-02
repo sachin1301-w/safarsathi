@@ -11,6 +11,7 @@ import { AlertsProvider } from '@/lib/alerts';
 import { api } from '@/lib/api';
 import { AppProvider } from '@/lib/app-context';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { ThemePreferenceProvider } from '@/lib/theme-preference';
 import { LocationProvider } from '@/lib/location';
 
 export default function RootLayout() {
@@ -28,9 +29,11 @@ export default function RootLayout() {
           card: theme.surface,
         },
       }}>
-      <AuthProvider>
-        <Gate />
-      </AuthProvider>
+      <ThemePreferenceProvider>
+        <AuthProvider>
+          <Gate />
+        </AuthProvider>
+      </ThemePreferenceProvider>
       <StatusBar style="auto" />
     </ThemeProvider>
   );

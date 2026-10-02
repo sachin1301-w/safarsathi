@@ -1,7 +1,7 @@
 import type { ParkingLot as ParkingRow } from '@prisma/client';
 
 import { prisma } from '../lib/db';
-import { haversineKm } from '../lib/geo';
+import { boxAround, haversineKm } from '../lib/geo';
 import type { ParkingLot, ParkingType } from '../types';
 import type { ParkingAdapter } from './types';
 
@@ -28,7 +28,7 @@ const code = (n: number) =>
 /** Parking lots seeded from data/parking.pune.json. Reservations are mock (no payment). */
 export class MockParkingAdapter implements ParkingAdapter {
   async findNear(lat: number, lng: number, radiusKm: number): Promise<ParkingLot[]> {
-    const rows = await prisma.parkingLot.findMany();
+    const rows = await prisma.parkingLot.findMany({ where: boxAround({ lat, lng }, radiusKm) });
     return rows
       .map(toParkingLot)
       .map((p) => ({ ...p, distanceKm: Math.round(haversineKm({ lat, lng }, p) * 10) / 10 }))

@@ -23,7 +23,7 @@ const CONNECTOR_NAMES: [RegExp, string][] = [
 
 /**
  * Real chargers from Open Charge Map (used when OPEN_CHARGE_MAP_KEY is set).
- * Results are upserted into SQLite so crowd reports and charger detail work the same as the mock.
+ * Results are upserted into the database so crowd reports and charger detail work the same as the mock.
  */
 export class OpenChargeMapAdapter extends MockChargerAdapter {
   constructor(private apiKey: string) {

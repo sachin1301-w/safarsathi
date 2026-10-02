@@ -60,7 +60,11 @@ export function AuthScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <FadeIn style={styles.brand}>
-            <TravelLoader vehicles={['bus', 'rickshaw', 'train', 'plane', 'ev']} cycleMs={2000} />
+            <TravelLoader
+              size="lg"
+              vehicles={['bus', 'rickshaw', 'train', 'plane', 'ev']}
+              cycleMs={2000}
+            />
             <Text style={[styles.title, { color: theme.text }]}>SafarSathi</Text>
             <Text style={{ color: theme.textSecondary, fontSize: 15, textAlign: 'center' }}>
               {mode === 'login'

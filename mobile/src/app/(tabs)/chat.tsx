@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatCards } from '@/components/chat-cards';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
-import { TravelLoader } from '@/components/travel-loader';
+import { FullScreenLoader } from '@/components/travel-loader';
 import { Chip, FadeIn, Icon } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -263,9 +263,8 @@ export default function ChatScreen() {
               {m.cards && <ChatCards cards={m.cards} />}
             </FadeIn>
           ))}
-
-          {busy && <Thinking />}
         </ScrollView>
+        <Thinking visible={busy} />
 
         {(hint || voice.error) && (
           <Text style={[styles.hint, { color: theme.textSecondary }]}>{voice.error ?? hint}</Text>
@@ -324,27 +323,25 @@ export default function ChatScreen() {
   );
 }
 
-/** "Typing" bubble while the copilot works; the text changes if it takes a while. */
-function Thinking() {
-  const theme = useTheme();
+/** Full-screen travel scene over the messages while the copilot works. */
+function Thinking({ visible }: { visible: boolean }) {
   const t = useT();
   const [slow, setSlow] = useState(false);
   useEffect(() => {
+    if (!visible) return;
     const timer = setTimeout(() => setSlow(true), 2500);
-    return () => clearTimeout(timer);
-  }, []);
+    return () => {
+      clearTimeout(timer);
+      setSlow(false);
+    };
+  }, [visible]);
   return (
-    <FadeIn
-      style={[
-        styles.bubble,
-        styles.thinking,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-      ]}>
-      <TravelLoader size="sm" width={170} vehicles={['bus', 'train', 'plane']} cycleMs={1500} />
-      <Text style={{ color: theme.textSecondary }}>
-        {slow ? t('chat.checking') : t('chat.planning')}
-      </Text>
-    </FadeIn>
+    <FullScreenLoader
+      visible={visible}
+      vehicles={['bus', 'train', 'plane', 'rickshaw']}
+      title={t('chat.planning')}
+      subtitle={slow ? t('chat.checking') : undefined}
+    />
   );
 }
 
@@ -394,13 +391,6 @@ const styles = StyleSheet.create({
   },
   tag: { fontSize: 11, fontWeight: '600' },
   speaker: { padding: 2 },
-  thinking: {
-    alignItems: 'flex-start',
-    gap: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignSelf: 'flex-start',
-    paddingVertical: 14,
-  },
   hint: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.xs, fontSize: 13 },
   inputBar: {
     flexDirection: 'row',

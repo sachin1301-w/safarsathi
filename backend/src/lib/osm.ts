@@ -188,3 +188,15 @@ export const elementPoint = (e: OsmElement) => ({
   lat: e.lat ?? e.center?.lat ?? 0,
   lng: e.lon ?? e.center?.lon ?? 0,
 });
+
+/**
+ * Waits for `p` at most `ms`; never throws. Lets a request answer from the database while a
+ * slow OpenStreetMap refresh carries on in the background.
+ */
+export const settleWithin = (p: Promise<unknown>, ms: number) =>
+  Promise.race([p.catch(() => undefined), new Promise((r) => setTimeout(r, ms))]);
+
+/** Saved results this many or more: answer at once and refresh in the background. */
+export const ENOUGH_SAVED = 3;
+/** With fewer saved results, wait this long for OpenStreetMap before answering. */
+export const MAX_WAIT_MS = 6000;
