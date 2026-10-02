@@ -1,17 +1,17 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import MapView from '@/components/maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { MapPin } from '@/components/map-pin';
 import { ChargerRow } from '@/components/charger-row';
 import { DemoFooter } from '@/components/demo-footer';
+import { LeafletMap } from '@/components/leaflet-map';
 import { Button, Chip, EmptyState, ErrorState, Icon, SkeletonCard } from '@/components/ui';
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
 import { useT } from '@/lib/i18n';
+import { useLocation } from '@/lib/location';
 import type { Charger, ChargerStatus } from '@/lib/types';
 
 const CONNECTORS = ['All', 'CCS2', 'Type2', 'GBT', 'Bharat AC001', 'CHAdeMO'];
@@ -25,7 +25,9 @@ export default function EvScreen() {
   const theme = useTheme();
   const t = useT();
   const { profile } = useApp();
-  const center = profile?.home ?? DEFAULT_CENTER;
+  const location = useLocation();
+  // Centre on the user when they're inside the demo data's area, else on their home.
+  const center = (location.covered && location.coords) || profile?.home || DEFAULT_CENTER;
 
   const [connector, setConnector] = useState('All');
   const [minKw, setMinKw] = useState<number | undefined>(undefined);
@@ -81,6 +83,7 @@ export default function EvScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.filterBar}
         contentContainerStyle={styles.filters}>
         {CONNECTORS.map((c) => (
           <Chip key={c} label={c} selected={connector === c} onPress={() => setConnector(c)} />
@@ -112,29 +115,22 @@ export default function EvScreen() {
         <ErrorState message={error} onRetry={load} />
       ) : view === 'map' ? (
         <View style={styles.mapWrap}>
-          <MapView
+          <LeafletMap
             style={StyleSheet.absoluteFill}
-            initialRegion={{
-              latitude: center.lat,
-              longitude: center.lng,
-              latitudeDelta: 0.2,
-              longitudeDelta: 0.2,
-            }}
-            onPress={() => setSelectedId(null)}
-            toolbarEnabled={false}>
-            {chargers?.map((c) => (
-              <MapPin
-                key={`${c.id}-${c.status}-${c.id === selectedId}`}
-                lat={c.lat}
-                lng={c.lng}
-                color={StatusColors[c.status]}
-                icon="ev-station"
-                selected={c.id === selectedId}
-                onPress={() => setSelectedId(c.id)}
-                accessibilityLabel={`${c.name}, ${t(`charger.${c.status}`)}`}
-              />
-            ))}
-          </MapView>
+            center={center}
+            zoom={12}
+            user={location.coords}
+            markers={(chargers ?? []).map((c) => ({
+              id: c.id,
+              lat: c.lat,
+              lng: c.lng,
+              color: StatusColors[c.status],
+              glyph: 'ev' as const,
+              selected: c.id === selectedId,
+            }))}
+            onMarkerPress={setSelectedId}
+            onMapPress={() => setSelectedId(null)}
+          />
           {selected && (
             <View style={styles.sheet}>
               <ChargerRow charger={selected} onPress={() => openDetail(selected.id)} />
@@ -201,6 +197,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     alignItems: 'center',
   },
+  // Horizontal ScrollViews grow to fill the column on Android unless told not to.
+  filterBar: { flexGrow: 0 },
   divider: { width: 1, height: 24, marginHorizontal: Spacing.xs },
   legend: {
     flexDirection: 'row',

@@ -98,19 +98,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   input: { flex: 1, fontSize: 16, paddingVertical: Spacing.sm },
+  // Inline (not absolutely positioned) so maps and lists below can't cover the suggestions.
   results: {
-    position: 'absolute',
-    top: TouchTarget + 10,
-    left: 0,
-    right: 0,
+    marginTop: Spacing.xs,
     borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
   },
   result: {
     minHeight: TouchTarget,

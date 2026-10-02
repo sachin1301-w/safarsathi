@@ -5,6 +5,7 @@ import { speech } from '../adapters';
 import { runAgent } from '../ai/agent';
 import { HttpError, validate } from '../lib/http';
 import { LANGUAGE_CODES } from '../lib/languages';
+import { nearestPlace } from './profile';
 
 export const chatRouter = Router();
 
@@ -22,12 +23,19 @@ const chatBody = z.object({
       message: 'conversation must start and end with a user message',
     }),
   language: z.enum(LANGUAGE_CODES).default('en-IN'),
+  location: z
+    .object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) })
+    .optional(),
 });
 
 chatRouter.post('/chat', async (req, res) => {
   const body = validate(chatBody, req.body);
   // Only the last 20 turns: plenty for a trip conversation, keeps requests small.
-  res.json(await runAgent(body.messages.slice(-20), body.language));
+  const location = body.location && {
+    ...body.location,
+    near: nearestPlace(body.location.lat, body.location.lng).place,
+  };
+  res.json(await runAgent(body.messages.slice(-20), body.language, location));
 });
 
 const transcribeBody = z.object({

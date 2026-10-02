@@ -53,6 +53,8 @@ export const api = {
   updateMe: (patch: { language?: string; evBatteryPct?: number }) =>
     request<Profile>('/me', { method: 'PATCH', body: JSON.stringify(patch) }),
   searchPlaces: (q: string) => request<Place[]>(`/places?${qs({ q })}`),
+  nearestPlace: (lat: number, lng: number) =>
+    request<{ place: Place; distanceKm: number }>(`/places/nearest?${qs({ lat, lng })}`),
 
   chargers: (p: {
     lat: number;
@@ -71,7 +73,7 @@ export const api = {
     post<{ reservationId: string; amount: number }>(`/parking/${id}/reserve`, { arriveAt, hours }),
 
   planJourney: (body: {
-    from: string;
+    from: string | { name: string; lat: number; lng: number };
     to: string;
     arriveBy?: string;
     departAt?: string;
@@ -96,8 +98,8 @@ export const api = {
     ),
   dismissAlert: (tripId: string) => post<{ ok: boolean }>(`/alerts/${tripId}/dismiss`, {}),
 
-  chat: (messages: ChatTurn[], language: string) =>
-    post<ChatResponse>('/chat', { messages, language }, 45_000),
+  chat: (messages: ChatTurn[], language: string, location?: { lat: number; lng: number }) =>
+    post<ChatResponse>('/chat', { messages, language, location }, 45_000),
   transcribe: (audioBase64: string, mimeType: string, languageCode?: string) =>
     post<{ text: string; languageCode: string }>(
       '/speech/transcribe',

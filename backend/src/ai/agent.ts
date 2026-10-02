@@ -10,6 +10,7 @@ import { getProfile } from '../routes/profile';
 import type { Card } from '../types';
 import { claudeConfigured, isAccountError, runClaude } from './claudeAgent';
 import { describeCards, runOfflineAgent } from './offline';
+import { withRequestContext, type UserLocation } from './requestContext';
 import { runSarvam, sarvamConfigured } from './sarvamAgent';
 import { contextPrompt, STABLE_SYSTEM_PROMPT } from './systemPrompt';
 
@@ -45,7 +46,7 @@ export interface ProviderReply {
 
 let claudeBlockedUntil = 0;
 
-async function buildContext(language: string): Promise<AgentContext> {
+async function buildContext(language: string, location?: UserLocation): Promise<AgentContext> {
   const profile = await getProfile();
   const memories = await prisma.memory.findMany({
     where: { userId: DEMO_USER_ID },
@@ -57,6 +58,11 @@ async function buildContext(language: string): Promise<AgentContext> {
     contextPrompt: contextPrompt({
       language,
       now: new Date(),
+      location: location && {
+        lat: location.lat,
+        lng: location.lng,
+        near: location.near?.name ?? null,
+      },
       memories: memories.map((m) => m.text),
       profile: {
         name: profile.name,
@@ -86,9 +92,22 @@ function providerChain(): Provider[] {
   return [...ordered, 'offline'];
 }
 
-export async function runAgent(history: ChatTurn[], language: string): Promise<ChatResult> {
+export function runAgent(
+  history: ChatTurn[],
+  language: string,
+  location?: UserLocation,
+): Promise<ChatResult> {
+  // Tools read the user's location from the request context.
+  return withRequestContext({ location }, () => runChain(history, language, location));
+}
+
+async function runChain(
+  history: ChatTurn[],
+  language: string,
+  location?: UserLocation,
+): Promise<ChatResult> {
   const chain = providerChain();
-  const ctx = chain[0] === 'offline' ? null : await buildContext(language);
+  const ctx = chain[0] === 'offline' ? null : await buildContext(language, location);
 
   for (const provider of chain) {
     if (provider === 'offline') {

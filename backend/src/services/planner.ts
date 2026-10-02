@@ -732,7 +732,11 @@ export async function planJourney(req: PlanRequest, deps: PlannerDeps): Promise<
 
   let candidates: Candidate[];
   if (sameCity) {
-    candidates = cityChains(deps, point(from), point(to), from.city, at)
+    // Going to or from an airport or station means luggage: no bike taxis.
+    const luggage = [from.type, to.type].some(
+      (t) => t === 'AIRPORT' || t === 'STATION' || t === 'BUS_STAND',
+    );
+    candidates = cityChains(deps, point(from), point(to), from.city, at, { luggage })
       .filter((c) => c.length)
       .map((segs) => toCandidate(scheduleChain(segs, earliest, arriveBy), arriveBy));
   } else {

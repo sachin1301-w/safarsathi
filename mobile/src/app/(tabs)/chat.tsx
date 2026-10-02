@@ -18,6 +18,7 @@ import { LanguagePicker, nativeName } from '@/components/language-picker';
 import { Chip, Icon } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
+import { useCurrentOrigin } from '@/lib/location';
 import { useApp } from '@/lib/app-context';
 import { useT } from '@/lib/i18n';
 import type { Card } from '@/lib/types';
@@ -47,6 +48,7 @@ export default function ChatScreen() {
   const theme = useTheme();
   const t = useT();
   const { profile, setLanguage } = useApp();
+  const origin = useCurrentOrigin();
   const params = useLocalSearchParams<{
     q?: string;
     n?: string;
@@ -88,6 +90,8 @@ export default function ChatScreen() {
         const res = await api.chat(
           history.map((m) => ({ role: m.role, content: m.content ?? m.text })),
           language,
+          // Lets the copilot plan from where the user is when they don't name a start.
+          origin ? { lat: origin.lat, lng: origin.lng } : undefined,
         );
         const reply: Message = {
           id: nextId++,
@@ -108,7 +112,7 @@ export default function ChatScreen() {
         setBusy(false);
       }
     },
-    [busy, messages, language, readAloud],
+    [busy, messages, language, origin, readAloud],
   );
 
   const voice = useVoiceInput(

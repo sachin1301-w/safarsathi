@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
-import MapView from '@/components/maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DemoFooter } from '@/components/demo-footer';
-import { MapPin } from '@/components/map-pin';
+import { LeafletMap } from '@/components/leaflet-map';
 import { PlaceSearch } from '@/components/place-search';
 import {
   Badge,
@@ -22,6 +21,7 @@ import { api } from '@/lib/api';
 import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
 import { formatInr, formatKm, formatTime } from '@/lib/format';
 import { useT, type StringKey } from '@/lib/i18n';
+import { useLocation } from '@/lib/location';
 import type { ParkingLot, Place } from '@/lib/types';
 
 const ARRIVAL_OPTIONS: { label: StringKey; offsetMins: number }[] = [
@@ -50,7 +50,7 @@ export default function ParkingScreen() {
   const theme = useTheme();
   const t = useT();
   const { profile } = useApp();
-  const mapRef = useRef<MapView>(null);
+  const location = useLocation();
 
   const [destination, setDestination] = useState<Place | null>(null);
   const [offsetMins, setOffsetMins] = useState(0);
@@ -59,7 +59,10 @@ export default function ParkingScreen() {
   const [selected, setSelected] = useState<ParkingLot | null>(null);
   const [reserving, setReserving] = useState<{ lot: ParkingLot; arriveAt: Date } | null>(null);
 
-  const center = destination ?? profile?.home ?? DEFAULT_CENTER;
+  // A searched destination, else where the user is (inside the demo area), else home.
+  const here = location.covered ? location.coords : null;
+  const center = destination ?? here ?? profile?.home ?? DEFAULT_CENTER;
+  const centerName = destination?.name ?? (here ? 'you' : (profile?.home?.name ?? 'Kothrud'));
 
   const load = useCallback(() => {
     api
@@ -78,12 +81,6 @@ export default function ParkingScreen() {
 
   useEffect(load, [load]);
 
-  useEffect(() => {
-    mapRef.current?.animateToRegion(
-      { latitude: center.lat, longitude: center.lng, latitudeDelta: 0.05, longitudeDelta: 0.05 },
-      400,
-    );
-  }, [center.lat, center.lng]);
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -99,10 +96,20 @@ export default function ParkingScreen() {
           onSelect={setDestination}
           placeholder={t('parking.search')}
         />
+        <View style={styles.nearRow}>
+          <Icon name="map-marker-radius" size={16} color={theme.accent} />
+          <Text style={{ color: theme.textSecondary, flex: 1 }} numberOfLines={1}>
+            Parking within 3 km of {centerName}
+          </Text>
+          {destination && here && (
+            <Chip label="Near me" icon="crosshairs-gps" onPress={() => setDestination(null)} />
+          )}
+        </View>
       </View>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.chipBar}
         contentContainerStyle={styles.chips}>
         {ARRIVAL_OPTIONS.map((o) => (
           <Chip
@@ -116,30 +123,23 @@ export default function ParkingScreen() {
       </ScrollView>
 
       <View style={styles.mapWrap}>
-        <MapView
-          ref={mapRef}
+        <LeafletMap
           style={StyleSheet.absoluteFill}
-          initialRegion={{
-            latitude: center.lat,
-            longitude: center.lng,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}
-          toolbarEnabled={false}>
-          {lots?.map((lot) => (
-            <MapPin
-              key={`${lot.id}-${lot.predictedFreeSpots}-${selected?.id === lot.id}`}
-              lat={lot.lat}
-              lng={lot.lng}
-              color={availabilityColor(lot)}
-              icon="parking"
-              label={`${lot.predictedFreeSpots}`}
-              selected={selected?.id === lot.id}
-              onPress={() => setSelected(lot)}
-              accessibilityLabel={`${lot.name}, ${lot.predictedFreeSpots} free spots`}
-            />
-          ))}
-        </MapView>
+          center={center}
+          zoom={14}
+          user={location.coords}
+          markers={(lots ?? []).map((lot) => ({
+            id: lot.id,
+            lat: lot.lat,
+            lng: lot.lng,
+            color: availabilityColor(lot),
+            glyph: 'parking' as const,
+            label: `${lot.predictedFreeSpots}`,
+            selected: lot.id === selected?.id,
+          }))}
+          onMarkerPress={(id) => setSelected(lots?.find((l) => l.id === id) ?? null)}
+          onMapPress={() => setSelected(null)}
+        />
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
@@ -334,6 +334,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800' },
   subtitle: { fontSize: 14 },
   searchWrap: { paddingHorizontal: Spacing.md, paddingTop: Spacing.md, zIndex: 10 },
+  // Horizontal ScrollViews grow to fill the column on Android unless told not to.
+  chipBar: { flexGrow: 0 },
+  nearRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: Spacing.sm },
   chips: { gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md },
   mapWrap: {
     height: 220,

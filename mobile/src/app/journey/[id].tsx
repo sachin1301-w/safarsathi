@@ -1,11 +1,11 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker, Polyline } from '@/components/maps';
 
 import { AlertBanner } from '@/components/alert-banner';
 import { DemoFooter } from '@/components/demo-footer';
 import { OptionBadges } from '@/components/journey-card';
+import { LeafletMap } from '@/components/leaflet-map';
 import { LegRow } from '@/components/leg-row';
 import { SimulateDelaySheet } from '@/components/simulate-delay';
 import { TripStatusChip } from '@/components/trip-status';
@@ -22,7 +22,6 @@ export default function JourneyDetailScreen() {
   const theme = useTheme();
   const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const mapRef = useRef<MapView>(null);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [booking, setBooking] = useState<'all' | string | null>(null);
@@ -80,17 +79,8 @@ export default function JourneyDetailScreen() {
 
   const first = trip.legs[0];
   const last = trip.legs[trip.legs.length - 1];
-  const coords = trip.legs.flatMap((l) => [
-    { latitude: l.from.lat, longitude: l.from.lng },
-    { latitude: l.to.lat, longitude: l.to.lng },
-  ]);
   const unbooked = trip.legs.filter((l) => BOOKABLE_MODES.includes(l.mode) && !l.bookingRef);
   const anyBookable = trip.legs.some((l) => BOOKABLE_MODES.includes(l.mode));
-  const fitMap = () =>
-    mapRef.current?.fitToCoordinates(coords, {
-      edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
-      animated: false,
-    });
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -122,34 +112,24 @@ export default function JourneyDetailScreen() {
       )}
 
       <View style={[styles.mapWrap, { borderColor: theme.border }]}>
-        <MapView
-          ref={mapRef}
+        <LeafletMap
           style={StyleSheet.absoluteFill}
-          onMapReady={fitMap}
-          toolbarEnabled={false}>
-          {trip.legs.map((l) => (
-            <Polyline
-              key={l.id}
-              coordinates={[
-                { latitude: l.from.lat, longitude: l.from.lng },
-                { latitude: l.to.lat, longitude: l.to.lng },
-              ]}
-              strokeColor={MODE_INFO[l.mode].color}
-              strokeWidth={5}
-              lineDashPattern={l.mode === 'WALK' ? [6, 6] : undefined}
-              geodesic={l.mode === 'FLIGHT'}
-            />
-          ))}
-          <Marker
-            coordinate={{ latitude: first.from.lat, longitude: first.from.lng }}
-            title={first.from.name}
-            pinColor="green"
-          />
-          <Marker
-            coordinate={{ latitude: last.to.lat, longitude: last.to.lng }}
-            title={last.to.name}
-          />
-        </MapView>
+          center={first.from}
+          fit
+          polylines={trip.legs.map((l) => ({
+            id: l.id,
+            coords: [
+              [l.from.lat, l.from.lng],
+              [l.to.lat, l.to.lng],
+            ],
+            color: MODE_INFO[l.mode].color,
+            dashed: l.mode === 'WALK',
+          }))}
+          markers={[
+            { id: 'start', lat: first.from.lat, lng: first.from.lng, color: '#16A34A', glyph: 'start' },
+            { id: 'end', lat: last.to.lat, lng: last.to.lng, color: '#DC2626', glyph: 'end' },
+          ]}
+        />
       </View>
 
       <Card>

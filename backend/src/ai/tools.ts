@@ -10,8 +10,9 @@ import { PlanError } from '../services/planner';
 import { bookAll, BookingError, bookLeg } from '../services/bookings';
 import { ReplanError, replanTrip } from '../services/replanner';
 import { getTrip, planForUser, saveItinerary } from '../services/trips';
-import type { Card, Itinerary, Place } from '../types';
+import type { Card, Itinerary, Place, Point } from '../types';
 import { getOption, rememberOption } from './planCache';
+import { currentLocation, isCurrentLocation } from './requestContext';
 
 export interface ToolOutput {
   /** What Claude sees: compact JSON, no coordinates it doesn't need. */
@@ -42,7 +43,28 @@ function parseOptionalTime(s: string | undefined, field: string): Date | undefin
   return d;
 }
 
+/** "current location" becomes the user's live position when the app sent one. */
+function resolveOrigin(from: string): string | Point {
+  const here = currentLocation();
+  return isCurrentLocation(from) && here
+    ? { name: 'Current location', lat: here.lat, lng: here.lng }
+    : from;
+}
+
 async function resolveNear(near: string | undefined): Promise<Place> {
+  const here = currentLocation();
+  if (here && (!near || isCurrentLocation(near))) {
+    const name = here.near ? `your location (near ${here.near.name})` : 'your location';
+    return {
+      id: 'current',
+      name,
+      city: here.near?.city ?? 'Unknown',
+      lat: here.lat,
+      lng: here.lng,
+      type: 'AREA',
+      aliases: [],
+    };
+  }
   const user = await prisma.user.findUniqueOrThrow({ where: { id: DEMO_USER_ID } });
   const q = (near ?? 'home').trim().toLowerCase();
   const savedId = q === 'home' ? user.homePlaceId : q === 'office' ? user.officePlaceId : null;
@@ -86,7 +108,7 @@ export const TOOLS = [
       from: z
         .string()
         .describe(
-          'Start place name, or "home"/"office". Default to "home" if the user did not say.',
+          'Start place name, "home"/"office", or "current location". If the user did not say, use "current location" when their location is known (see context), else "home".',
         ),
       to: z.string().describe('Destination place name, or "home"/"office"'),
       arriveBy: isoTime.optional().describe('Latest arrival time, if the user has a deadline'),
@@ -102,8 +124,8 @@ export const TOOLS = [
     }),
     async run(input) {
       const result = await planForUser({
-        from: input.from,
-        to: input.to,
+        from: resolveOrigin(input.from),
+        to: resolveOrigin(input.to),
         arriveBy: parseOptionalTime(input.arriveBy, 'arriveBy'),
         departAt: parseOptionalTime(input.departAt, 'departAt'),
         preference: input.preference,
@@ -126,7 +148,12 @@ export const TOOLS = [
     description:
       'Find public EV chargers near a place, with live status (WORKING, BUSY, BROKEN), power, connectors and price.',
     schema: z.object({
-      near: z.string().optional().describe('Place name, or "home"/"office". Defaults to home.'),
+      near: z
+        .string()
+        .optional()
+        .describe(
+          'Place name, "home"/"office" or "current location". Defaults to where the user is now, else home.',
+        ),
       radiusKm: z.number().positive().max(100).optional().describe('Search radius, default 5 km'),
       connector: z.string().optional().describe('CCS2, Type2, GBT, Bharat AC001 or CHAdeMO'),
       minKw: z.number().nonnegative().optional().describe('Minimum charging power in kW'),
@@ -165,7 +192,12 @@ export const TOOLS = [
     description:
       'Find parking lots near a place with predicted free spots at the arrival time, rate per hour and EV charging.',
     schema: z.object({
-      near: z.string().optional().describe('Place name, or "home"/"office". Defaults to home.'),
+      near: z
+        .string()
+        .optional()
+        .describe(
+          'Place name, "home"/"office" or "current location". Defaults to where the user is now, else home.',
+        ),
       arriveAt: isoTime.optional().describe('When the user will arrive; defaults to now'),
     }),
     async run(input) {

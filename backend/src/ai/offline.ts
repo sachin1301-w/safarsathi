@@ -7,6 +7,7 @@ import { geocode } from '../adapters';
 import { atIst, formatIst } from '../lib/time';
 import type { Card, Itinerary, Place } from '../types';
 import type { ChatResult, ChatTurn } from './agent';
+import { currentLocation } from './requestContext';
 import { runTool } from './tools';
 
 type Lang = 'en' | 'hi' | 'mr';
@@ -242,7 +243,12 @@ export async function runOfflineAgent(history: ChatTurn[], language: string): Pr
         : undefined;
   const toPlace = mentioned.filter((m) => m !== fromPlace).at(-1) ?? mentioned.at(-1)!;
   const out = await runTool('plan_journey', {
-    from: fromPlace && fromPlace !== toPlace ? fromPlace.place.name : 'home',
+    from:
+      fromPlace && fromPlace !== toPlace
+        ? fromPlace.place.name
+        : currentLocation()
+          ? 'current location'
+          : 'home',
     to: toPlace.place.name,
     arriveBy: deadline(text),
     useEv: wantsEvTrip || undefined,

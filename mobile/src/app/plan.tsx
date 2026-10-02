@@ -8,6 +8,7 @@ import { Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-context';
 import { formatTime } from '@/lib/format';
+import { useCurrentOrigin } from '@/lib/location';
 import { openItinerary } from '@/lib/open-itinerary';
 import type { PlanResult } from '@/lib/types';
 
@@ -16,7 +17,9 @@ export default function PlanScreen() {
   const theme = useTheme();
   const { profile } = useApp();
   const params = useLocalSearchParams<{ to: string; from?: string; arriveBy?: string }>();
-  const from = params.from || 'home';
+  const origin = useCurrentOrigin();
+  // An explicit start wins; otherwise where the user is (inside the demo area), else home.
+  const from = params.from || origin || 'home';
   const [useEv, setUseEv] = useState(false);
   const [result, setResult] = useState<PlanResult | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -44,7 +44,13 @@
           "microphonePermission": "SafarSathi uses the microphone so you can speak your trip."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SafarSathi uses your location to plan trips from where you are and show chargers and parking nearby."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
