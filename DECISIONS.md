@@ -49,3 +49,17 @@ These extend SPEC.md and take precedence over it where they conflict.
 - **Reserving a lot predicted to be full returns 409.**
 - **Maps:** `react-native-maps` (works in Expo Go, no key needed). Pins are custom round views coloured by status. The EV map loads chargers within 150 km so the highway chargers show up.
 - **No GPS:** maps centre on the user's saved home (Kothrud) or the searched destination, so the demo needs no location permission.
+
+## Phase 4
+
+- **Honest option labels.** Each itinerary carries `badges`: the metrics it truly wins among all candidates. One route that is fastest *and* cheapest is shown once with both badges, and the remaining slots are filled with distinct runner-ups marked "Other option". `label` is kept for spec compatibility (the primary badge).
+- **Fastest** = shortest door to door when there's a deadline that can be met, otherwise the earliest arrival. On-time options always come first. Same-day options are preferred over arriving 8+ hours early.
+- **Scheduled services repeat daily.** The planner looks at yesterday, today and tomorrow's departures around the deadline (overnight trains), and never schedules a first leg before "now".
+- **Buffers:** be at the airport 60 min before a flight, the station 20 min before a train, the bus stand 15 min before an intercity bus. 15 min to exit after a flight.
+- **No bike taxis to or from airports and stations** (luggage). Pickup waits: auto 4 min, bike taxi 4 min, cab 6 min. Metro wait = half the headway, 5 min per line change.
+- **Road modes halve speed in peak hours. Cars over 40 km use 50 km/h** highway speed. Bike taxi speed (not in spec) = 25 km/h, CO₂ 0.04 kg/km.
+- **Fares:** auto ₹26 for the first 1.5 km + ₹17/km, bike taxi ₹20 + ₹7/km, cab ₹60 + ₹18/km (outstation ₹300 + ₹13/km), metro by distance slab, PMPML ₹2/km (₹10–35). EV drive ₹1.2/km (home electricity) plus the charging cost at public chargers.
+- **EV stops:** chargers within 15 km of the straight line, WORKING preferred (BUSY adds 20 min), charge to 80%, keep 10% of range in reserve, max 4 stops.
+- **Tapping an itinerary saves it as a PLANNED trip** (`POST /api/trips`) so the Journey detail screen, bookings and replanning all work on a trip id.
+- **Route choice screen (`/plan`)** shows the three options for the Home quick chips and search box. Phase 5 routes free-text queries through the chatbot instead.
+- **`npm run plan -- <from> <to> [HH:MM] [--ev]`** prints planner output for quick checks.

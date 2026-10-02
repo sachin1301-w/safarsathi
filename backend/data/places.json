@@ -507,8 +507,8 @@
     "id": "igi-t3",
     "name": "IGI Airport T3",
     "city": "Delhi",
-    "lat": 28.5562,
-    "lng": 77.1,
+    "lat": 28.555,
+    "lng": 77.0866,
     "type": "AIRPORT",
     "aliases": [
       "igi t3",

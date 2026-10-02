@@ -1,4 +1,15 @@
-import type { Charger, ChargerReport, ChargerStatus, ParkingLot, Place, Profile } from './types';
+import type {
+  Charger,
+  ChargerReport,
+  ChargerStatus,
+  Itinerary,
+  OptionLabel,
+  ParkingLot,
+  Place,
+  PlanResult,
+  Profile,
+  Trip,
+} from './types';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -56,4 +67,15 @@ export const api = {
     request<ParkingLot[]>(`/parking?${qs(p)}`),
   reserveParking: (id: string, arriveAt: string, hours: number) =>
     post<{ reservationId: string; amount: number }>(`/parking/${id}/reserve`, { arriveAt, hours }),
+
+  planJourney: (body: {
+    from: string;
+    to: string;
+    arriveBy?: string;
+    departAt?: string;
+    preference?: OptionLabel;
+    useEv?: boolean;
+  }) => post<PlanResult>('/journeys/plan', body, 20_000),
+  saveTrip: (itinerary: Itinerary) => post<Trip>('/trips', itinerary),
+  trip: (id: string) => request<Trip>(`/trips/${id}`),
 };

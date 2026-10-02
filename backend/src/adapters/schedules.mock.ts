@@ -42,7 +42,7 @@ export class MockScheduleAdapter implements ScheduleAdapter {
       return {
         mode: 'TRAIN',
         serviceNo: t.serviceNo,
-        name: `${t.serviceNo} ${t.name}`,
+        name: t.name,
         provider: 'IRCTC (mock)',
         fromPlaceId: t.from,
         toPlaceId: t.to,

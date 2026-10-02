@@ -155,7 +155,7 @@ const places = [
     'terminal 1',
     'delhi airport t1',
   ]),
-  P('igi-t3', 'IGI Airport T3', 'Delhi', 28.5562, 77.1, 'AIRPORT', [
+  P('igi-t3', 'IGI Airport T3', 'Delhi', 28.555, 77.0866, 'AIRPORT', [
     'igi t3',
     'igi airport',
     'delhi airport',
@@ -424,7 +424,7 @@ const transit = {
           name: 'Airport Express',
           color: '#E96F1E',
           stations: [
-            S('igi-t3-metro', 'IGI Airport T3', 28.5562, 77.087),
+            S('igi-t3-metro', 'IGI Airport T3', 28.5553, 77.087),
             S('aerocity-metro', 'Delhi Aerocity', 28.5488, 77.1205),
             S('dhaula-kuan', 'Dhaula Kuan', 28.5918, 77.1615),
             S('shivaji-stadium', 'Shivaji Stadium', 28.629, 77.2112),

@@ -30,6 +30,8 @@ export default function RootLayout() {
           }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="charger/[id]" options={{ title: 'Charger' }} />
+          <Stack.Screen name="plan" options={{ title: 'Choose your route' }} />
+          <Stack.Screen name="journey/[id]" options={{ title: 'Your journey' }} />
         </Stack>
       </AppProvider>
       <StatusBar style="auto" />

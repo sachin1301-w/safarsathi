@@ -41,6 +41,8 @@ export type OptionLabel = 'FASTEST' | 'CHEAPEST' | 'GREENEST';
 
 export interface Itinerary {
   label: OptionLabel;
+  /** Metrics this option genuinely wins; empty for an alternative. */
+  badges: OptionLabel[];
   title: string;
   legs: Leg[];
   totalMins: number;
@@ -136,4 +138,10 @@ export interface Profile {
   office: Place | null;
   services?: { chargers: string; speech: string; memory: string };
   languages?: Language[];
+}
+
+export interface PlanResult {
+  from: Place;
+  to: Place;
+  options: Itinerary[];
 }

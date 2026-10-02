@@ -43,6 +43,8 @@ export type OptionLabel = 'FASTEST' | 'CHEAPEST' | 'GREENEST';
 
 export interface Itinerary {
   label: OptionLabel;
+  /** Metrics this option is genuinely best at among all candidates; empty for an alternative. */
+  badges: OptionLabel[];
   title: string; // "Kothrud → Connaught Place"
   legs: Leg[];
   totalMins: number;
