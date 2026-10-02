@@ -1,0 +1,9 @@
+// Models are added in Phase 2 (Data and adapters).
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
