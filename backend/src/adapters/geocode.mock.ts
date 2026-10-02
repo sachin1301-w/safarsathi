@@ -3,6 +3,8 @@ import type { Place } from '../types';
 import type { GeocodeAdapter } from './types';
 
 const HOME_CITY = 'Pune';
+/** Scores from here up mean the query names the place, not just shares a word with it. */
+const STRONG_MATCH = 300;
 
 const normalize = (s: string) =>
   s
@@ -24,6 +26,22 @@ export class MockGeocodeAdapter implements GeocodeAdapter {
   }
 
   search(query: string, limit = 5): Place[] {
+    return this.scored(query)
+      .slice(0, limit)
+      .map((s) => s.place);
+  }
+
+  /**
+   * Best match, or null. `strict` only accepts a name or alias match, not a shared word, so
+   * "Jaipur Airport" doesn't resolve to Pune Airport and can be looked up online instead.
+   */
+  resolve(query: string, opts: { strict?: boolean } = {}): Place | null {
+    const top = this.scored(query)[0];
+    if (!top || (opts.strict && top.score < STRONG_MATCH)) return null;
+    return top.place;
+  }
+
+  private scored(query: string) {
     const q = normalize(query);
     if (!q) return [];
     const qTokens = new Set(q.split(' '));
@@ -44,14 +62,6 @@ export class MockGeocodeAdapter implements GeocodeAdapter {
       if (score > 0 && place.city === HOME_CITY) score += 5;
       return { place, score };
     });
-    return scored
-      .filter((s) => s.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map((s) => s.place);
-  }
-
-  resolve(query: string): Place | null {
-    return this.search(query, 1)[0] ?? null;
+    return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score);
   }
 }

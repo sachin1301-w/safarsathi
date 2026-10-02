@@ -50,7 +50,8 @@
         {
           "locationWhenInUsePermission": "SafarSathi uses your location to plan trips from where you are and show chargers and parking nearby."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

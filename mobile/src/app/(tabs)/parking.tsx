@@ -21,7 +21,7 @@ import {
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
-import { formatInr, formatKm, formatTime } from '@/lib/format';
+import { formatInr, formatKm, formatRate, formatTime } from '@/lib/format';
 import { useT, type StringKey } from '@/lib/i18n';
 import { useLocation } from '@/lib/location';
 import type { ParkingLot, Place } from '@/lib/types';
@@ -66,7 +66,7 @@ export default function ParkingScreen() {
   const [selected, setSelected] = useState<ParkingLot | null>(null);
   const [reserving, setReserving] = useState<{ lot: ParkingLot; arriveAt: Date } | null>(null);
 
-  // A searched destination, else where the user is (inside the demo area), else home.
+  // A searched destination, else where the user is (in India), else home.
   const here = location.covered ? location.coords : null;
   const center = destination ?? here ?? profile?.home ?? DEFAULT_CENTER;
   const centerName = destination?.name ?? (here ? 'you' : (profile?.home?.name ?? 'Kothrud'));
@@ -237,7 +237,8 @@ function LotCard({
           </Text>
           <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
             {lot.distanceKm !== undefined ? `${formatKm(lot.distanceKm)} · ` : ''}
-            {formatInr(lot.ratePerHour)}/hr{lot.hasEvCharging ? ' · EV charging' : ''}
+            {formatRate(lot.ratePerHour)}
+            {lot.hasEvCharging ? ' · EV charging' : ''}
           </Text>
         </View>
         <Badge label={`${free} ${t('parking.free')}`} color={color} />
@@ -252,7 +253,9 @@ function LotCard({
       </View>
       <View style={styles.lotBottom}>
         <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
-          {free} of {lot.totalSpots} spots predicted free
+          {lot.estimated ? '~' : ''}
+          {free} of {lot.estimated ? '~' : ''}
+          {lot.totalSpots} spots predicted free{lot.estimated ? ' (estimate)' : ''}
         </Text>
         <Button
           label={t('parking.reserve')}
@@ -339,7 +342,9 @@ function ReserveSheet({
               </View>
               {lot && (
                 <Text style={[styles.total, { color: theme.text }]}>
-                  Total {formatInr(lot.ratePerHour * hours)}
+                  {lot.ratePerHour < 0
+                    ? 'Pay at the lot (rate not listed)'
+                    : `Total ${formatInr(lot.ratePerHour * hours)}`}
                 </Text>
               )}
               {error && <Text style={{ color: theme.danger }}>{error}</Text>}

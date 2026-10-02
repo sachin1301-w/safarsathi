@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Badge, Card, Icon } from '@/components/ui';
 import { Spacing, StatusColors, useTheme } from '@/constants/theme';
-import { formatKm } from '@/lib/format';
+import { formatKm, formatKw, formatPerKwh } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import type { Charger } from '@/lib/types';
 
@@ -22,7 +22,13 @@ export function ChargerRow({ charger, onPress }: { charger: Charger; onPress: ()
             {charger.name}
           </Text>
           <Text style={[styles.rowMeta, { color: theme.textSecondary }]} numberOfLines={1}>
-            {charger.powerKw} kW · {charger.connectors.join(', ')} · ₹{charger.pricePerKwh}/kWh
+            {[
+              formatKw(charger.powerKw),
+              charger.connectors.join(', '),
+              formatPerKwh(charger.pricePerKwh),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </Text>
         </View>
         <View style={styles.rowRight}>

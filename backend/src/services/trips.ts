@@ -1,11 +1,12 @@
 import type { Trip as TripRow } from '@prisma/client';
 
-import { chargers, geocode, schedules, transit } from '../adapters';
-import { DEMO_USER_ID, prisma } from '../lib/db';
+import { chargers, geocode, lookupPlace, schedules, transit } from '../adapters';
+import { currentUserId } from '../lib/auth';
+import { prisma } from '../lib/db';
 import type { Itinerary, Leg, OptionLabel, Trip } from '../types';
 import { planJourney, type PlannerDeps, type PlanRequest } from './planner';
 
-export const plannerDeps: PlannerDeps = { geocode, transit, schedules, chargers };
+export const plannerDeps: PlannerDeps = { geocode, transit, schedules, chargers, lookupPlace };
 
 export function toTrip(row: TripRow): Trip {
   return {
@@ -25,7 +26,7 @@ export function toTrip(row: TripRow): Trip {
 
 /** The demo user's EV and saved places, as planner input. */
 export async function userPlanningContext(): Promise<Pick<PlanRequest, 'ev' | 'savedPlaces'>> {
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: DEMO_USER_ID } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: currentUserId() } });
   const savedPlaces: Record<string, string> = {};
   if (user.homePlaceId) savedPlaces.home = user.homePlaceId;
   if (user.officePlaceId) savedPlaces.office = user.officePlaceId;
@@ -51,13 +52,13 @@ export async function planForUser(req: Omit<PlanRequest, 'ev' | 'savedPlaces'>) 
 export async function saveItinerary(it: Itinerary): Promise<Trip> {
   if (it.replacesTripId) {
     await prisma.trip.updateMany({
-      where: { id: it.replacesTripId, userId: DEMO_USER_ID },
+      where: { id: it.replacesTripId, userId: currentUserId() },
       data: { status: 'REPLACED', alertMessage: null },
     });
   }
   const row = await prisma.trip.create({
     data: {
-      userId: DEMO_USER_ID,
+      userId: currentUserId(),
       title: it.title,
       status: 'PLANNED',
       option: it.label,
@@ -72,6 +73,6 @@ export async function saveItinerary(it: Itinerary): Promise<Trip> {
 }
 
 export async function getTrip(id: string): Promise<Trip | null> {
-  const row = await prisma.trip.findFirst({ where: { id, userId: DEMO_USER_ID } });
+  const row = await prisma.trip.findFirst({ where: { id, userId: currentUserId() } });
   return row ? toTrip(row) : null;
 }

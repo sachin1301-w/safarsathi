@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { HttpError, validate } from '../lib/http';
+import { currentUserId } from '../lib/auth';
 import { addClient } from '../lib/sse';
 import { PlanError } from '../services/planner';
 import {
@@ -61,7 +62,7 @@ alertsRouter.post('/journeys/:tripId/replan', async (req, res) => {
 });
 
 alertsRouter.get('/alerts/stream', (_req, res) => {
-  addClient(res);
+  addClient(res, currentUserId());
 });
 
 alertsRouter.get('/alerts/active', async (_req, res) => {

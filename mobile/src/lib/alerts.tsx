@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
-import { api } from './api';
+import { api, authHeaders } from './api';
 
 export interface TripAlert {
   tripId: string;
@@ -34,6 +34,7 @@ function subscribe(url: string, onEvent: (event: string, data: string) => void):
     xhr = new XMLHttpRequest();
     xhr.open('GET', url);
     xhr.setRequestHeader('Accept', 'text/event-stream');
+    for (const [k, v] of Object.entries(authHeaders())) xhr.setRequestHeader(k, v);
     xhr.onreadystatechange = () => {
       if (!xhr) return;
       if (xhr.readyState === 3 || xhr.readyState === 4) {

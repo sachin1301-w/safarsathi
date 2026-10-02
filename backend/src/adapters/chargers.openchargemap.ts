@@ -83,7 +83,7 @@ export class OpenChargeMapAdapter extends MockChargerAdapter {
       powerKw: Math.max(0, ...connections.map((c) => c.PowerKW ?? 0)),
       connectors: JSON.stringify([...connectors]),
       status: operational === true ? 'WORKING' : operational === false ? 'BROKEN' : 'UNKNOWN',
-      pricePerKwh: Number.isFinite(price) ? price : 18,
+      pricePerKwh: Number.isFinite(price) ? price : 0, // 0 = unknown
       lastVerified: poi.DateLastVerified ? new Date(poi.DateLastVerified) : new Date(0),
     };
   }

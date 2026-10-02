@@ -28,12 +28,24 @@ function apiUrl() {
 
 const API_URL = apiUrl();
 
+// The logged-in session. Set by AuthProvider; a 401 from the server signs the user out.
+let authToken: string | null = null;
+let onUnauthorized: (() => void) | null = null;
+export function setAuthToken(token: string | null) {
+  authToken = token;
+}
+export function setOnUnauthorized(fn: (() => void) | null) {
+  onUnauthorized = fn;
+}
+export const authHeaders = (): Record<string, string> =>
+  authToken ? { Authorization: `Bearer ${authToken}` } : {};
+
 async function request<T>(path: string, init?: RequestInit & { timeoutMs?: number }): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}/api${path}`, {
       ...init,
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      headers: { 'Content-Type': 'application/json', ...authHeaders(), ...init?.headers },
       signal: AbortSignal.timeout(init?.timeoutMs ?? 15_000),
     });
   } catch (e) {
@@ -45,9 +57,15 @@ async function request<T>(path: string, init?: RequestInit & { timeoutMs?: numbe
   }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
+    if (res.status === 401 && authToken) onUnauthorized?.();
     throw new Error(body.error ?? `Request failed (${res.status})`);
   }
   return body as T;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: { id: string; name: string };
 }
 
 const qs = (params: Record<string, string | number | undefined>) =>
@@ -62,7 +80,12 @@ const post = <T>(path: string, body: unknown, timeoutMs?: number) =>
 
 export const api = {
   baseUrl: API_URL,
-  health: () => request<{ ok: boolean }>('/health'),
+  health: () => request<{ ok: boolean }>('/health', { timeoutMs: 4000 }),
+
+  signup: (body: { name: string; email: string; password: string; language?: string }) =>
+    post<AuthResponse>('/auth/signup', body),
+  login: (body: { email: string; password: string }) => post<AuthResponse>('/auth/login', body),
+  logout: () => post<{ ok: boolean }>('/auth/logout', {}),
 
   me: () => request<Profile>('/me'),
   updateMe: (patch: { language?: string; evBatteryPct?: number }) =>

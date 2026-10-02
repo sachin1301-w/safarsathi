@@ -31,9 +31,11 @@ const chatBody = z.object({
 chatRouter.post('/chat', async (req, res) => {
   const body = validate(chatBody, req.body);
   // Only the last 20 turns: plenty for a trip conversation, keeps requests small.
+  // "Near X" only when a known place is actually close; elsewhere the coordinates speak for it.
+  const nearest = body.location && nearestPlace(body.location.lat, body.location.lng);
   const location = body.location && {
     ...body.location,
-    near: nearestPlace(body.location.lat, body.location.lng).place,
+    near: nearest && nearest.distanceKm <= 40 ? nearest.place : null,
   };
   res.json(await runAgent(body.messages.slice(-20), body.language, location));
 });

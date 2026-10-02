@@ -88,6 +88,8 @@ export interface ParkingLot {
   type: 'MALL' | 'STATION' | 'AIRPORT' | 'STREET' | 'MULTILEVEL';
   hourlyPattern: number[];
   hasEvCharging: boolean;
+  /** Spot counts are estimates (OpenStreetMap lot), not counted data. */
+  estimated?: boolean;
   predictedFreeSpots?: number;
   distanceKm?: number;
 }
@@ -132,6 +134,7 @@ export interface Language {
 export interface Profile {
   id: string;
   name: string;
+  email?: string | null;
   language: string;
   hasEv: boolean;
   evRangeKm: number | null;

@@ -40,7 +40,7 @@ export default function EvScreen() {
   const t = useT();
   const { profile } = useApp();
   const location = useLocation();
-  // Centre on the user when they're inside the demo data's area, else on their home.
+  // Centre on the user when they're in India, else on their home.
   const center = (location.covered && location.coords) || profile?.home || DEFAULT_CENTER;
 
   const [connector, setConnector] = useState('All');

@@ -2,5 +2,5 @@ import { PrismaClient } from '@prisma/client';
 
 export const prisma = new PrismaClient();
 
-/** The single seeded demo user (no auth in the hackathon build). */
+/** The seeded demo account (log in as demo@safarsathi.app / demo1234). */
 export const DEMO_USER_ID = 'demo-user';

@@ -16,6 +16,8 @@ export function toParkingLot(row: ParkingRow): ParkingLot {
     type: row.type as ParkingType,
     hourlyPattern: JSON.parse(row.hourlyPattern) as number[],
     hasEvCharging: row.hasEvCharging,
+    // OpenStreetMap lots: spot counts and occupancy are estimates, not counted data.
+    estimated: row.id.startsWith('osm-'),
   };
 }
 
@@ -41,7 +43,8 @@ export class MockParkingAdapter implements ParkingAdapter {
 
   async reserve(lotId: string, userId: string, arriveAt: Date, hours: number) {
     const lot = await prisma.parkingLot.findUniqueOrThrow({ where: { id: lotId } });
-    const amount = Math.round(lot.ratePerHour * hours);
+    // An unknown rate (-1) is paid at the lot.
+    const amount = Math.max(0, Math.round(lot.ratePerHour * hours));
     const reservationId = `PRK-${code(6)}`;
     await prisma.parkingReservation.create({
       data: { id: reservationId, lotId, userId, arriveAt, hours, amount },

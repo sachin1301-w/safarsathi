@@ -5,7 +5,8 @@
  * LLM_PROVIDER=claude | gemini | sarvam | offline picks the first provider to try. Unset, it
  * tries every provider with a key in that order, then the offline assistant.
  */
-import { DEMO_USER_ID, prisma } from '../lib/db';
+import { currentUserId } from '../lib/auth';
+import { prisma } from '../lib/db';
 import { getProfile } from '../routes/profile';
 import type { Card } from '../types';
 import { claudeConfigured, isAccountError, runClaude } from './claudeAgent';
@@ -50,7 +51,7 @@ let claudeBlockedUntil = 0;
 async function buildContext(language: string, location?: UserLocation): Promise<AgentContext> {
   const profile = await getProfile();
   const memories = await prisma.memory.findMany({
-    where: { userId: DEMO_USER_ID },
+    where: { userId: currentUserId() },
     orderBy: { createdAt: 'desc' },
     take: 10,
   });

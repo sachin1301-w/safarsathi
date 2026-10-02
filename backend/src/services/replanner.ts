@@ -2,8 +2,9 @@
  * Disruptions: apply a delay or cancellation to a trip, check whether connections still work,
  * and plan a way out from where the user is now.
  */
-import { DEMO_USER_ID, prisma } from '../lib/db';
-import { broadcast } from '../lib/sse';
+import { currentUserId } from '../lib/auth';
+import { prisma } from '../lib/db';
+import { sendToUser } from '../lib/sse';
 import { addMins, diffMins, formatIst } from '../lib/time';
 import type { Itinerary, Leg, Mode, Point, Trip } from '../types';
 import { getTrip, planForUser, toTrip } from './trips';
@@ -149,7 +150,7 @@ export async function disruptTrip(
     },
   });
   const updated = toTrip(row);
-  broadcast('disruption', {
+  sendToUser(row.userId, 'disruption', {
     tripId: trip.id,
     legId,
     title: trip.title,
@@ -210,7 +211,7 @@ export async function replanTrip(
 export async function activeAlerts() {
   const rows = await prisma.trip.findMany({
     where: {
-      userId: DEMO_USER_ID,
+      userId: currentUserId(),
       alertMessage: { not: null },
       status: { notIn: ['REPLACED', 'DONE'] },
     },
@@ -226,7 +227,7 @@ export async function activeAlerts() {
 
 export async function dismissAlert(tripId: string) {
   await prisma.trip.updateMany({
-    where: { id: tripId, userId: DEMO_USER_ID },
+    where: { id: tripId, userId: currentUserId() },
     data: { alertMessage: null },
   });
 }

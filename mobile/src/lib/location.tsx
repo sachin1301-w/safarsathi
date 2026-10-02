@@ -12,15 +12,16 @@ import {
 import { api } from './api';
 import type { Place } from './types';
 
-/** Within this distance of a known place, the demo data covers where the user is. */
-const COVERAGE_KM = 40;
+/** Rough bounding box of India: the app's data (places, chargers, parking) covers the country. */
+const inIndia = (c: { lat: number; lng: number }) =>
+  c.lat > 6 && c.lat < 37.5 && c.lng > 68 && c.lng < 97.5;
 
 export interface LocationState {
   status: 'locating' | 'ready' | 'denied' | 'unavailable';
   coords: { lat: number; lng: number } | null;
   /** Nearest known place and how far it is. */
   nearest: { place: Place; distanceKm: number } | null;
-  /** True when the user is inside the area the demo data covers (Pune, Delhi, Mumbai, Bengaluru…). */
+  /** True when the user is in India, the area the app's data covers. */
   covered: boolean;
   refresh: () => void;
 }
@@ -64,7 +65,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     locate();
   }, [locate]);
 
-  const covered = !!nearest && nearest.distanceKm <= COVERAGE_KM;
+  const covered = !!coords && inIndia(coords);
 
   return (
     <LocationContext.Provider value={{ status, coords, nearest, covered, refresh }}>
@@ -79,7 +80,7 @@ export function useLocation(): LocationState {
   return ctx;
 }
 
-/** The user's position as a trip start, when they're inside the demo data's coverage. */
+/** The user's position as a trip start, when they're in India. */
 export function useCurrentOrigin(): { name: string; lat: number; lng: number } | null {
   const { coords, covered } = useLocation();
   // Memoised so screens can use it as an effect dependency without refetching every render.

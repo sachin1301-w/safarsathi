@@ -2,8 +2,9 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 
-import { chargers, geocode, memory, parking } from '../adapters';
-import { DEMO_USER_ID, prisma } from '../lib/db';
+import { chargers, findPlaces, geocode, lookupPlace, memory, parking } from '../adapters';
+import { currentUserId } from '../lib/auth';
+import { prisma } from '../lib/db';
 import { formatIst, parseTime } from '../lib/time';
 import { withPrediction } from '../services/parkingPredictor';
 import { PlanError } from '../services/planner';
@@ -65,10 +66,11 @@ async function resolveNear(near: string | undefined): Promise<Place> {
       aliases: [],
     };
   }
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: DEMO_USER_ID } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: currentUserId() } });
   const q = (near ?? 'home').trim().toLowerCase();
   const savedId = q === 'home' ? user.homePlaceId : q === 'office' ? user.officePlaceId : null;
-  const place = (savedId && geocode.byId(savedId)) || geocode.resolve(near ?? 'Kothrud');
+  const place =
+    (savedId && geocode.byId(savedId)) || (await lookupPlace(near ?? 'Kothrud').catch(() => null));
   if (!place) throw new ToolInputError(`Unknown place "${near}". Try geocode_place first.`);
   return place;
 }
@@ -342,7 +344,7 @@ export const TOOLS = [
       'Look up a place by name to check it exists and see its city. Returns up to 3 matches.',
     schema: z.object({ query: z.string() }),
     async run({ query }) {
-      const matches = geocode.search(query, 3);
+      const matches = await findPlaces(query, 3);
       return { result: matches.map((p) => ({ name: p.name, city: p.city, type: p.type })) };
     },
   }),
@@ -356,7 +358,7 @@ export const TOOLS = [
       kind: z.enum(['PLACE', 'PREFERENCE', 'NOTE']),
     }),
     async run({ fact, kind }) {
-      await memory.remember(DEMO_USER_ID, kind, fact);
+      await memory.remember(currentUserId(), kind, fact);
       return { result: { saved: true } };
     },
   }),
@@ -366,7 +368,7 @@ export const TOOLS = [
     description: 'Search long-term memory for things the user told you before.',
     schema: z.object({ query: z.string() }),
     async run({ query }) {
-      return { result: { memories: await memory.recall(DEMO_USER_ID, query) } };
+      return { result: { memories: await memory.recall(currentUserId(), query) } };
     },
   }),
 ];

@@ -14,7 +14,7 @@ import {
 } from '@/components/ui';
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
-import { timeAgo } from '@/lib/format';
+import { formatKw, formatPerKwh, timeAgo } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import type { Charger, ChargerReport, ChargerStatus } from '@/lib/types';
 
@@ -88,8 +88,8 @@ export default function ChargerDetailScreen() {
       </View>
 
       <View style={styles.stats}>
-        <Stat icon="lightning-bolt" label="Power" value={`${charger.powerKw} kW`} />
-        <Stat icon="currency-inr" label="Price" value={`₹${charger.pricePerKwh}/kWh`} />
+        <Stat icon="lightning-bolt" label="Power" value={formatKw(charger.powerKw)} />
+        <Stat icon="currency-inr" label="Price" value={formatPerKwh(charger.pricePerKwh)} />
       </View>
       <Card>
         <Text style={[styles.label, { color: theme.textSecondary }]}>Connectors</Text>

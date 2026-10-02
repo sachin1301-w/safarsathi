@@ -1,6 +1,7 @@
 import { booking, memory } from '../adapters';
 import { BOOKABLE_MODES } from '../adapters/booking.mock';
-import { DEMO_USER_ID, prisma } from '../lib/db';
+import { currentUserId } from '../lib/auth';
+import { prisma } from '../lib/db';
 import { formatIst } from '../lib/time';
 import type { Leg, Trip } from '../types';
 import { getTrip, toTrip } from './trips';
@@ -82,12 +83,12 @@ async function rememberBooking(trip: Trip) {
   const text = `Booked trip ${trip.title} on ${day}, leaving ${formatIst(new Date(trip.legs[0].departAt))}${
     services.length ? ` by ${services.join(', ')}` : ''
   }. Trip id ${trip.id}.`;
-  await memory.remember(DEMO_USER_ID, 'TRIP', text).catch(() => undefined);
+  await memory.remember(currentUserId(), 'TRIP', text).catch(() => undefined);
 }
 
 export async function listTrips(): Promise<Trip[]> {
   const rows = await prisma.trip.findMany({
-    where: { userId: DEMO_USER_ID },
+    where: { userId: currentUserId() },
     orderBy: { createdAt: 'desc' },
   });
   return rows.map(toTrip);

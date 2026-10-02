@@ -4,7 +4,9 @@ import express from 'express';
 
 import { describeAdapters } from './adapters';
 import { errorHandler } from './lib/http';
+import { requireAuth } from './lib/auth';
 import { alertsRouter } from './routes/alerts';
+import { authRouter } from './routes/auth';
 import { bookingsRouter } from './routes/bookings';
 import { chargersRouter } from './routes/chargers';
 import { chatRouter } from './routes/chat';
@@ -17,9 +19,11 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // voice clips arrive as base64
 
+// Open routes, then everything else needs a logged-in user.
+app.use('/api', healthRouter, authRouter);
 app.use(
   '/api',
-  healthRouter,
+  requireAuth,
   profileRouter,
   chargersRouter,
   parkingRouter,

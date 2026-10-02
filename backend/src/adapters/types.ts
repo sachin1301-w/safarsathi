@@ -4,8 +4,8 @@ import type { Charger, ChargerReport, ChargerStatus, Leg, Mode, ParkingLot, Plac
 
 export interface GeocodeAdapter {
   search(query: string, limit?: number): Place[];
-  /** Best single match, or null. */
-  resolve(query: string): Place | null;
+  /** Best single match, or null. `strict` rejects matches on a shared word alone. */
+  resolve(query: string, opts?: { strict?: boolean }): Place | null;
   byId(id: string): Place | undefined;
   all(): Place[];
 }

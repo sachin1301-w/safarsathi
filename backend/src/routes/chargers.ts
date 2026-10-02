@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { chargers } from '../adapters';
-import { DEMO_USER_ID, prisma } from '../lib/db';
+import { currentUserId } from '../lib/auth';
+import { prisma } from '../lib/db';
 import { notFound, queryNumber, validate } from '../lib/http';
 
 export const chargersRouter = Router();
@@ -35,5 +36,5 @@ chargersRouter.post('/chargers/:id/report', async (req, res) => {
   const body = validate(reportBody, req.body);
   const exists = await prisma.charger.findUnique({ where: { id: req.params.id } });
   if (!exists) throw notFound('Charger');
-  res.json(await chargers.report(req.params.id, DEMO_USER_ID, body.status, body.note || undefined));
+  res.json(await chargers.report(req.params.id, currentUserId(), body.status, body.note || undefined));
 });

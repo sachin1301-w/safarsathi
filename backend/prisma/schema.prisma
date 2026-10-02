@@ -9,8 +9,11 @@ datasource db {
 }
 
 model User {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
+  email         String?  @unique // login; lower-cased
+  passwordHash  String? // scrypt, see src/lib/auth.ts
+  createdAt     DateTime @default(now())
   language      String  @default("en-IN") // BCP-47, e.g. en-IN | hi-IN | mr-IN | ta-IN
   hasEv         Boolean @default(false)
   evRangeKm     Int? // full-battery range
@@ -23,6 +26,16 @@ model User {
   reports      ChargerReport[]
   memories     Memory[]
   reservations ParkingReservation[]
+  sessions     Session[]
+}
+
+// Login sessions: the app sends the token as "Authorization: Bearer <token>".
+model Session {
+  token     String   @id
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Charger {

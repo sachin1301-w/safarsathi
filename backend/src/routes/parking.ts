@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { parking } from '../adapters';
-import { DEMO_USER_ID } from '../lib/db';
+import { currentUserId } from '../lib/auth';
 import { HttpError, notFound, queryNumber, validate } from '../lib/http';
 import { parseTime } from '../lib/time';
 import { withPrediction } from '../services/parkingPredictor';
@@ -44,5 +44,5 @@ parkingRouter.post('/parking/:id/reserve', async (req, res) => {
   if (withPrediction(lot, body.arriveAt).predictedFreeSpots === 0) {
     throw new HttpError(409, 'This lot is predicted to be full at that time');
   }
-  res.status(201).json(await parking.reserve(lot.id, DEMO_USER_ID, body.arriveAt, body.hours));
+  res.status(201).json(await parking.reserve(lot.id, currentUserId(), body.arriveAt, body.hours));
 });

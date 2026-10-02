@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 
-import { describeAdapters, geocode } from '../adapters';
-import { DEMO_USER_ID, prisma } from '../lib/db';
+import { describeAdapters, findPlaces, geocode } from '../adapters';
+import { currentUserId } from '../lib/auth';
+import { prisma } from '../lib/db';
 import { haversineKm } from '../lib/geo';
 import { validate } from '../lib/http';
 import { LANGUAGE_CODES, LANGUAGES } from '../lib/languages';
@@ -11,10 +12,11 @@ import type { Place } from '../types';
 export const profileRouter = Router();
 
 export async function getProfile() {
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: DEMO_USER_ID } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: currentUserId() } });
   return {
     id: user.id,
     name: user.name,
+    email: user.email,
     language: user.language,
     hasEv: user.hasEv,
     evRangeKm: user.evRangeKm,
@@ -36,7 +38,7 @@ const patchBody = z.object({
 
 profileRouter.patch('/me', async (req, res) => {
   const body = validate(patchBody, req.body);
-  await prisma.user.update({ where: { id: DEMO_USER_ID }, data: body });
+  await prisma.user.update({ where: { id: currentUserId() }, data: body });
   res.json(await getProfile());
 });
 
@@ -62,7 +64,7 @@ profileRouter.get('/places/nearest', (req, res) => {
 
 const placesQuery = z.object({ q: z.string().trim().min(1).max(100) });
 
-profileRouter.get('/places', (req, res) => {
+profileRouter.get('/places', async (req, res) => {
   const { q } = validate(placesQuery, req.query);
-  res.json(geocode.search(q, 6));
+  res.json(await findPlaces(q, 6));
 });

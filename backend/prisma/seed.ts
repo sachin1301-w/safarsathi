@@ -6,8 +6,14 @@ import 'dotenv/config';
 
 import { PrismaClient } from '@prisma/client';
 
+import { importOsmIndia } from '../scripts/import-osm-india';
 import { loadData } from '../src/lib/data';
+import { hashPassword } from '../src/lib/auth';
 import { DEMO_USER_ID } from '../src/lib/db';
+
+/** Shown on the app's login screen as the demo account. */
+const DEMO_EMAIL = 'demo@safarsathi.app';
+const DEMO_PASSWORD = 'demo1234';
 
 const prisma = new PrismaClient();
 
@@ -83,6 +89,7 @@ async function main() {
   await prisma.parkingReservation.deleteMany();
   await prisma.memory.deleteMany();
   await prisma.trip.deleteMany();
+  await prisma.session.deleteMany();
   await prisma.charger.deleteMany();
   await prisma.parkingLot.deleteMany();
   await prisma.user.deleteMany();
@@ -91,6 +98,8 @@ async function main() {
     data: {
       id: DEMO_USER_ID,
       name: 'Aarav',
+      email: DEMO_EMAIL,
+      passwordHash: await hashPassword(DEMO_PASSWORD),
       language: 'en-IN',
       hasEv: true,
       evRangeKm: 300,
@@ -115,12 +124,15 @@ async function main() {
     data: lots.map((p) => ({ ...p, hourlyPattern: JSON.stringify(p.hourlyPattern) })),
   });
 
+  // All-India OpenStreetMap data from scripts/fetch-osm-india.ts.
+  const india = await importOsmIndia(prisma);
+
   await prisma.memory.createMany({
     data: STARTER_MEMORIES.map((m) => ({ ...m, userId: DEMO_USER_ID })),
   });
 
   console.log(
-    `Seeded 1 user, ${chargers.length} chargers, ${lots.length} parking lots, ${STARTER_MEMORIES.length} memories.`,
+    `Seeded 1 user (${DEMO_EMAIL} / ${DEMO_PASSWORD}), ${chargers.length + india.chargers} chargers, ${lots.length + india.lots} parking lots, ${STARTER_MEMORIES.length} memories.`,
   );
   await pushToCognee();
 }

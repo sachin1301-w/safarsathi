@@ -39,3 +39,10 @@ export function timeAgo(iso: string, now = Date.now()): string {
 
 export const formatKm = (km: number) =>
   km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+
+/** OpenStreetMap chargers often have no power or price recorded; 0 means unknown. */
+export const formatKw = (kw: number) => (kw > 0 ? `${kw} kW` : 'Power n/a');
+export const formatPerKwh = (p: number) => (p > 0 ? `₹${p}/kWh` : 'Price n/a');
+/** -1 means the parking rate is unknown; 0 means free. */
+export const formatRate = (r: number) =>
+  r < 0 ? 'Rate n/a' : r === 0 ? 'Free' : `${formatInr(r)}/hr`;

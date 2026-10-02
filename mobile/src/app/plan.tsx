@@ -18,7 +18,7 @@ export default function PlanScreen() {
   const { profile } = useApp();
   const params = useLocalSearchParams<{ to: string; from?: string; arriveBy?: string }>();
   const origin = useCurrentOrigin();
-  // An explicit start wins; otherwise where the user is (inside the demo area), else home.
+  // An explicit start wins; otherwise where the user is (in India), else home.
   const from = params.from || origin || 'home';
   const [useEv, setUseEv] = useState(false);
   const [result, setResult] = useState<PlanResult | null>(null);

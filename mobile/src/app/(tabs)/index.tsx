@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AlertBanner } from '@/components/alert-banner';
@@ -12,6 +12,7 @@ import { Button, Card, Chip, FadeIn, Icon, SectionTitle, type IconName } from '@
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAlerts } from '@/lib/alerts';
+import { useAuth } from '@/lib/auth';
 import { useT, type StringKey } from '@/lib/i18n';
 import { useApp } from '@/lib/app-context';
 import type { Trip } from '@/lib/types';
@@ -35,6 +36,7 @@ function greeting(): StringKey {
 export default function HomeScreen() {
   const theme = useTheme();
   const { profile, setLanguage } = useApp();
+  const { logout } = useAuth();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [status, setStatus] = useState<Status>('checking');
   const [query, setQuery] = useState('');
@@ -95,6 +97,12 @@ export default function HomeScreen() {
   };
   const voice = () => router.navigate({ pathname: '/chat', params: { voice: String(Date.now()) } });
 
+  const account = () =>
+    Alert.alert(profile?.name ?? 'Account', profile?.email ?? undefined, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log out', style: 'destructive', onPress: () => logout() },
+    ]);
+
   const dot =
     status === 'connected' ? theme.success : status === 'offline' ? theme.danger : theme.muted;
 
@@ -133,6 +141,15 @@ export default function HomeScreen() {
                   : t('status.connecting')}
             </Text>
           </Pressable>
+          <Pressable
+            onPress={account}
+            accessibilityRole="button"
+            accessibilityLabel="Account and log out"
+            style={[styles.avatar, { backgroundColor: theme.accent }]}>
+            <Text style={[styles.avatarText, { color: theme.onAccent }]}>
+              {(profile?.name ?? '?').trim().charAt(0).toUpperCase()}
+            </Text>
+          </Pressable>
         </View>
 
         {status === 'offline' && (
@@ -145,8 +162,8 @@ export default function HomeScreen() {
                 </Text>
               </View>
               <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
-                Can&apos;t reach the SafarSathi server at {api.baseUrl}. Make sure npm run dev is running
-                in backend/ on the laptop that runs Expo.
+                Can&apos;t reach the SafarSathi server at {api.baseUrl}. Make sure npm run dev is
+                running in backend/ on the laptop that runs Expo.
               </Text>
               <Button
                 label={t('common.retry')}
@@ -263,6 +280,14 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontSize: 15, fontWeight: '800' },
   offlineRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   offlineTitle: { fontSize: 17, fontWeight: '700' },
   statusText: { fontSize: 12, fontWeight: '600' },

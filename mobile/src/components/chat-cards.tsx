@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { JourneyCard } from '@/components/journey-card';
 import { Badge, Card, Icon } from '@/components/ui';
 import { Spacing, StatusColors, useTheme } from '@/constants/theme';
-import { formatInr, formatKm } from '@/lib/format';
+import { formatKm, formatKw, formatPerKwh, formatRate } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { openItinerary } from '@/lib/open-itinerary';
 import type { Card as ChatCard } from '@/lib/types';
@@ -47,7 +47,7 @@ export function ChatCards({ cards }: { cards: ChatCard[] }) {
                       {c.name}
                     </Text>
                     <Text style={[styles.miniMeta, { color: theme.textSecondary }]}>
-                      {c.powerKw} kW · ₹{c.pricePerKwh}/kWh
+                      {formatKw(c.powerKw)} · {formatPerKwh(c.pricePerKwh)}
                       {c.distanceKm !== undefined ? ` · ${formatKm(c.distanceKm)}` : ''}
                     </Text>
                   </Card>
@@ -73,7 +73,7 @@ export function ChatCards({ cards }: { cards: ChatCard[] }) {
                       {p.name}
                     </Text>
                     <Text style={[styles.miniMeta, { color: theme.textSecondary }]}>
-                      {formatInr(p.ratePerHour)}/hr
+                      {formatRate(p.ratePerHour)}
                       {p.distanceKm !== undefined ? ` · ${formatKm(p.distanceKm)}` : ''}
                     </Text>
                   </Card>

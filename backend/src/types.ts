@@ -91,6 +91,9 @@ export interface ParkingLot {
   type: ParkingType;
   hourlyPattern: number[];
   hasEvCharging: boolean;
+  /** Spots and occupancy are estimated (OpenStreetMap lot), not counted. */
+  estimated?: boolean;
+  /** -1 in ratePerHour means the rate is unknown. */
   predictedFreeSpots?: number;
   distanceKm?: number;
 }

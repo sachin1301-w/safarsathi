@@ -4,3 +4,4 @@ dist/
 *.db
 *.db-journal
 .cache/
+data/.parking.india.progress.json

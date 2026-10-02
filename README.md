@@ -48,6 +48,8 @@ npm install
 npx expo start              # scan the QR code with Expo Go
 ```
 
+In Expo Go the app finds the backend on the same laptop by itself, so `EXPO_PUBLIC_API_URL` only matters for standalone builds. Sign up in the app, or tap **Use demo account** (`demo@safarsathi.app` / `demo1234`, created by `npm run db:seed`).
+
 Find your LAN IP with `ipconfig` (Windows, the Wi-Fi adapter's IPv4 address) or `ipconfig getifaddr en0` (macOS).
 
 ### Environment variables (`backend/.env`)
@@ -61,8 +63,8 @@ Find your LAN IP with `ipconfig` (Windows, the Wi-Fi adapter's IPv4 address) or 
 | `SARVAM_API_KEY` | Voice in and out, and the Sarvam copilot (`sarvam-105b-conversations`) | Keyboard dictation, the phone's own text-to-speech, and the offline assistant |
 | `SARVAM_CHAT_MODEL` | Override the Sarvam chat model | `sarvam-105b-conversations` |
 | `COGNEE_API_URL`, `COGNEE_API_KEY` | Long-term memory in Cognee | Memory is kept in the local database only |
-| `OPEN_CHARGE_MAP_KEY` | Real chargers from Open Charge Map | Seeded Pune chargers |
-| `DEMO_OFFLINE` | `true` forces the offline assistant (backup for the demo) | |
+| `OPEN_CHARGE_MAP_KEY` | Live chargers from Open Charge Map (better India coverage; free key at openchargemap.org) | OpenStreetMap chargers plus the seeded Pune ones |
+| `DEMO_OFFLINE` | `true` forces the offline assistant and keeps chargers and parking to the seeded Pune data, with no internet calls (backup for the demo) | |
 | `DATABASE_URL`, `PORT` | SQLite file and API port | Defaults: `file:./dev.db`, `4000` |
 
 Never commit `.env`; both apps ignore it.
@@ -72,7 +74,9 @@ Never commit `.env`; both apps ignore it.
 | Where | Command | What it does |
 | --- | --- | --- |
 | backend | `npm run dev` | API with auto-reload |
-| backend | `npm run db:seed` | **Reset the demo**: chargers, parking, user, memories; deletes trips |
+| backend | `npm run db:seed` | **Reset the demo**: chargers, parking, demo user, memories; deletes all accounts and trips |
+| backend | `npx tsx scripts/fetch-osm-india.ts` | Download all-India chargers and parking for major cities from OpenStreetMap into `backend/data` (slow; resumable) |
+| backend | `npx tsx scripts/import-osm-india.ts` | Load that data into the database without touching accounts or trips |
 | backend | `npm test` | Planner, replanner and booking tests (Vitest) |
 | backend | `npm run plan -- Kothrud "Connaught Place" 20:00` | Print planner output (add `--ev` for an EV trip) |
 | backend | `npm run data:generate` | Regenerate the mock JSON in `backend/data` |
@@ -82,7 +86,7 @@ Never commit `.env`; both apps ignore it.
 
 ## Demo script (4 minutes)
 
-Before you start: `npm run db:seed` in `backend`, open the app, and check that Home shows **Connected**.
+Before you start: `npm run db:seed` in `backend`, open the app, tap **Use demo account**, and check that Home shows **Connected**.
 
 1. **Hook (30 s).** "Nearly 3 in 10 government-approved EV chargers in India don't work, and our metros are underused because nobody solves the last mile. Meet SafarSathi."
 2. **Plan (60 s).** On Home, tap the mic and say "I need to reach Connaught Place, Delhi by 8 PM today from Kothrud" (or type it). Chat shows three options. Open one with a flight, then tap **Book all**. The tickets appear in Trips.

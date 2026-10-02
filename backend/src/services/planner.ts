@@ -50,6 +50,8 @@ export interface PlannerDeps {
   transit: TransitAdapter;
   schedules: ScheduleAdapter;
   chargers: ChargerAdapter;
+  /** Online lookup for names the demo geocoder doesn't know (e.g. "Bikaner"). */
+  lookupPlace?: (query: string) => Promise<Place | null>;
 }
 
 export interface PlanResult {
@@ -95,6 +97,13 @@ const EV_MAX_CAR_KW = 60;
 const EV_CORRIDOR_KM = 15;
 const EV_BUSY_WAIT_MINS = 20;
 const EV_MAX_STOPS = 4;
+
+/** Longest door-to-door outstation cab we offer. */
+const MAX_CAB_KM = 1500;
+/** A cab to or from a hub (to use a train or flight beyond it) must be at most this long… */
+const MAX_HUB_CAB_KM = 800;
+/** …and must cover less than this share of the whole trip, or the hub isn't on the way. */
+const MAX_HUB_CAB_SHARE = 0.6;
 
 // ------------------------------------------------------------------- types
 
@@ -570,11 +579,21 @@ function intercityCandidates(
   exclude: string[] = [],
 ): Candidate[] {
   const anchor = arriveBy ?? earliest;
+  const total = roadKm(from, to);
+  // A hub works if it's in the trip's own city, or a reasonable cab ride away and on the way
+  // (e.g. fly Pune → Delhi, then a cab to Bikaner).
+  const reachable = (hub: Place | undefined, end: Place) =>
+    !!hub &&
+    (hub.city === end.city ||
+      (roadKm(hub, end) <= MAX_HUB_CAB_KM && roadKm(hub, end) < total * MAX_HUB_CAB_SHARE));
   const services = deps.schedules.services().filter((s) => {
     if (exclude.includes(s.serviceNo)) return false;
     const a = deps.geocode.byId(s.fromPlaceId);
     const b = deps.geocode.byId(s.toPlaceId);
-    return a?.city === from.city && b?.city === to.city;
+    if (!a || !b || a.city === b.city) return false;
+    // At least one end must be the trip's own city, so we never chain two long cabs.
+    if (a.city !== from.city && b.city !== to.city) return false;
+    return reachable(a, from) && reachable(b, to);
   });
 
   // City legs depend on peak hours, so cache them per hub and peak/off-peak.
@@ -584,21 +603,30 @@ function intercityCandidates(
     if (!cache.has(k)) cache.set(k, variants(cityChains(deps, a, b, city, at, { luggage: true })));
     return cache.get(k)!;
   };
+  // Same city: local transport. Otherwise an outstation cab between the hub and the trip end.
+  const hubLegs = (a: Point, b: Point, sameCity: boolean, city: string, at: Date) =>
+    sameCity
+      ? cityLegs(a, b, city, at)
+      : [[{ ...directSegment('CAB', a, b, at), provider: 'Outstation cab' }]];
 
   const out: Candidate[] = [];
   for (const svc of services) {
-    const hubA = point(deps.geocode.byId(svc.fromPlaceId)!);
-    const hubB = point(deps.geocode.byId(svc.toPlaceId)!);
+    const placeA = deps.geocode.byId(svc.fromPlaceId)!;
+    const placeB = deps.geocode.byId(svc.toPlaceId)!;
+    const hubA = point(placeA);
+    const hubB = point(placeB);
+    const accessIn = placeA.city === from.city;
+    const egressIn = placeB.city === to.city;
     for (const dayOffset of [-1, 0, 1]) {
       for (const hhmm of svc.departures) {
         const dep = atIst(anchor, hhmm, dayOffset);
         const arr = addMins(dep, svc.durationMins);
         const atHub = addMins(dep, -BOARDING_BUFFER_MINS[svc.mode]);
         const out1 = addMins(arr, EXIT_MINS[svc.mode]);
-        for (const access of cityLegs(point(from), hubA, from.city, addMins(atHub, -45))) {
+        for (const access of hubLegs(point(from), hubA, accessIn, from.city, addMins(atHub, -45))) {
           const start = addMins(atHub, -chainMins(access));
           if (start < addMins(earliest, -1)) continue;
-          for (const egress of cityLegs(hubB, point(to), to.city, out1)) {
+          for (const egress of hubLegs(hubB, point(to), egressIn, to.city, out1)) {
             const legs = [
               ...scheduleForward(access, start),
               serviceLeg(svc, hubA, hubB, dep),
@@ -691,11 +719,11 @@ function pickOptions(cands: Candidate[], arriveBy: Date | undefined): Picked[] {
 
 // --------------------------------------------------------------------- api
 
-function resolvePlace(
+async function resolvePlace(
   deps: PlannerDeps,
   input: string | Point,
   saved?: Record<string, string>,
-): Place {
+): Promise<Place> {
   if (typeof input !== 'string') {
     const nearest = [...deps.geocode.all()].sort(
       (x, y) => haversineKm(input, x) - haversineKm(input, y),
@@ -712,7 +740,11 @@ function resolvePlace(
     };
   }
   const savedId = saved?.[input.trim().toLowerCase()];
-  const place = (savedId && deps.geocode.byId(savedId)) || deps.geocode.resolve(input);
+  const place =
+    (savedId && deps.geocode.byId(savedId)) ||
+    (deps.lookupPlace
+      ? await deps.lookupPlace(input).catch(() => deps.geocode.resolve(input))
+      : deps.geocode.resolve(input));
   if (!place)
     throw new PlanError(`I couldn't find "${input}". Try a nearby landmark or area name.`);
   return place;
@@ -720,8 +752,8 @@ function resolvePlace(
 
 export async function planJourney(req: PlanRequest, deps: PlannerDeps): Promise<PlanResult> {
   const now = req.now ?? new Date();
-  const from = resolvePlace(deps, req.from, req.savedPlaces);
-  const to = resolvePlace(deps, req.to, req.savedPlaces);
+  const from = await resolvePlace(deps, req.from, req.savedPlaces);
+  const to = await resolvePlace(deps, req.to, req.savedPlaces);
   if (haversineKm(from, to) < 0.2) throw new PlanError('Start and destination are the same place.');
 
   const earliest = req.departAt && req.departAt > now ? req.departAt : now;
@@ -741,7 +773,7 @@ export async function planJourney(req: PlanRequest, deps: PlannerDeps): Promise<
       .map((segs) => toCandidate(scheduleChain(segs, earliest, arriveBy), arriveBy));
   } else {
     candidates = intercityCandidates(deps, from, to, earliest, arriveBy, req.excludeServices);
-    if (road <= 400) {
+    if (road <= MAX_CAB_KM) {
       const cab = directSegment('CAB', point(from), point(to), at);
       candidates.push(
         toCandidate(
@@ -762,7 +794,9 @@ export async function planJourney(req: PlanRequest, deps: PlannerDeps): Promise<
   }
 
   if (!candidates.length) {
-    throw new PlanError(`No routes found from ${from.name} to ${to.name} in the demo data.`);
+    throw new PlanError(
+      `No routes found from ${from.name} to ${to.name}. Trains, flights and buses are only known from Pune, and cabs go up to ${MAX_CAB_KM} km.`,
+    );
   }
 
   const picked = pickOptions(candidates, arriveBy);
