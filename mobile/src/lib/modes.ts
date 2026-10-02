@@ -20,3 +20,6 @@ export const OPTION_INFO: Record<OptionLabel, { icon: IconName; label: string; c
   CHEAPEST: { icon: 'cash', label: 'Cheapest', color: '#2563EB' },
   GREENEST: { icon: 'leaf', label: 'Greenest', color: '#16A34A' },
 };
+
+/** Legs the mock providers can book (mirrors BOOKABLE_MODES on the backend). */
+export const BOOKABLE_MODES: Mode[] = ['TRAIN', 'FLIGHT', 'INTERCITY_BUS', 'METRO', 'CAB'];

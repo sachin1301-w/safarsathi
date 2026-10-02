@@ -80,6 +80,10 @@ export const api = {
   }) => post<PlanResult>('/journeys/plan', body, 20_000),
   saveTrip: (itinerary: Itinerary) => post<Trip>('/trips', itinerary),
   trip: (id: string) => request<Trip>(`/trips/${id}`),
+  trips: () => request<Trip[]>('/trips'),
+  bookLeg: (tripId: string, legId: string) =>
+    post<{ bookingRef: string }>('/bookings', { tripId, legId }),
+  bookAll: (tripId: string) => post<Trip>(`/trips/${tripId}/book-all`, {}),
 
   chat: (messages: ChatTurn[], language: string) =>
     post<ChatResponse>('/chat', { messages, language }, 45_000),

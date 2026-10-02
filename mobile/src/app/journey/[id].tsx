@@ -5,11 +5,12 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import { OptionBadges } from '@/components/journey-card';
 import { LegRow } from '@/components/leg-row';
-import { Card, ErrorState, Icon } from '@/components/ui';
+import { TripStatusChip } from '@/components/trip-status';
+import { Button, Card, ErrorState, Icon } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { formatDuration, formatInr, formatTime } from '@/lib/format';
-import { MODE_INFO } from '@/lib/modes';
+import { BOOKABLE_MODES, MODE_INFO } from '@/lib/modes';
 import type { Trip } from '@/lib/types';
 
 export default function JourneyDetailScreen() {
@@ -18,6 +19,7 @@ export default function JourneyDetailScreen() {
   const mapRef = useRef<MapView>(null);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [booking, setBooking] = useState<'all' | string | null>(null);
 
   const load = useCallback(() => {
     api
@@ -30,6 +32,29 @@ export default function JourneyDetailScreen() {
   }, [id]);
 
   useEffect(load, [load]);
+
+  async function bookAll() {
+    setBooking('all');
+    try {
+      setTrip(await api.bookAll(id));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBooking(null);
+    }
+  }
+
+  async function bookOne(legId: string) {
+    setBooking(legId);
+    try {
+      await api.bookLeg(id, legId);
+      setTrip(await api.trip(id));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBooking(null);
+    }
+  }
 
   if (error && !trip) return <ErrorState message={error} onRetry={load} />;
   if (!trip) {
@@ -46,6 +71,8 @@ export default function JourneyDetailScreen() {
     { latitude: l.from.lat, longitude: l.from.lng },
     { latitude: l.to.lat, longitude: l.to.lng },
   ]);
+  const unbooked = trip.legs.filter((l) => BOOKABLE_MODES.includes(l.mode) && !l.bookingRef);
+  const anyBookable = trip.legs.some((l) => BOOKABLE_MODES.includes(l.mode));
   const fitMap = () =>
     mapRef.current?.fitToCoordinates(coords, {
       edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
@@ -57,7 +84,10 @@ export default function JourneyDetailScreen() {
       <Stack.Screen options={{ title: 'Your journey' }} />
 
       <View>
-        <Text style={[styles.title, { color: theme.text }]}>{trip.title}</Text>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, { color: theme.text }]}>{trip.title}</Text>
+          <TripStatusChip status={trip.status} />
+        </View>
         <Text style={{ color: theme.textSecondary }}>
           Leave {formatTime(first.departAt)} · Arrive {formatTime(last.arriveAt)}
           {trip.arriveBy ? ` · Deadline ${formatTime(trip.arriveBy)}` : ''}
@@ -102,20 +132,55 @@ export default function JourneyDetailScreen() {
           <Stat label="Total cost" value={formatInr(trip.totalCost)} />
           <Stat label="CO₂ saved" value={`${trip.co2SavedKg} kg`} color={theme.success} />
         </View>
-        <View style={[styles.green, { backgroundColor: theme.accentSoft }]}>
-          <Icon name="leaf" color={theme.success} />
-          <Text style={{ color: theme.text, flex: 1 }}>
-            Compared with driving the whole way alone. That&apos;s like{' '}
-            {Math.max(1, Math.round(trip.co2SavedKg / 21))} tree
-            {Math.round(trip.co2SavedKg / 21) > 1 ? 's' : ''} absorbing CO₂ for a year.
-          </Text>
-        </View>
+        {trip.co2SavedKg >= 1 && (
+          <View style={[styles.green, { backgroundColor: theme.accentSoft }]}>
+            <Icon name="leaf" color={theme.success} />
+            <Text style={{ color: theme.text, flex: 1 }}>
+              Compared with driving the whole way alone
+              {trip.co2SavedKg >= 21
+                ? `, that's what ${Math.round(trip.co2SavedKg / 21)} tree${trip.co2SavedKg >= 42 ? 's' : ''} absorb in a year.`
+                : '.'}
+            </Text>
+          </View>
+        )}
       </Card>
+
+      {anyBookable && (
+        <Button
+          label={
+            unbooked.length
+              ? `Book all (${unbooked.length} ticket${unbooked.length > 1 ? 's' : ''})`
+              : 'All tickets booked'
+          }
+          icon={unbooked.length ? 'ticket-confirmation' : 'check-circle'}
+          onPress={bookAll}
+          loading={booking === 'all'}
+          disabled={!unbooked.length || booking !== null}
+        />
+      )}
+      {error && <Text style={{ color: theme.danger }}>{error}</Text>}
 
       <Text style={[styles.section, { color: theme.text }]}>Step by step</Text>
       <View>
         {trip.legs.map((leg, i) => (
-          <LegRow key={leg.id} leg={leg} isLast={i === trip.legs.length - 1} />
+          <LegRow
+            key={leg.id}
+            leg={leg}
+            isLast={i === trip.legs.length - 1}
+            action={
+              BOOKABLE_MODES.includes(leg.mode) && !leg.bookingRef ? (
+                <Button
+                  label="Book"
+                  icon="ticket-outline"
+                  variant="secondary"
+                  onPress={() => bookOne(leg.id)}
+                  loading={booking === leg.id}
+                  disabled={booking !== null}
+                  style={styles.legBook}
+                />
+              ) : undefined
+            }
+          />
         ))}
       </View>
     </ScrollView>
@@ -135,7 +200,9 @@ function Stat({ label, value, color }: { label: string; value: string; color?: s
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: Spacing.md, gap: Spacing.md, paddingBottom: Spacing.xl },
-  title: { fontSize: 24, fontWeight: '800' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
+  title: { fontSize: 24, fontWeight: '800', flexShrink: 1 },
+  legBook: { alignSelf: 'flex-start', minHeight: 40, marginTop: Spacing.sm },
   mapWrap: {
     height: 220,
     borderRadius: Radius.lg,

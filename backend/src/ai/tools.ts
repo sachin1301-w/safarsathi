@@ -7,9 +7,10 @@ import { DEMO_USER_ID, prisma } from '../lib/db';
 import { formatIst, parseTime } from '../lib/time';
 import { withPrediction } from '../services/parkingPredictor';
 import { PlanError } from '../services/planner';
-import { getTrip, planForUser } from '../services/trips';
+import { bookAll, BookingError, bookLeg } from '../services/bookings';
+import { getTrip, planForUser, saveItinerary } from '../services/trips';
 import type { Card, Itinerary, Place } from '../types';
-import { rememberOption } from './planCache';
+import { getOption, rememberOption } from './planCache';
 
 export interface ToolOutput {
   /** What Claude sees: compact JSON, no coordinates it doesn't need. */
@@ -187,6 +188,54 @@ export const TOOLS = [
         },
         cards: lots.length ? [{ type: 'parking', data: lots }] : [],
       };
+    },
+  }),
+
+  tool({
+    name: 'book_leg',
+    description:
+      'Book a trip with the mock providers (trains get a 10-digit PNR, flights a 6-letter PNR; metro QR tickets and cabs too). Only call this after the user has confirmed. Pass an optionId from plan_journey or a saved tripId. Omit legId to book every bookable leg.',
+    schema: z.object({
+      tripId: z.string().describe('A saved trip id, or an optionId (opt_...) from plan_journey'),
+      legId: z.string().optional().describe('One leg to book; omit to book all bookable legs'),
+    }),
+    async run({ tripId, legId }) {
+      let id = tripId;
+      if (tripId.startsWith('opt_')) {
+        const option = getOption(tripId);
+        if (!option) throw new ToolInputError('That option has expired. Plan the journey again.');
+        id = (await saveItinerary(option)).id;
+      }
+      try {
+        const trip = legId ? (await bookLeg(id, legId)).trip : await bookAll(id);
+        const booked = trip.legs.filter((l) => l.bookingRef);
+        return {
+          result: {
+            tripId: trip.id,
+            status: trip.status,
+            bookings: booked.map((l) => ({
+              legId: l.id,
+              mode: l.mode,
+              service: l.serviceNo,
+              bookingRef: l.bookingRef,
+            })),
+          },
+          cards: booked.length
+            ? [
+                {
+                  type: 'booking',
+                  data: {
+                    tripId: trip.id,
+                    bookingRef: booked.map((l) => l.bookingRef).join(' · '),
+                  },
+                },
+              ]
+            : [],
+        };
+      } catch (err) {
+        if (err instanceof BookingError) throw new ToolInputError(err.message);
+        throw err;
+      }
     },
   }),
 

@@ -79,3 +79,11 @@ These extend SPEC.md and take precedence over it where they conflict.
 - **Voice:** the mic records with `expo-audio` and transcribes with Sarvam `saaras:v4` (auto-detects the language when English is selected, since people code-mix). Replies to voice questions are read aloud automatically; every reply has a speaker button. Sarvam `bulbul:v3` (speaker "priya") is used when configured, the phone's TTS otherwise. Without the Sarvam key the mic suggests keyboard dictation (the spec's original plan).
 - **Measured:** Sarvam TTS ~9 s for a fresh phrase and ~10 ms from cache; STT ~0.2 s. Verification used 2 Sarvam calls.
 - **Home "Where to?"** opens Chat with the query and sends it; the quick chips still go straight to the route-choice screen (no LLM needed).
+
+## Phase 6
+
+- **`POST /api/trips/:id/book-all`** (extra) books every bookable leg in one request. "Book all" uses it; `POST /api/bookings` books a single leg (the per-leg "Book" buttons).
+- **Trip status becomes BOOKED once every bookable leg has a reference.** Booking an already-booked leg returns the existing reference; walks and street autos return 422.
+- **`book_leg` tool** takes a saved `tripId` or an `optionId` from `plan_journey` (saving it as a trip first), and books one leg or, without `legId`, every bookable leg. The system prompt still requires confirming with the user first.
+- **Booked trips are written to memory (Cognee + local)**, e.g. "Booked trip Kothrud → Connaught Place on Sat 3 Oct … flight QP-1406 (PNR …)", so the copilot can answer "what's my PNR?" later.
+- **Trips tab sections:** Upcoming (booked/active), Saved plans (opened but not booked) and Past, with pull to refresh and reload on focus.
