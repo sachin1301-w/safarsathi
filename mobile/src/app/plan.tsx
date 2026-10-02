@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { JourneyCard } from '@/components/journey-card';
+import { RouteScene } from '@/components/scenes';
 import { FullScreenLoader } from '@/components/travel-loader';
 import { Chip, ErrorState, FadeIn, SkeletonCard } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
@@ -98,7 +99,7 @@ export default function PlanScreen() {
       </ScrollView>
       <FullScreenLoader
         visible={!result && !error}
-        vehicles={['rickshaw', 'bus', 'train', 'plane']}
+        scene={<RouteScene />}
         title={params.to ? `Finding the best way to ${params.to}` : 'Finding your best routes'}
         subtitle="Comparing autos, metro, buses, trains and flights"
       />

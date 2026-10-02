@@ -123,11 +123,13 @@ export default function HomeScreen() {
           <Pressable
             onPress={() => setAccountOpen(true)}
             accessibilityRole="button"
-            accessibilityLabel="Account and settings"
-            style={[styles.avatar, { backgroundColor: theme.accent }]}>
-            <Text style={[styles.avatarText, { color: theme.onAccent }]}>
-              {(profile?.name ?? '?').trim().charAt(0).toUpperCase()}
-            </Text>
+            accessibilityLabel="Menu"
+            hitSlop={8}
+            style={[
+              styles.menuButton,
+              { backgroundColor: theme.surface, borderColor: theme.border },
+            ]}>
+            <Icon name="menu" size={24} color={theme.text} />
           </Pressable>
         </View>
 
@@ -263,14 +265,14 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  menuButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 15, fontWeight: '800' },
   offlineRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   offlineTitle: { fontSize: 17, fontWeight: '700' },
   statusText: { fontSize: 12, fontWeight: '600' },

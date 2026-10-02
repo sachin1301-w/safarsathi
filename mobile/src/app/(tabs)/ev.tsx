@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChargerRow } from '@/components/charger-row';
 import { DemoFooter } from '@/components/demo-footer';
 import { LeafletMap } from '@/components/leaflet-map';
+import { ChargingScene } from '@/components/scenes';
 import { FullScreenLoader } from '@/components/travel-loader';
 import { Button, Chip, EmptyState, ErrorState, FadeIn, Icon, SkeletonCard } from '@/components/ui';
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
@@ -190,7 +191,7 @@ export default function EvScreen() {
       )}
       <FullScreenLoader
         visible={loadedKey !== reqKey}
-        vehicles={['ev', 'car']}
+        scene={<ChargingScene />}
         title={t('ev.finding')}
         subtitle="Checking live status and connectors near you"
       />

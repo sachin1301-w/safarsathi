@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 
-import { TravelLoader } from '@/components/travel-loader';
+import { PinDropScene } from '@/components/scenes';
 import { useT } from '@/lib/i18n';
 
 export interface MapMarker {
@@ -191,7 +191,7 @@ export function LeafletMap({
           styles.cover,
           { opacity: cover, backgroundColor: dark ? '#0B0E0F' : '#E8EEEE' },
         ]}>
-        <TravelLoader vehicles={['car']} label={t('map.loading')} />
+        <PinDropScene label={t('map.loading')} />
       </Animated.View>
     </View>
   );

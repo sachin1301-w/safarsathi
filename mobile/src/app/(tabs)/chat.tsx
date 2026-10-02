@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatCards } from '@/components/chat-cards';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
+import { OrbitScene } from '@/components/scenes';
 import { FullScreenLoader } from '@/components/travel-loader';
 import { Chip, FadeIn, Icon } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
@@ -193,7 +193,8 @@ export default function ChatScreen() {
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        // Android is edge-to-edge (the window doesn't resize), so pad on both platforms.
+        behavior="padding">
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={styles.messages}
@@ -338,7 +339,7 @@ function Thinking({ visible }: { visible: boolean }) {
   return (
     <FullScreenLoader
       visible={visible}
-      vehicles={['bus', 'train', 'plane', 'rickshaw']}
+      scene={<OrbitScene />}
       title={t('chat.planning')}
       subtitle={slow ? t('chat.checking') : undefined}
     />

@@ -4,6 +4,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DemoFooter } from '@/components/demo-footer';
+import { TicketScene } from '@/components/scenes';
 import { FullScreenLoader } from '@/components/travel-loader';
 import { TripStatusChip } from '@/components/trip-status';
 import {
@@ -110,7 +111,7 @@ export default function TripsScreen() {
       </ScrollView>
       <FullScreenLoader
         visible={!sections && !error}
-        vehicles={['bus', 'train', 'plane']}
+        scene={<TicketScene />}
         title="Loading your trips"
         subtitle="Fetching bookings and live status"
       />

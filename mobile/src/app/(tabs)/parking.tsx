@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DemoFooter } from '@/components/demo-footer';
 import { LeafletMap } from '@/components/leaflet-map';
+import { ParkingScene } from '@/components/scenes';
 import { FullScreenLoader } from '@/components/travel-loader';
 import { PlaceSearch } from '@/components/place-search';
 import {
@@ -205,7 +206,7 @@ export default function ParkingScreen() {
       />
       <FullScreenLoader
         visible={loadedKey !== reqKey}
-        vehicles={['car', 'rickshaw']}
+        scene={<ParkingScene />}
         title={t('parking.finding')}
         subtitle="Predicting free spots for your arrival time"
       />

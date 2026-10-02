@@ -2,7 +2,7 @@
  * Loading scene in the style of the boot screen: a vehicle drives in, keeps running in place
  * with scenery streaming past, and (with several vehicles) hands over to the next one.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Animated, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
 import { Icon, type IconName } from '@/components/ui';
@@ -255,12 +255,15 @@ const styles = StyleSheet.create({
  */
 export function FullScreenLoader({
   visible,
+  scene,
   vehicles = ['bus'],
   title,
   subtitle,
   cycleMs = 1800,
 }: {
   visible: boolean;
+  /** The animation to show; defaults to the vehicle scene. */
+  scene?: ReactNode;
   vehicles?: Vehicle[];
   title: string;
   subtitle?: string;
@@ -282,7 +285,7 @@ export function FullScreenLoader({
     <Animated.View
       pointerEvents={visible ? 'auto' : 'none'}
       style={[fullStyles.overlay, { backgroundColor: theme.background, opacity }]}>
-      <TravelLoader size="lg" vehicles={vehicles} cycleMs={cycleMs} />
+      {scene ?? <TravelLoader size="lg" vehicles={vehicles} cycleMs={cycleMs} />}
       <View style={fullStyles.text}>
         <Text style={[fullStyles.title, { color: theme.text }]}>{title}</Text>
         {subtitle && (
