@@ -102,7 +102,7 @@ These extend SPEC.md and take precedence over it where they conflict.
 
 ## Phase 8
 
-- **UI strings in all 11 languages** (`mobile/src/lib/i18n.ts`). English, Hindi and Marathi cover every label; the other eight cover the most visible ones (tabs, Home, Chat, chargers, parking, trips, option badges, "Fix my trip") and fall back to English for the rest. All translations were written without a native-speaker review, so have them checked before a public release. Copilot replies are generated in the chosen language by Claude regardless.
+- **UI strings in all 11 languages** (`mobile/src/lib/i18n.ts`), every key in every language. Each table is typed `Record<StringKey, string>`, so a missing translation fails the type-check. The translations were written without a native-speaker review, so have them checked before a public release. Copilot replies are generated in the chosen language by Claude regardless.
 - **Language can be changed from Home or Chat.** It is saved to the profile and used for UI labels, the copilot's replies and the voice.
 - **Demo-data footer** on Home, EV list, Parking, Trips, Journey and Charger detail.
 - **App icon and splash:** a white "start dot → dotted route → destination pin" mark on the teal accent, rendered from SVG (`sharp`) into the icon, Android adaptive foreground/background/monochrome layers, splash image and favicon. The Expo template's iOS `expo.icon` was replaced with the PNG.
