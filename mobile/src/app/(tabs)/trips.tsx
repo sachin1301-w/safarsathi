@@ -3,6 +3,7 @@ import { Fragment, useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DemoFooter } from '@/components/demo-footer';
 import { TripStatusChip } from '@/components/trip-status';
 import {
   Button,
@@ -16,6 +17,7 @@ import {
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { formatDay, formatInr, formatTime } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 import { MODE_INFO } from '@/lib/modes';
 import type { Trip } from '@/lib/types';
 
@@ -41,6 +43,7 @@ function group(trips: Trip[], now: number): Sections {
 
 export default function TripsScreen() {
   const theme = useTheme();
+  const t = useT();
   const [sections, setSections] = useState<Sections | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -76,8 +79,8 @@ export default function TripsScreen() {
             tintColor={theme.accent}
           />
         }>
-        <Text style={[styles.title, { color: theme.text }]}>My trips</Text>
-        <Text style={{ color: theme.textSecondary }}>Every ticket for every leg, in one place</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('trips.title')}</Text>
+        <Text style={{ color: theme.textSecondary }}>{t('trips.subtitle')}</Text>
 
         {error && !sections ? (
           <ErrorState message={error} onRetry={load} />
@@ -89,19 +92,20 @@ export default function TripsScreen() {
         ) : total === 0 ? (
           <EmptyState
             icon="ticket-outline"
-            title="No trips yet"
-            message="Plan a journey and book it, and your tickets will show up here."
+            title={t('trips.empty')}
+            message={t('trips.emptyMessage')}
             action={
               <Button label="Plan a trip" icon="magnify" onPress={() => router.navigate('/')} />
             }
           />
         ) : (
           <>
-            <TripSection title="Upcoming" trips={sections.upcoming} />
-            <TripSection title="Saved plans" trips={sections.planned} />
-            <TripSection title="Past trips" trips={sections.past} muted />
+            <TripSection title={t('trips.upcoming')} trips={sections.upcoming} />
+            <TripSection title={t('trips.saved')} trips={sections.planned} />
+            <TripSection title={t('trips.past')} trips={sections.past} muted />
           </>
         )}
+        <DemoFooter />
       </ScrollView>
     </SafeAreaView>
   );

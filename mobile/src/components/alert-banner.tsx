@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@/components/ui';
 import { Radius, Spacing, TouchTarget } from '@/constants/theme';
 import type { TripAlert } from '@/lib/alerts';
+import { useT } from '@/lib/i18n';
 
 /** Opens the copilot with a request to fix the trip. The trip id goes to the AI, not on screen. */
 export function fixMyTrip(alert: Pick<TripAlert, 'tripId' | 'title'>) {
@@ -14,6 +15,7 @@ export function fixMyTrip(alert: Pick<TripAlert, 'tripId' | 'title'>) {
 }
 
 export function AlertBanner({ alert, onDismiss }: { alert: TripAlert; onDismiss?: () => void }) {
+  const t = useT();
   const bg = alert.broken ? '#DC2626' : '#D97706';
   return (
     <View style={[styles.banner, { backgroundColor: bg }]} accessibilityRole="alert">
@@ -44,7 +46,7 @@ export function AlertBanner({ alert, onDismiss }: { alert: TripAlert; onDismiss?
           accessibilityLabel="Fix my trip"
           style={({ pressed }) => [styles.fix, pressed && { opacity: 0.85 }]}>
           <Icon name="auto-fix" color={bg} />
-          <Text style={[styles.fixText, { color: bg }]}>Fix my trip</Text>
+          <Text style={[styles.fixText, { color: bg }]}>{t('alert.fix')}</Text>
         </Pressable>
       )}
     </View>

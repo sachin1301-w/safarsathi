@@ -3,6 +3,7 @@ import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DemoFooter } from '@/components/demo-footer';
 import { MapPin } from '@/components/map-pin';
 import { PlaceSearch } from '@/components/place-search';
 import {
@@ -20,12 +21,13 @@ import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
 import { formatInr, formatKm, formatTime } from '@/lib/format';
+import { useT, type StringKey } from '@/lib/i18n';
 import type { ParkingLot, Place } from '@/lib/types';
 
-const ARRIVAL_OPTIONS = [
-  { label: 'Now', offsetMins: 0 },
-  { label: 'In 1 hour', offsetMins: 60 },
-  { label: 'In 3 hours', offsetMins: 180 },
+const ARRIVAL_OPTIONS: { label: StringKey; offsetMins: number }[] = [
+  { label: 'parking.now', offsetMins: 0 },
+  { label: 'parking.in1h', offsetMins: 60 },
+  { label: 'parking.in3h', offsetMins: 180 },
 ];
 const HOURS = [1, 2, 3, 4];
 
@@ -46,6 +48,7 @@ function availabilityColor(lot: ParkingLot) {
 
 export default function ParkingScreen() {
   const theme = useTheme();
+  const t = useT();
   const { profile } = useApp();
   const mapRef = useRef<MapView>(null);
 
@@ -85,16 +88,16 @@ export default function ParkingScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>Parking</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('parking.title')}</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Predicted free spots when you arrive
+          {t('parking.subtitle')}
         </Text>
       </View>
       <View style={styles.searchWrap}>
         <PlaceSearch
           value={destination}
           onSelect={setDestination}
-          placeholder="Where are you going?"
+          placeholder={t('parking.search')}
         />
       </View>
       <ScrollView
@@ -104,7 +107,7 @@ export default function ParkingScreen() {
         {ARRIVAL_OPTIONS.map((o) => (
           <Chip
             key={o.label}
-            label={o.label}
+            label={t(o.label)}
             icon="clock-outline"
             selected={offsetMins === o.offsetMins}
             onPress={() => setOffsetMins(o.offsetMins)}
@@ -168,6 +171,7 @@ export default function ParkingScreen() {
               />
             ))
         )}
+        <DemoFooter />
       </ScrollView>
 
       <ReserveSheet
@@ -191,6 +195,7 @@ function LotCard({
   onReserve: () => void;
 }) {
   const theme = useTheme();
+  const t = useT();
   const free = lot.predictedFreeSpots ?? 0;
   const color = availabilityColor(lot);
   return (
@@ -208,7 +213,7 @@ function LotCard({
             {formatInr(lot.ratePerHour)}/hr{lot.hasEvCharging ? ' · EV charging' : ''}
           </Text>
         </View>
-        <Badge label={`${free} free`} color={color} />
+        <Badge label={`${free} ${t('parking.free')}`} color={color} />
       </View>
       <View style={[styles.bar, { backgroundColor: theme.surfaceAlt }]}>
         <View
@@ -223,7 +228,7 @@ function LotCard({
           {free} of {lot.totalSpots} spots predicted free
         </Text>
         <Button
-          label="Reserve"
+          label={t('parking.reserve')}
           icon="calendar-check"
           onPress={onReserve}
           disabled={free === 0}

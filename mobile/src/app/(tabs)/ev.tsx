@@ -5,11 +5,13 @@ import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MapPin } from '@/components/map-pin';
-import { ChargerRow, STATUS_LABEL } from '@/components/charger-row';
+import { ChargerRow } from '@/components/charger-row';
+import { DemoFooter } from '@/components/demo-footer';
 import { Button, Chip, EmptyState, ErrorState, Icon, SkeletonCard } from '@/components/ui';
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
+import { useT } from '@/lib/i18n';
 import type { Charger, ChargerStatus } from '@/lib/types';
 
 const CONNECTORS = ['All', 'CCS2', 'Type2', 'GBT', 'Bharat AC001', 'CHAdeMO'];
@@ -21,6 +23,7 @@ const POWER = [
 
 export default function EvScreen() {
   const theme = useTheme();
+  const t = useT();
   const { profile } = useApp();
   const center = profile?.home ?? DEFAULT_CENTER;
 
@@ -63,10 +66,8 @@ export default function EvScreen() {
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <View>
-          <Text style={[styles.title, { color: theme.text }]}>EV chargers</Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Live status from operators and drivers like you
-          </Text>
+          <Text style={[styles.title, { color: theme.text }]}>{t('ev.title')}</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{t('ev.subtitle')}</Text>
         </View>
         <Pressable
           onPress={() => setView(view === 'map' ? 'list' : 'map')}
@@ -101,7 +102,7 @@ export default function EvScreen() {
           <View key={s} style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: StatusColors[s] }]} />
             <Text style={[styles.legendText, { color: theme.textSecondary }]}>
-              {STATUS_LABEL[s]} {chargers ? counts[s] : ''}
+              {t(`charger.${s}`)} {chargers ? counts[s] : ''}
             </Text>
           </View>
         ))}
@@ -130,7 +131,7 @@ export default function EvScreen() {
                 icon="ev-station"
                 selected={c.id === selectedId}
                 onPress={() => setSelectedId(c.id)}
-                accessibilityLabel={`${c.name}, ${STATUS_LABEL[c.status]}`}
+                accessibilityLabel={`${c.name}, ${t(`charger.${c.status}`)}`}
               />
             ))}
           </MapView>
@@ -153,6 +154,7 @@ export default function EvScreen() {
           renderItem={({ item }) => (
             <ChargerRow charger={item} onPress={() => openDetail(item.id)} />
           )}
+          ListFooterComponent={<DemoFooter />}
           ListEmptyComponent={
             chargers ? (
               <EmptyState

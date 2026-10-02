@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Card, Icon } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { formatDuration, formatInr, formatTime } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 import { MODE_INFO, OPTION_INFO } from '@/lib/modes';
 import type { Itinerary, OptionLabel } from '@/lib/types';
 
@@ -14,8 +15,13 @@ function modeChain(it: Itinerary) {
 
 export function OptionBadges({ badges }: { badges: OptionLabel[] }) {
   const theme = useTheme();
+  const t = useT();
   if (!badges.length) {
-    return <Text style={[styles.badgeText, { color: theme.textSecondary }]}>OTHER OPTION</Text>;
+    return (
+      <Text style={[styles.badgeText, { color: theme.textSecondary }]}>
+        {t('option.OTHER').toUpperCase()}
+      </Text>
+    );
   }
   return (
     <View style={styles.badges}>
@@ -23,7 +29,7 @@ export function OptionBadges({ badges }: { badges: OptionLabel[] }) {
         <View key={b} style={[styles.badge, { backgroundColor: OPTION_INFO[b].color + '22' }]}>
           <Icon name={OPTION_INFO[b].icon} size={14} color={OPTION_INFO[b].color} />
           <Text style={[styles.badgeText, { color: OPTION_INFO[b].color }]}>
-            {OPTION_INFO[b].label.toUpperCase()}
+            {t(`option.${b}`).toUpperCase()}
           </Text>
         </View>
       ))}
@@ -41,6 +47,7 @@ export function JourneyCard({
   compact?: boolean;
 }) {
   const theme = useTheme();
+  const t = useT();
   const first = itinerary.legs[0];
   const last = itinerary.legs[itinerary.legs.length - 1];
   const chain = modeChain(itinerary);
@@ -65,8 +72,8 @@ export function JourneyCard({
       </View>
 
       <Text style={[styles.times, { color: theme.text }]}>
-        Leave {formatTime(first.departAt)} · Arrive {formatTime(last.arriveAt)} ·{' '}
-        {formatDuration(itinerary.totalMins)}
+        {t('card.leave')} {formatTime(first.departAt)} · {t('card.arrive')}{' '}
+        {formatTime(last.arriveAt)} · {formatDuration(itinerary.totalMins)}
       </Text>
 
       {!compact && (
@@ -74,13 +81,13 @@ export function JourneyCard({
           <View style={styles.green}>
             <Icon name="leaf" size={16} color={theme.success} />
             <Text style={[styles.greenText, { color: theme.success }]}>
-              Saves {itinerary.co2SavedKg} kg CO₂
+              {t('card.saves', { n: itinerary.co2SavedKg })}
             </Text>
           </View>
           {itinerary.onTime === false && (
             <View style={[styles.late, { backgroundColor: theme.dangerSoft }]}>
               <Icon name="clock-alert-outline" size={14} color={theme.danger} />
-              <Text style={[styles.lateText, { color: theme.danger }]}>Misses your deadline</Text>
+              <Text style={[styles.lateText, { color: theme.danger }]}>{t('card.late')}</Text>
             </View>
           )}
         </View>

@@ -2,17 +2,18 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { STATUS_LABEL } from '@/components/charger-row';
 import { JourneyCard } from '@/components/journey-card';
 import { Badge, Card, Icon } from '@/components/ui';
 import { Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { formatInr, formatKm } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 import { openItinerary } from '@/lib/open-itinerary';
 import type { Card as ChatCard } from '@/lib/types';
 
 /** Renders the structured cards the copilot returns under a reply. */
 export function ChatCards({ cards }: { cards: ChatCard[] }) {
   const theme = useTheme();
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
   if (!cards.length) return null;
 
@@ -40,8 +41,8 @@ export function ChatCards({ cards }: { cards: ChatCard[] }) {
                     key={c.id}
                     style={styles.mini}
                     onPress={() => router.push({ pathname: '/charger/[id]', params: { id: c.id } })}
-                    accessibilityLabel={`${c.name}, ${STATUS_LABEL[c.status]}`}>
-                    <Badge label={STATUS_LABEL[c.status]} color={StatusColors[c.status]} />
+                    accessibilityLabel={`${c.name}, ${t(`charger.${c.status}`)}`}>
+                    <Badge label={t(`charger.${c.status}`)} color={StatusColors[c.status]} />
                     <Text style={[styles.miniTitle, { color: theme.text }]} numberOfLines={2}>
                       {c.name}
                     </Text>

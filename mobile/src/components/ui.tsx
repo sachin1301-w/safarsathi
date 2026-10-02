@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
+import { useT } from '@/lib/i18n';
 
 export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -206,13 +207,16 @@ export function EmptyState({
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  const t = useT();
   return (
     <EmptyState
       icon="wifi-alert"
-      title="Something went wrong"
+      title={t('common.error')}
       message={message}
       action={
-        onRetry && <Button label="Try again" icon="refresh" variant="secondary" onPress={onRetry} />
+        onRetry && (
+          <Button label={t('common.retry')} icon="refresh" variant="secondary" onPress={onRetry} />
+        )
       }
     />
   );

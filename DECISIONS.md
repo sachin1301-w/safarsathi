@@ -99,3 +99,12 @@ These extend SPEC.md and take precedence over it where they conflict.
 - **"Fix my trip"** opens Chat showing "Fix my trip: <title>" while sending the trip id to the copilot, which calls `replan_trip` (the offline assistant does too).
 - **Simulate delay** is hidden behind a long-press on the Journey detail title and lets you pick the leg and 30/60/90/120 minutes (defaults: the flight/train, 90 min).
 - **Measured:** the SSE alert reached a listener 14 ms after `POST /demo/disrupt`.
+
+## Phase 8
+
+- **UI strings in all 11 languages** (`mobile/src/lib/i18n.ts`). English, Hindi and Marathi cover every label; the other eight cover the most visible ones (tabs, Home, Chat, chargers, parking, trips, option badges, "Fix my trip") and fall back to English for the rest. All translations were written without a native-speaker review, so have them checked before a public release. Copilot replies are generated in the chosen language by Claude regardless.
+- **Language can be changed from Home or Chat.** It is saved to the profile and used for UI labels, the copilot's replies and the voice.
+- **Demo-data footer** on Home, EV list, Parking, Trips, Journey and Charger detail.
+- **App icon and splash:** a white "start dot → dotted route → destination pin" mark on the teal accent, rendered from SVG (`sharp`) into the icon, Android adaptive foreground/background/monochrome layers, splash image and favicon. The Expo template's iOS `expo.icon` was replaced with the PNG.
+- **Package ids** `com.safarsathi.app` and microphone permission text were added for future builds. `expo-asset` was installed as the peer `expo-audio` needs; `expo-doctor` passes 21/21.
+- **Not done here:** the full demo on a real Android phone (it needs your device). Everything else was checked with type-checks, lint, unit tests, HTTP tests of every endpoint, and an Android bundle build.

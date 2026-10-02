@@ -4,37 +4,42 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AlertBanner } from '@/components/alert-banner';
+import { DemoFooter } from '@/components/demo-footer';
 import { JourneyCard } from '@/components/journey-card';
+import { LanguagePicker, nativeName } from '@/components/language-picker';
 import { TripStatusChip } from '@/components/trip-status';
 import { Chip, Icon, SectionTitle, type IconName } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAlerts } from '@/lib/alerts';
+import { useT, type StringKey } from '@/lib/i18n';
 import { useApp } from '@/lib/app-context';
 import type { Trip } from '@/lib/types';
 
 type Status = 'checking' | 'connected' | 'offline';
 
-const QUICK: { label: string; icon: IconName; to: string; from?: string }[] = [
-  { label: 'Home', icon: 'home-variant', to: 'home', from: 'office' },
-  { label: 'Office', icon: 'briefcase', to: 'office' },
-  { label: 'Airport', icon: 'airplane', to: 'Pune Airport' },
-  { label: 'Station', icon: 'train', to: 'Pune Railway Station' },
+const QUICK: { label: StringKey; icon: IconName; to: string; from?: string }[] = [
+  { label: 'home.chipHome', icon: 'home-variant', to: 'home', from: 'office' },
+  { label: 'home.chipOffice', icon: 'briefcase', to: 'office' },
+  { label: 'home.chipAirport', icon: 'airplane', to: 'Pune Airport' },
+  { label: 'home.chipStation', icon: 'train', to: 'Pune Railway Station' },
 ];
 
-function greeting(): string {
+function greeting(): StringKey {
   const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 12) return 'home.morning';
+  if (h < 17) return 'home.afternoon';
+  return 'home.evening';
 }
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const { profile } = useApp();
+  const { profile, setLanguage } = useApp();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [status, setStatus] = useState<Status>('checking');
   const [query, setQuery] = useState('');
   const [hello] = useState(greeting);
+  const t = useT();
   const { alerts, dismiss, refresh } = useAlerts();
   const [nextTrip, setNextTrip] = useState<Trip | null>(null);
 
@@ -94,15 +99,28 @@ export default function HomeScreen() {
             <Icon name="map-marker-path" size={22} color={theme.onAccent} />
           </View>
           <Text style={[styles.brand, { color: theme.text }]}>SafarSathi</Text>
+          <Pressable
+            onPress={() => setPickerOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Change language"
+            style={[
+              styles.status,
+              { backgroundColor: theme.accentSoft, borderColor: theme.accent },
+            ]}>
+            <Icon name="translate" size={14} color={theme.accent} />
+            <Text style={[styles.statusText, { color: theme.text }]}>
+              {nativeName(profile?.language ?? 'en-IN')}
+            </Text>
+          </Pressable>
           <View
             style={[styles.status, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <View style={[styles.dot, { backgroundColor: dot }]} />
             <Text style={[styles.statusText, { color: theme.textSecondary }]}>
               {status === 'connected'
-                ? 'Connected'
+                ? t('status.connected')
                 : status === 'offline'
-                  ? 'Offline'
-                  : 'Connecting'}
+                  ? t('status.offline')
+                  : t('status.connecting')}
             </Text>
           </View>
         </View>
@@ -117,10 +135,10 @@ export default function HomeScreen() {
 
         <View>
           <Text style={[styles.hello, { color: theme.textSecondary }]}>
-            {hello}
+            {t(hello)}
             {profile ? `, ${profile.name}` : ''}
           </Text>
-          <Text style={[styles.headline, { color: theme.text }]}>Where to today?</Text>
+          <Text style={[styles.headline, { color: theme.text }]}>{t('home.headline')}</Text>
         </View>
 
         <View
@@ -133,11 +151,11 @@ export default function HomeScreen() {
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={submit}
-            placeholder="Where to?"
+            placeholder={t('home.placeholder')}
             placeholderTextColor={theme.textSecondary}
             returnKeyType="go"
             style={[styles.searchInput, { color: theme.text }]}
-            accessibilityLabel="Where to?"
+            accessibilityLabel={t('home.placeholder')}
           />
           <Pressable
             onPress={voice}
@@ -157,14 +175,19 @@ export default function HomeScreen() {
 
         <View style={styles.chips}>
           {QUICK.map((q) => (
-            <Chip key={q.label} label={q.label} icon={q.icon} onPress={() => goTo(q.to, q.from)} />
+            <Chip
+              key={q.label}
+              label={t(q.label)}
+              icon={q.icon}
+              onPress={() => goTo(q.to, q.from)}
+            />
           ))}
         </View>
 
         {nextTrip && (
           <View style={styles.section}>
             <SectionTitle action={<TripStatusChip status={nextTrip.status} />}>
-              Your next trip
+              {t('home.nextTrip')}
             </SectionTitle>
             <JourneyCard
               itinerary={{
@@ -179,7 +202,14 @@ export default function HomeScreen() {
             />
           </View>
         )}
+        <DemoFooter />
       </ScrollView>
+      <LanguagePicker
+        visible={pickerOpen}
+        value={profile?.language ?? 'en-IN'}
+        onSelect={setLanguage}
+        onClose={() => setPickerOpen(false)}
+      />
     </SafeAreaView>
   );
 }

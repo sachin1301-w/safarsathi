@@ -2,7 +2,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { STATUS_LABEL } from '@/components/charger-row';
+import { DemoFooter } from '@/components/demo-footer';
 import {
   Badge,
   Button,
@@ -15,6 +15,7 @@ import {
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { timeAgo } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 import type { Charger, ChargerReport, ChargerStatus } from '@/lib/types';
 
 type Reportable = Exclude<ChargerStatus, 'UNKNOWN'>;
@@ -26,6 +27,7 @@ const REPORT_OPTIONS: { status: Reportable; icon: IconName }[] = [
 
 export default function ChargerDetailScreen() {
   const theme = useTheme();
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [charger, setCharger] = useState<(Charger & { reports: ChargerReport[] }) | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export default function ChargerDetailScreen() {
       <View style={[styles.hero, { backgroundColor: color }]}>
         <Icon name="ev-station" size={36} color="#FFFFFF" />
         <View style={{ flex: 1 }}>
-          <Text style={styles.heroStatus}>{STATUS_LABEL[charger.status]}</Text>
+          <Text style={styles.heroStatus}>{t(`charger.${charger.status}`)}</Text>
           <Text style={styles.heroName}>{charger.name}</Text>
           <Text style={styles.heroMeta}>Last verified {timeAgo(charger.lastVerified)}</Text>
         </View>
@@ -110,7 +112,7 @@ export default function ChargerDetailScreen() {
         {REPORT_OPTIONS.map((o) => (
           <Button
             key={o.status}
-            label={STATUS_LABEL[o.status]}
+            label={t(`charger.${o.status}`)}
             icon={o.icon}
             variant="secondary"
             loading={reporting === o.status}
@@ -130,7 +132,7 @@ export default function ChargerDetailScreen() {
             <View style={[styles.dot, { backgroundColor: StatusColors[r.status] }]} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.reportStatus, { color: theme.text }]}>
-                {STATUS_LABEL[r.status]}
+                {t(`charger.${r.status}`)}
               </Text>
               {r.note ? <Text style={{ color: theme.textSecondary }}>{r.note}</Text> : null}
             </View>
@@ -138,6 +140,7 @@ export default function ChargerDetailScreen() {
           </View>
         ))
       )}
+      <DemoFooter />
     </ScrollView>
   );
 }

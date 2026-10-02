@@ -3,20 +3,16 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Badge, Card, Icon } from '@/components/ui';
 import { Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { formatKm } from '@/lib/format';
-import type { Charger, ChargerStatus } from '@/lib/types';
-
-export const STATUS_LABEL: Record<ChargerStatus, string> = {
-  WORKING: 'Working',
-  BUSY: 'Busy',
-  BROKEN: 'Broken',
-  UNKNOWN: 'Unknown',
-};
+import { useT } from '@/lib/i18n';
+import type { Charger } from '@/lib/types';
 
 export function ChargerRow({ charger, onPress }: { charger: Charger; onPress: () => void }) {
   const theme = useTheme();
+  const t = useT();
+  const statusLabel = t(`charger.${charger.status}`);
   const color = StatusColors[charger.status];
   return (
-    <Card onPress={onPress} accessibilityLabel={`${charger.name}, ${STATUS_LABEL[charger.status]}`}>
+    <Card onPress={onPress} accessibilityLabel={`${charger.name}, ${statusLabel}`}>
       <View style={styles.rowTop}>
         <View style={[styles.rowIcon, { backgroundColor: color }]}>
           <Icon name="ev-station" color="#FFFFFF" />
@@ -30,7 +26,7 @@ export function ChargerRow({ charger, onPress }: { charger: Charger; onPress: ()
           </Text>
         </View>
         <View style={styles.rowRight}>
-          <Badge label={STATUS_LABEL[charger.status]} color={color} />
+          <Badge label={statusLabel} color={color} />
           {charger.distanceKm !== undefined && (
             <Text style={[styles.rowMeta, { color: theme.textSecondary }]}>
               {formatKm(charger.distanceKm)}

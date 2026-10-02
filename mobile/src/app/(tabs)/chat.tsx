@@ -19,6 +19,7 @@ import { Chip, Icon } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-context';
+import { useT } from '@/lib/i18n';
 import type { Card } from '@/lib/types';
 import { speak, stopSpeaking, useVoiceInput } from '@/lib/voice';
 
@@ -44,6 +45,7 @@ let nextId = 1;
 
 export default function ChatScreen() {
   const theme = useTheme();
+  const t = useT();
   const { profile, setLanguage } = useApp();
   const params = useLocalSearchParams<{
     q?: string;
@@ -169,7 +171,7 @@ export default function ChatScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: theme.text }]}>SafarSathi</Text>
-          <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Your AI travel copilot</Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 13 }}>{t('chat.subtitle')}</Text>
         </View>
         <Pressable
           onPress={() => setPickerOpen(true)}
@@ -194,12 +196,9 @@ export default function ChatScreen() {
           {messages.length === 0 && (
             <View style={styles.welcome}>
               <Text style={[styles.welcomeTitle, { color: theme.text }]}>
-                Namaste{profile ? `, ${profile.name}` : ''}! Where are we going?
+                Namaste{profile ? `, ${profile.name}` : ''}! {t('chat.welcome')}
               </Text>
-              <Text style={{ color: theme.textSecondary, fontSize: 15 }}>
-                Ask in any Indian language, by text or voice. I plan door to door across metro, bus,
-                trains, flights, cabs and your EV.
-              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 15 }}>{t('chat.intro')}</Text>
               <View style={styles.suggestions}>
                 {SUGGESTIONS.map((s) => (
                   <Chip key={s} label={s} onPress={() => send(s)} />
@@ -236,7 +235,7 @@ export default function ChatScreen() {
                   <View style={styles.bubbleFooter}>
                     {m.offline && (
                       <Text style={[styles.tag, { color: theme.textSecondary }]}>
-                        Offline assistant
+                        {t('chat.offline')}
                       </Text>
                     )}
                     <Pressable
@@ -268,7 +267,7 @@ export default function ChatScreen() {
                 { backgroundColor: theme.surface, borderColor: theme.border },
               ]}>
               <ActivityIndicator color={theme.accent} />
-              <Text style={{ color: theme.textSecondary }}>Planning…</Text>
+              <Text style={{ color: theme.textSecondary }}>{t('chat.planning')}</Text>
             </View>
           )}
         </ScrollView>
@@ -300,9 +299,7 @@ export default function ChatScreen() {
           <TextInput
             value={input}
             onChangeText={setInput}
-            placeholder={
-              voice.state === 'recording' ? 'Listening… tap stop when done' : 'Ask SafarSathi…'
-            }
+            placeholder={voice.state === 'recording' ? t('chat.listening') : t('chat.placeholder')}
             placeholderTextColor={theme.textSecondary}
             style={[styles.input, { color: theme.text }]}
             multiline

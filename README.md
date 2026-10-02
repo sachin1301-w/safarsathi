@@ -1,49 +1,109 @@
 # SafarSathi — AI Mobility Copilot
 
-One AI copilot that fixes the whole journey, not just one leg of it. See [SPEC.md](SPEC.md) for the full build specification and [DECISIONS.md](DECISIONS.md) for choices made along the way.
+One AI copilot that fixes the whole journey, not just one leg of it.
+
+SafarSathi plans door-to-door trips across metro, bus, auto, bike taxi, cab, train, flight and your EV, books every leg in one place, and replans automatically when something is delayed. It speaks 11 Indian languages.
+
+See [SPEC.md](SPEC.md) for the build specification and [DECISIONS.md](DECISIONS.md) for every choice made along the way.
+
+## What's inside
+
+| Feature | Where |
+| --- | --- |
+| AI journey planner: Fastest, Cheapest and Greenest options with honest badges | Home, Chat, `POST /api/journeys/plan` |
+| Disruption replanning with live alerts (SSE) and "Fix my trip" | Journey detail, Home banner, Chat |
+| EV charger map with live status and crowd reports | EV tab, Charger detail |
+| Parking finder with predicted free spots and mock reservations | Parking tab |
+| Unified bookings (mock PNRs) and one Trips screen | Journey detail "Book all", Trips tab |
+| Voice chat in 11 languages: Sarvam AI speech-to-text and text-to-speech | Chat mic and speaker buttons |
+| Long-term memory of places, preferences and booked trips (Cognee) | Chat tools `remember` / `recall_memory` |
+| Green score: CO₂ saved versus driving alone | Every journey card |
 
 ```
-backend/   Express + TypeScript + Prisma (SQLite) REST API and AI agent
-mobile/    Expo (React Native) + TypeScript + Expo Router app
+backend/   Express + TypeScript + Prisma (SQLite): REST API, planner, AI agent, adapters
+mobile/    Expo SDK 57 (React Native) + TypeScript + Expo Router
 ```
 
-## Prerequisites
+## Run it
 
-- Node.js 20+
-- An Android phone with **Expo Go** installed, on the same Wi-Fi as your laptop
+You need Node.js 20+ and an Android phone with **Expo Go** on the same Wi-Fi as your laptop.
 
-## Backend
+### 1. Backend
 
 ```bash
 cd backend
-cp .env.example .env        # then fill in ANTHROPIC_API_KEY
+cp .env.example .env        # then fill in the keys (see below)
 npm install
+npm run db:setup            # create the SQLite database and seed demo data
 npm run dev                 # http://localhost:4000/api/health -> { "ok": true }
 ```
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Start the API with auto-reload |
-| `npm start` | Start the API |
-| `npm run typecheck` | Type-check with `tsc` |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier |
-| `npm test` | Vitest unit tests |
-
-## Mobile
+### 2. Mobile
 
 ```bash
 cd mobile
-cp .env.example .env        # set EXPO_PUBLIC_API_URL to http://<your-laptop-LAN-IP>:4000
+cp .env.example .env        # EXPO_PUBLIC_API_URL=http://<your-laptop-LAN-IP>:4000
 npm install
 npx expo start              # scan the QR code with Expo Go
 ```
 
-Find your LAN IP with `ipconfig` (Windows) or `ipconfig getifaddr en0` (macOS). If the phone can't reach the backend, allow Node.js through the Windows firewall on private networks.
+Find your LAN IP with `ipconfig` (Windows, the Wi-Fi adapter's IPv4 address) or `ipconfig getifaddr en0` (macOS).
 
-| Command | What it does |
-| --- | --- |
-| `npx expo start` | Start the Expo dev server |
-| `npm run lint` | ESLint (`expo lint`) |
-| `npm run typecheck` | Type-check with `tsc` |
-| `npm run format` | Prettier |
+### Environment variables (`backend/.env`)
+
+| Variable | Needed for | Without it |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` | The Claude copilot in Chat | The offline assistant answers the demo's requests from templates |
+| `SARVAM_API_KEY` | Voice input and natural Indian-language voices | Keyboard dictation and the phone's own text-to-speech |
+| `COGNEE_API_URL`, `COGNEE_API_KEY` | Long-term memory in Cognee | Memory is kept in the local database only |
+| `OPEN_CHARGE_MAP_KEY` | Real chargers from Open Charge Map | Seeded Pune chargers |
+| `DEMO_OFFLINE` | `true` forces the offline assistant (backup for the demo) | |
+| `DATABASE_URL`, `PORT` | SQLite file and API port | Defaults: `file:./dev.db`, `4000` |
+
+Never commit `.env`; both apps ignore it.
+
+## Commands
+
+| Where | Command | What it does |
+| --- | --- | --- |
+| backend | `npm run dev` | API with auto-reload |
+| backend | `npm run db:seed` | **Reset the demo**: chargers, parking, user, memories; deletes trips |
+| backend | `npm test` | Planner, replanner and booking tests (Vitest) |
+| backend | `npm run plan -- Kothrud "Connaught Place" 20:00` | Print planner output (add `--ev` for an EV trip) |
+| backend | `npm run data:generate` | Regenerate the mock JSON in `backend/data` |
+| backend | `npm run typecheck` / `npm run lint` / `npm run format` | Checks |
+| mobile | `npx expo start` | Expo dev server |
+| mobile | `npm run typecheck` / `npm run lint` / `npm run format` | Checks |
+
+## Demo script (4 minutes)
+
+Before you start: `npm run db:seed` in `backend`, open the app, and check that Home shows **Connected**.
+
+1. **Hook (30 s).** "Nearly 3 in 10 government-approved EV chargers in India don't work, and our metros are underused because nobody solves the last mile. Meet SafarSathi."
+2. **Plan (60 s).** On Home, tap the mic and say "I need to reach Connaught Place, Delhi by 8 PM today from Kothrud" (or type it). Chat shows three options. Open one with a flight, then tap **Book all**. The tickets appear in Trips.
+3. **Disruption (60 s).** On the journey screen, **long-press the trip title**, pick the flight and 90 minutes, and tap Delay. A red alert appears. Tap **Fix my trip**: the copilot explains the impact and offers a new plan. Tap it to accept; the old trip is marked Replaced.
+4. **EV (40 s).** Open the EV tab, tap a charger, report it **Broken** and go back: the pin is red. In Chat ask "Plan an EV trip to Mahabaleshwar"; the plan includes a charging stop (the demo user's battery is at 30%).
+5. **Language (20 s).** Switch the language to मराठी (top of Home or Chat), ask "जवळचे पार्किंग कुठे आहे?" and tap the speaker to hear the answer.
+6. **Close (30 s).** Every data source sits behind an adapter (`backend/src/adapters`), ready for IRCTC partner APIs, Open Charge Map, GTFS feeds and parking operators.
+
+"By 8 PM today" only has on-time options if you run the demo before about 2 PM. Later in the day, ask for "tomorrow by 8 PM".
+
+### Backup plan
+
+- Set `DEMO_OFFLINE=true` in `backend/.env` and restart: the offline assistant answers the demo's requests in English, Hindi and Marathi without the Claude API.
+- Record a screen video of the full demo the night before.
+
+## Troubleshooting
+
+- **Home says Offline.** The phone and laptop must be on the same Wi-Fi, and `EXPO_PUBLIC_API_URL` must use the laptop's LAN IP (not `localhost`). On Windows, allow Node.js through the firewall for private networks. Restart `npx expo start` after changing `mobile/.env`.
+- **No voice input.** Voice needs `SARVAM_API_KEY` on the backend. Without it, use the keyboard's mic to dictate.
+- **Chat replies are tagged "Offline assistant".** `ANTHROPIC_API_KEY` is empty or rejected, or `DEMO_OFFLINE=true`. Check the backend log.
+
+## How it's built
+
+- **Planner** (`backend/src/services/planner.ts`): builds candidate chains (walk/auto/bike taxi/cab, metro with line changes, PMPML bus, city leg → train/flight/bus → city leg, EV drive with charger stops), schedules them in India time with boarding buffers and peak-hour speeds, and picks Fastest, Cheapest and Greenest.
+- **Replanner** (`backend/src/services/replanner.ts`): applies a delay, checks every connection and the deadline, pushes an SSE alert, and plans from the user's current point without the delayed service.
+- **Copilot** (`backend/src/ai`): Claude Sonnet 5.5 tool-use loop with tools for planning, replanning, chargers, parking, booking, trips, geocoding and memory. Facts only come from tools.
+- **Adapters** (`backend/src/adapters`): one interface per data source, with offline mocks plus Open Charge Map, Sarvam and Cognee implementations.
+
+All prices, timings, PNRs and charger statuses are demo data.
