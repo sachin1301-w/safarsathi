@@ -1,650 +1,515 @@
-# SafarSathi: Project Documentation
+# SafarSathi: Complete Project Guide
 
-**One AI copilot that fixes the whole journey, not just one leg of it.**
+**SafarSathi** ("travel companion") is an app that plans your whole trip across India, from your door to your destination. It uses autos, bike taxis, cabs, metro, city buses, trains, flights, intercity buses and your own electric car (EV). It books every part of the trip in one place, finds EV chargers and parking, and makes a new plan for you if something is delayed. You can type or speak to it in 11 Indian languages.
 
-SafarSathi ("travel companion") is a mobile app that plans door-to-door journeys across India using walking, auto-rickshaws, bike taxis, cabs, metro, city buses, trains, flights, intercity buses and the user's own EV. It books every leg in one place, finds EV chargers and parking, and replans automatically when something is delayed. Users can type or speak to it in 11 Indian languages.
+We built it for the **iQOO Grand Finale hackathon** (Mobility theme). It runs as a **phone app** (Android, through Expo Go) and as a **website**.
 
-It was built for the iQOO Grand Finale hackathon (Mobility theme), starting from the build specification in [`SPEC.md`](../SPEC.md). This document covers the whole project: what it does, how it is built, how to run it, everything that was changed after the original eight build phases, the problems found along the way, and what is still open.
+This guide explains, in simple language:
 
-Related files:
+- what the app does and how it works inside
+- how to run it on your laptop, your phone, and any other device
+- everything we built and changed, from the start until now
+- the problems we ran into, and how we solved them
+- what is still left to do
 
-- [`SPEC.md`](../SPEC.md): the original build specification.
-- [`DECISIONS.md`](../DECISIONS.md): every design choice made during the eight build phases.
-- [`README.md`](../README.md): the short run guide.
+Other files in the project:
+
+| File | What's in it |
+| --- | --- |
+| [`README.md`](../README.md) | The short "how to run it" page |
+| [`SPEC.md`](../SPEC.md) | The original plan we built from |
+| [`DECISIONS.md`](../DECISIONS.md) | Small design choices made during the first build |
 
 ---
 
 ## Contents
 
-1. [Status at a glance](#1-status-at-a-glance)
-2. [The product](#2-the-product)
-3. [Features](#3-features)
-4. [Architecture and tech stack](#4-architecture-and-tech-stack)
-5. [Repository layout](#5-repository-layout)
-6. [Backend](#6-backend)
-7. [Mobile app](#7-mobile-app)
-8. [Data](#8-data)
-9. [Configuration](#9-configuration)
-10. [Running the project](#10-running-the-project)
-11. [Demo script](#11-demo-script)
-12. [Testing and measurements](#12-testing-and-measurements)
-13. [Project history](#13-project-history)
-14. [Troubleshooting](#14-troubleshooting)
-15. [Security notes](#15-security-notes)
-16. [Open items and next steps](#16-open-items-and-next-steps)
+1. [Quick summary](#1-quick-summary)
+2. [What problem it solves](#2-what-problem-it-solves)
+3. [What the app can do](#3-what-the-app-can-do)
+4. [The screens, one by one](#4-the-screens-one-by-one)
+5. [How it works inside](#5-how-it-works-inside)
+6. [Where the data comes from](#6-where-the-data-comes-from)
+7. [Accounts and security](#7-accounts-and-security)
+8. [Settings and keys](#8-settings-and-keys)
+9. [How to run it](#9-how-to-run-it)
+10. [Making it work on any device](#10-making-it-work-on-any-device)
+11. [Demo script for the judges](#11-demo-script-for-the-judges)
+12. [Testing and speed](#12-testing-and-speed)
+13. [The full story: what we did, step by step](#13-the-full-story-what-we-did-step-by-step)
+14. [Problems we hit and how we fixed them](#14-problems-we-hit-and-how-we-fixed-them)
+15. [If something goes wrong](#15-if-something-goes-wrong)
+16. [What is left to do](#16-what-is-left-to-do)
+17. [Glossary](#17-glossary)
 
 ---
 
-## 1. Status at a glance
+## 1. Quick summary
 
-| Area | Status |
+| Item | Status |
 | --- | --- |
-| All eight spec phases (planner, copilot, EV, parking, bookings, replanning, polish) | Done |
-| AI chat | Runs on **Google Gemini** (`gemini-3.5-flash-lite`); falls back to Sarvam, then an offline assistant |
-| Voice in and out, 11 languages | Done (Sarvam AI) |
-| Trips anywhere in India | Done (OpenStreetMap place search + hub-and-cab routing) |
-| EV chargers and parking across India | Done (OpenStreetMap; 600 chargers, 2,419 parking lots in 44 cities, plus live lookups) |
-| Accounts (email + password), saved trips per user | Done |
-| Maps (Leaflet + CARTO tiles), current location | Done |
-| Full-screen loading animations, a different scene per screen | Done |
-| Account menu with Light / Dark / System theme | Done |
-| Tested on a real Android phone | The app was opened and used on the developer's phone over a hotspot. The latest UI changes have not yet been checked on a phone. |
-| Database on MongoDB Atlas | **Active.** Cluster `cluster0.8ywplm8`, database `IQOO`. Accounts and sessions were migrated from SQLite. SQLite remains available offline (`prisma/sqlite/schema.prisma`). |
-| Website | **Done.** The same app in a browser: sidebar layout, hover effects, live Leaflet map, side-by-side Parking |
-| Navigate to parking | **Done.** Navigate button on every lot and in chat results (Google Maps directions) |
-| App usable from any phone, anywhere | **Ready, blocked by AVG.** `npx expo start --tunnel` serves the app and API through one public address, but AVG's HTTPS scanning breaks the tunnel on this laptop (see [section 16](#16-open-items-and-next-steps)). |
-| "Continue with Google" sign-in | **Website: done** (client id configured; first real sign-in still to be tried). Phone app: needs an installable build (see [section 16](#16-open-items-and-next-steps)). |
+| Trip planning (fastest, cheapest, greenest) | ✅ Working, anywhere in India |
+| AI chat assistant | ✅ Working (Google Gemini) |
+| Voice in 11 languages | ✅ Working (Sarvam AI) |
+| EV charger map | ✅ Working, all of India |
+| Parking finder, reservations and **Navigate** | ✅ Working, all of India |
+| Bookings and the Trips list | ✅ Working (demo tickets) |
+| Delay alerts and automatic re-planning | ✅ Working |
+| Login and sign-up (email and password) | ✅ Working |
+| Website version | ✅ Working (desktop and phone browsers) |
+| "Continue with Google" | ⚠️ Built; you must finish the Google Cloud setup (section 16) |
+| Online database (MongoDB Atlas) | ✅ Working |
+| Any phone, any network (through a tunnel) | ✅ Working while the laptop is on |
+| Online without the laptop (Render) | ⏳ Code ready; deploy it from your Render account (section 10) |
+| Code on GitHub | ✅ Private repository `sachin1301-w/safarsathi` |
 
 ---
 
-## 2. The product
+## 2. What problem it solves
 
-### Problems it solves
-
-| Problem | SafarSathi's answer |
+| Problem in India | How SafarSathi helps |
 | --- | --- |
-| Many public EV chargers in India don't work (only 6,645 of 9,332 FAME-II chargers were operational in March 2026) | Charger map with working status and crowd reports |
-| Too few chargers for the EVs on the road | Range-aware EV trip planning that adds charging stops |
-| Poor first- and last-mile connectivity | Door-to-door routes combining metro, bus, auto and bike taxi |
-| No parking information | Parking finder with predicted free spots and reservations |
-| Bookings spread across many apps | One itinerary and one booking flow for every leg |
-| Delays break connections | Automatic disruption alerts and AI replanning |
-| Language barriers | Voice and text chat in 11 Indian languages |
+| Many public EV chargers don't work (only about 7 in 10 were working in March 2026) | A charger map with live status, plus "Working / Busy / Broken" reports from drivers |
+| Too few chargers | EV trips that add a charging stop on the way, based on your battery |
+| Getting to and from the metro or station is hard (the "last mile") | Door-to-door routes that mix metro, bus, auto and bike taxi |
+| No information about parking | Parking near you, how many spaces will be free, a reserve button and directions |
+| Every ticket needs a different app | One trip, one "Book all" button |
+| A delay breaks the rest of your journey | Automatic alert and a new plan in one tap |
+| Many apps are English-only | Text and voice in 11 Indian languages |
 
-### Target users
-
-Daily metro and bus commuters, intercity travellers combining trains, flights and buses, EV owners, and first-time or elderly travellers who prefer speaking in their own language.
+**Who it is for:** daily metro and bus users, people travelling between cities, EV owners, and first-time or older travellers who prefer speaking in their own language.
 
 ---
 
-## 3. Features
+## 3. What the app can do
 
-### Journey planning
+### Plan a trip
 
-- Ask in Chat ("Kothrud to Connaught Place, Delhi by 8 PM tomorrow"), or use the Home quick chips (Home, Office, Airport, Station).
-- Returns up to three options. Each option carries honest badges for what it truly wins: **Fastest**, **Cheapest** or **Greenest**. One route that wins several metrics shows all its badges once.
-- Combines walking, auto, bike taxi, cab, Pune Metro and Delhi Metro, PMPML buses, trains, flights, intercity buses and EV drives, with boarding buffers, peak-hour speeds and India time.
-- **Anywhere in India:** names the demo data doesn't know (for example "Bikaner") are looked up on OpenStreetMap. Long trips chain a real timetabled service to a hub city with an outstation cab, for example *Pune → Delhi flight, then a cab to Bikaner*. Door-to-door outstation cabs are offered up to 1,500 km.
-- Trips start from the user's **current location** when they don't name a start point.
-- Every journey card shows a **green score**: CO₂ saved compared with driving alone.
+- Ask in chat, for example *"Kothrud to Connaught Place, Delhi by 8 PM tomorrow"*, or tap a quick button (Home, Office, Airport, Station).
+- You get up to **3 options**, each marked **Fastest**, **Cheapest** or **Greenest**. If one option wins two of these, it shows both labels.
+- **Anywhere in India:** if a place isn't in our list (for example Bikaner), the app looks it up on OpenStreetMap, a free world map. For long trips it combines a real train or flight with a cab, for example *"fly Pune → Delhi, then take a cab to Bikaner"*. Cab-only trips go up to 1,500 km.
+- If you don't say where you're starting from, it uses **your current location**.
+- Every option shows how much **CO₂ you save** compared with driving alone.
 
-### Bookings and trips
+### Book and keep your trips
 
-- **Book all** books every bookable leg of a trip through mock providers. Trains get 10-digit PNRs, flights 6-letter PNRs, and metro, cab and intercity-bus legs get booking references.
-- The **Trips** tab lists Upcoming, Saved plans and Past trips per account.
+- **Book all** books every part of the trip in one go and gives demo ticket numbers: 10-digit train PNRs, 6-letter flight PNRs, and references for metro, cab and bus.
+- The **Trips** tab shows Upcoming trips, Saved plans and Past trips. Each person's trips are saved to their own account.
 
-### Disruptions and replanning
+### Delays and re-planning
 
-- A simulated delay (long-press the trip title on the Journey screen) is pushed to the phone over Server-Sent Events. A red alert banner appears within milliseconds.
-- **Fix my trip** opens Chat. The copilot explains the impact in one sentence and offers new plans from the user's current point, keeping the original deadline and excluding the delayed service.
-- Accepting a new plan marks the old trip **Replaced**.
+- If a train or flight is delayed, a **red alert** appears in under a second.
+- Tap **Fix my trip**. The assistant explains what went wrong in one sentence and offers a new plan that still gets you there on time if possible. Accept it, and the old trip is marked "Replaced".
+- For the demo, you create a delay by **long-pressing the trip title** on the journey screen.
 
 ### EV chargers
 
-- Map and list of chargers, colour-coded **Working / Busy / Broken / Unknown**, with connector and power filters.
-- The charger detail screen shows power, price, the last-verified time and recent crowd reports. Reporting **Broken** turns the pin red immediately.
-- **Coverage:** 40 curated Pune and highway chargers, plus 600 chargers across India from OpenStreetMap. More are looked up live for any new area within a 300 km search radius.
-- EV trips use the car's current battery level and add charging stops near the route.
+- A map and list of chargers, coloured **green (Working)**, **amber (Busy)**, **red (Broken)** or **grey (Unknown)**.
+- Filter by plug type (CCS2, Type2…) and power (22 kW and up, 50 kW and up).
+- Tap a charger to see details and recent reports, report its status, or tap **Navigate** for directions.
+- Covers all of India: 40 hand-made chargers around Pune and on the highways, about 600 from OpenStreetMap, plus new ones looked up whenever you search a new area.
 
 ### Parking
 
-- Lots within 15 km of the user, or of a searched destination. If none are in range, the nearest five are shown with a clear note.
-- Predicted free spots for the chosen arrival time (now, in 1 hour, in 3 hours), based on each lot's hourly occupancy pattern.
-- Mock **Reserve** with a booking reference.
-- **Coverage:** 25 curated Pune lots, plus 2,419 OpenStreetMap lots in 44 major cities, plus live lookups elsewhere. Counts for OpenStreetMap lots are marked as estimates. An unknown rate shows "Rate n/a", and the user pays at the lot.
+- Parking within **15 km** of you or of a place you search. If there's nothing that close, you see the nearest 5.
+- How many spaces are **predicted to be free** when you arrive (now, in 1 hour, or in 3 hours).
+- **Reserve** books a demo spot. **Navigate** opens Google Maps directions. This button is on every parking card and in chat results.
+- Covers all of India: 25 hand-made lots in Pune and about 2,400 lots in 44 big cities from OpenStreetMap, plus live lookups elsewhere. For OpenStreetMap lots the number of spaces is an **estimate** and is marked that way. If the price isn't known, the card says "Rate n/a".
 
-### AI copilot
+### AI assistant (chat)
 
-- Tool-using agent: the language model decides which backend tools to call (plan, replan, chargers, parking, book, trip details, place lookup, memory). **It never invents trains, flights, prices or chargers**; every fact comes from a tool result.
-- Providers in order: **Claude → Gemini → Sarvam → offline assistant**. The first one with a working key answers. Today that is Gemini, because the Anthropic account has no API credits.
-- **Long-term memory** (Cognee plus a local copy) of saved places, preferences and booked trips.
-- Knows the user's current location, so "parking near me" works.
+- Understands normal sentences in many languages.
+- **Never makes up** trains, flights, prices or chargers. It always fetches real data from the app first.
+- Remembers things about you, such as your home, office, preferences and booked trips.
+- Knows where you are, so "parking near me" works.
 
 ### Voice and languages
 
-- The UI is translated into **11 languages**: English, Hindi, Marathi, Bengali, Tamil, Telugu, Kannada, Malayalam, Gujarati, Punjabi and Odia. Each language can be chosen on Home, in Chat or in the account menu.
-- Mic input is transcribed by Sarvam `saaras:v4`. Replies are read aloud by Sarvam `bulbul:v3`, or by the phone's own voice when Sarvam isn't configured.
-
-### Accounts
-
-- Email and password **sign-up / log-in**. Each account has its own trips, alerts and memories.
-- Sessions survive app restarts (the token is kept in the phone's secure storage). Logging out ends the session on the server.
-- A seeded demo account exists for presentations: `demo@safarsathi.app` / `demo1234`.
+- The app's text is translated into **11 languages**: English, Hindi, Marathi, Bengali, Tamil, Telugu, Kannada, Malayalam, Gujarati, Punjabi and Odia.
+- Tap the **mic** to speak. Replies can be **read aloud**.
 
 ### Look and feel
 
-- **Startup screen:** a bus drives in and keeps running until the backend responds, then drives off into the app.
-- **A different full-screen loading scene for each screen** (see [section 7](#loading-animations)).
-- **Account menu** (☰ button on Home): profile and trip counts, **Light / Dark / System** appearance, language, home address and EV details, shortcuts, and log out.
-- Teal accent colour, dark mode, large touch targets, fade-in lists, skeleton cards, and empty and error states.
+- **Startup:** a bus drives in and keeps running until the app is ready, then drives away.
+- **Every loading screen has its own animation:**
+
+  | Screen | Animation |
+  | --- | --- |
+  | Route planning | The route draws itself between two pins while a vehicle travels it |
+  | Chat | Bus, train, plane and charger icons orbit a pulsing assistant icon |
+  | EV | A battery fills while power flows from a charger |
+  | Parking | A car reverses into a parking bay under a "P" sign |
+  | Trips | Tickets fan out, then a "BOOKED" stamp lands |
+  | Map | A pin drops with ripples |
+
+- **Dark mode / light mode:** choose System, Light or Dark from the menu.
+- **Website:** a left sidebar on big screens, cards that lift when your mouse moves over them, and a live map.
 
 ---
 
-## 4. Architecture and tech stack
+## 4. The screens, one by one
 
-```
-┌──────────────────────────┐   HTTPS/HTTP (JSON, Bearer token)   ┌──────────────────────────────┐
-│  Mobile app (Expo Go)    │ ───────────────────────────────────▶ │  Backend (Node.js + Express) │
-│  React Native, TypeScript│ ◀─────────────── SSE alerts ──────── │  TypeScript, Zod, Prisma     │
-│  Leaflet map in WebView  │                                      │                              │
-└──────────────────────────┘                                      │  services: planner, replanner│
-           │ map tiles                                            │  ai: agent + tools           │
-           ▼                                                      │  adapters: one per source    │
-   CARTO / OpenStreetMap                                          └──────────────┬───────────────┘
-                                                                                 │
-     ┌───────────────────┬─────────────────────┬──────────────────┬──────────────┼──────────────────┐
-     ▼                   ▼                     ▼                  ▼              ▼                  ▼
- SQLite (Prisma)   Gemini / Claude /      Sarvam AI         Cognee         OpenStreetMap      Open Charge Map
- (MongoDB Atlas    Sarvam LLMs            speech to text,   long-term      Nominatim (places) (optional key)
-  prepared)        (chat tool use)        text to speech    memory         Overpass (chargers,
-                                                                           parking)
-```
-
-The backend owns all data and the AI agent. The app only renders data and sends what the user types or says.
-
-### Request flow for a chat question
-
-1. The user types or speaks: "Kothrud to Pune Airport by 6 PM".
-2. The app sends `POST /api/chat` with the conversation, language and current location, plus the login token.
-3. The backend builds the prompt (rules, user profile, recent memories, current time and location) and calls the first available LLM with the tool definitions.
-4. The LLM calls tools such as `plan_journey`. The backend runs each tool and returns the results, for up to 5 rounds.
-5. The LLM writes a short reply. The backend returns `{ reply, cards }`, and the app renders the reply with itinerary, charger or parking cards.
-
-### Tech stack
-
-| Layer | Choice |
+| Screen | What you see |
 | --- | --- |
-| Mobile | Expo SDK 57, React Native 0.86, TypeScript, Expo Router (file-based routes in `mobile/src/app`) |
-| Maps | Leaflet 1.9.4 inside `react-native-webview`, CARTO basemap tiles (with key), OpenStreetMap tiles as fallback |
-| Location, storage, audio | `expo-location`, `expo-secure-store`, `expo-audio` |
-| Backend | Node.js 20+ (developed on Node 24), Express 5, TypeScript run through `tsx` |
-| Validation | Zod 4 (API inputs and LLM tool arguments) |
-| Database | Prisma 6 with SQLite (`backend/prisma/dev.db`); a MongoDB Atlas schema is prepared |
-| AI | Gemini (OpenAI-compatible endpoint), Anthropic Claude (`@anthropic-ai/sdk`), Sarvam chat, offline rule-based assistant |
-| Speech | Sarvam AI `saaras:v4` (speech to text) and `bulbul:v3` (text to speech) |
-| Memory | Cognee (cloud tenant) plus local `Memory` table |
-| Real-time | Server-Sent Events (`GET /api/alerts/stream`) |
-| Open data | OpenStreetMap Nominatim (place search) and Overpass (chargers, parking) |
-| Tests | Vitest (backend) |
-| Quality | ESLint, Prettier, `tsc --noEmit` on both apps |
+| **Startup** | Bus animation while the app connects to the server |
+| **Login** | Log in, Create account, and "Continue with Google" (website). The form moves up when the keyboard opens |
+| **Home** | "SafarSathi" title, language button, ☰ menu, alerts, "Where to?" search with mic, quick buttons, your next trip |
+| **☰ Menu** | Your name and email; counts of trips, booked and upcoming; Appearance (System / Light / Dark); language; home; your EV; shortcuts (Home, Trips, EV, Parking); Log out |
+| **Chat** | Messages, result cards, mic, speaker and language buttons |
+| **Choose your route** | The three trip options |
+| **Journey** | Route map, every step with times and prices, Book / Book all, CO₂ saved, alerts |
+| **EV** | Charger map or list, filters, colour key with counts |
+| **Charger** | Details, reports, Working / Busy / Broken buttons, Navigate |
+| **Parking** | Search, "Near me", arrival time, map, cards with Navigate and Reserve. On the website the map and list sit side by side |
+| **Trips** | Upcoming, Saved plans, Past |
 
 ---
 
-## 5. Repository layout
+## 5. How it works inside
+
+There are two parts:
+
+1. **The app** (`mobile/` folder): what you see and touch. It's built with **Expo / React Native**, so the same code runs as the Android app and as the website.
+2. **The server, or "backend"** (`backend/` folder): the brain. It stores the data, plans trips, talks to the AI and fetches maps and places. It's built with **Node.js and Express**.
 
 ```
-Mobility/
-├── SPEC.md, DECISIONS.md, README.md
-├── docs/DOCUMENTATION.md        ← this file
-├── tools/                       local binaries (cloudflared), not committed
-├── backend/
-│   ├── prisma/
-│   │   ├── schema.prisma        active schema (SQLite)
-│   │   ├── mongodb/schema.prisma prepared MongoDB Atlas schema
-│   │   └── seed.ts              resets the demo: demo user, Pune + India data, memories
-│   ├── data/                    seed and lookup data (see section 8)
-│   ├── scripts/
-│   │   ├── generate-data.ts     regenerates the Pune mock data (seeded RNG)
-│   │   ├── plan.ts              prints planner output from the command line
-│   │   ├── fetch-osm-india.ts   downloads all-India chargers and city parking from OpenStreetMap
-│   │   └── import-osm-india.ts  loads that data into the database without touching accounts
-│   ├── src/
-│   │   ├── index.ts             Express app: open routes, then requireAuth, then the rest
-│   │   ├── routes/              alerts, auth, bookings, chargers, chat, health, journeys, parking, profile
-│   │   ├── services/            planner, replanner, bookings, trips, parkingPredictor, greenScore
-│   │   ├── ai/                  agent (provider chain), claudeAgent, geminiAgent, sarvamAgent,
-│   │   │                        openaiCompat (shared tool loop), tools, systemPrompt, offline,
-│   │   │                        planCache, requestContext
-│   │   ├── adapters/            booking, chargers (mock / OSM / Open Charge Map), geocode, memory
-│   │   │                        (Cognee), parking (mock / OSM), schedules, speech (Sarvam), transit
-│   │   └── lib/                 auth, db, geo, http, languages, osm, sse, time, data
-│   └── tests/                   planner, replanner and booking tests
-└── mobile/
-    └── src/
-        ├── app/                 screens: (tabs)/index, chat, ev, parking, trips; plan;
-        │                        journey/[id]; charger/[id]; _layout (boot → login → app)
-        ├── components/          UI kit, maps, scenes, loaders, account sheet, auth screen, cards…
-        ├── constants/theme.ts   colours (light/dark), spacing, radii
-        └── lib/                 api client, auth, alerts (SSE), location, i18n, theme preference,
-                                 secure storage, voice, formatting
+   Phone app / Website  ──── asks questions ───▶  Backend server  ──▶  MongoDB Atlas (database)
+         ▲                                            │
+         └──── live delay alerts (instant) ◀──────────┤──▶  Gemini AI (chat)
+                                                      ├──▶  Sarvam AI (voice)
+                                                      ├──▶  Cognee (memory)
+                                                      └──▶  OpenStreetMap (places, chargers, parking)
 ```
+
+**What happens when you ask the chat a question:**
+
+1. The app sends your message, language and location to the backend.
+2. The backend asks the AI (Gemini) what to do, and gives it a list of "tools" it can use: plan a trip, find chargers, find parking, book, remember things.
+3. The AI picks the tools it needs, and the backend runs them on real data.
+4. The AI writes a short answer, and the app shows it with cards (trip options, chargers, parking).
+
+**Which AI is used:** the app tries **Claude → Gemini → Sarvam → offline helper**, in that order, and uses the first one that works. Claude needs paid credits, which the account doesn't have, so in practice **Gemini** answers. If every AI is down, a simple built-in helper still answers the demo questions.
+
+**Main building blocks:**
+
+| Part | Job |
+| --- | --- |
+| Trip planner (`backend/src/services/planner.ts`) | Builds and compares the trip options |
+| Re-planner (`replanner.ts`) | Handles delays and makes new plans |
+| AI assistant (`backend/src/ai/`) | Chat, tools, prompts, the list of AIs to try |
+| Data sources (`backend/src/adapters/`) | One module per source (chargers, parking, places, voice, memory…) |
+| Login (`backend/src/lib/auth.ts`) | Passwords, sessions, Google sign-in |
+| Maps (`mobile/src/components/leaflet-map*.tsx`) | The map on the phone and on the website |
+| Animations (`scenes.tsx`, `travel-loader.tsx`, `boot-screen.tsx`) | All loading scenes |
 
 ---
 
-## 6. Backend
+## 6. Where the data comes from
 
-### 6.1 API reference
-
-All routes are under `/api`, return JSON, and validate input with Zod. Errors return `{ "error": "message" }` with a proper HTTP status.
-
-**Open routes (no login):**
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/health` | `{ ok: true }` |
-| POST | `/auth/signup` | `{ name, email, password, language? }` → `{ token, user }` (409 if the email exists) |
-| POST | `/auth/login` | `{ email, password }` → `{ token, user }` (401 on a wrong email or password) |
-
-**Logged-in routes** (send `Authorization: Bearer <token>`; 401 otherwise):
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| POST | `/auth/logout` | Ends the current session |
-| GET / PATCH | `/me` | Profile (name, email, language, EV details, home, office, live services) / update language or battery % |
-| GET | `/places?q=` | Place search: demo places first, then OpenStreetMap |
-| GET | `/places/nearest?lat&lng` | Nearest demo place and its distance |
-| POST | `/chat` | `{ messages, language, location? }` → `{ reply, cards, mode, provider }` |
-| POST | `/speech/transcribe` | Audio (base64) → text and detected language |
-| POST | `/speech/synthesize` | Text → spoken audio (cached on disk) |
-| POST | `/journeys/plan` | `{ from, to, arriveBy?, departAt?, preference?, useEv? }` → up to 3 itineraries. `from` and `to` can be names or `{ name, lat, lng }` |
-| POST | `/journeys/:tripId/replan` | New options after a disruption |
-| GET | `/chargers?lat&lng&radiusKm&connector?&minKw?` | Chargers near a point (radius up to 500 km) |
-| GET | `/chargers/:id` | Charger detail with recent reports |
-| POST | `/chargers/:id/report` | `{ status, note? }` crowd report; becomes the live status |
-| GET | `/parking?lat&lng&radiusKm&arriveAt?` | Lots with `predictedFreeSpots` (radius up to 500 km) |
-| POST | `/parking/:id/reserve` | `{ arriveAt, hours }` → `{ reservationId, amount }` |
-| GET / POST | `/trips` | List the user's trips / save an itinerary as a trip |
-| GET | `/trips/:id` | Trip detail |
-| POST | `/trips/:id/book-all` | Book every bookable leg |
-| POST | `/bookings` | `{ tripId, legId }` → book one leg |
-| POST | `/demo/disrupt` | `{ tripId, legId, delayMins }` simulate a delay (demo) |
-| GET | `/alerts/stream` | Server-Sent Events: this user's disruption alerts |
-| GET | `/alerts/active` | Current alerts (fallback poll) |
-| POST | `/alerts/:tripId/dismiss` | Dismiss an alert |
-
-### 6.2 Data model (Prisma)
-
-| Model | Key fields |
+| Data | Source |
 | --- | --- |
-| `User` | name, `email` (unique, lower-cased), `passwordHash` (scrypt), language (BCP-47, e.g. `mr-IN`), EV details (hasEv, range, connector, battery %), home/office place ids |
-| `Session` | `token` (random, 32 bytes), userId, createdAt. Deleted on logout or when a user is removed |
-| `Trip` | userId, title, status (PLANNED, BOOKED, IN_PROGRESS, DISRUPTED, DONE, REPLACED), option, `legs` (JSON), totals, CO₂ saved, `arriveBy`, `alertMessage` |
-| `Charger` / `ChargerReport` | location, power, connectors (JSON), status, price, last verified / crowd reports |
-| `ParkingLot` / `ParkingReservation` | location, spots, rate (−1 = unknown), type, 24-hour occupancy pattern / reservations |
-| `Memory` | local copy of everything sent to Cognee |
+| Pune metro, buses, trains, flights, intercity buses | Demo timetables we created (`backend/data/`). Real enough for a demo, not real bookings |
+| Places in India | 54 known places, plus **OpenStreetMap** search for everything else |
+| EV chargers | 40 demo chargers around Pune, plus about 600 from **OpenStreetMap**, plus live lookups |
+| Parking | 25 demo lots in Pune, plus about 2,400 from **OpenStreetMap** in 44 cities, plus live lookups |
+| Map pictures (tiles) | **CARTO** (with our key), or plain OpenStreetMap |
+| AI chat | **Google Gemini** |
+| Voice | **Sarvam AI** |
+| Memory | **Cognee**, plus a copy in our database |
 
-Arrays and nested objects are stored as JSON strings (a SQLite limitation, kept for the MongoDB schema too). IDs that start with `osm-` come from OpenStreetMap.
+**Honest data:** if OpenStreetMap doesn't know a charger's power or price, or a parking lot's rate, the app shows "n/a" and never invents a number. Demo screens carry a small "Demo data" note.
 
-### 6.3 Journey planner (`services/planner.ts`)
-
-- **City trips:** walk, auto, bike taxi and cab, metro with line changes, and PMPML buses, with first- and last-mile legs. There are no bike taxis to or from airports and stations, because of luggage.
-- **Intercity trips:** city leg → train, flight or intercity bus → city leg, using the timetables for yesterday, today and tomorrow. Buffers: 60 min before a flight, 20 min before a train, 15 min before an intercity bus.
-- **Hub routes (anywhere in India):** when no timetabled service reaches the destination's city, the planner uses a service to a hub that is on the way. The cab from the hub must be at most 800 km and cover less than 60 % of the trip. Example: Pune → Delhi flight, then a cab to Bikaner.
-- **Outstation cabs** door to door, up to 1,500 km.
-- **EV trips:** use the current battery level, add stops at chargers within 15 km of the route (WORKING preferred), charge to 80 % and keep a 10 % reserve.
-- **Speeds and fares:** road speeds halve in peak hours (8–11 AM, 5–9 PM), and cars over 40 km use 50 km/h. Fare formulas are in `DECISIONS.md` (Phase 4). Road distance is the straight-line distance × 1.3.
-- **Place resolution:** a saved place (home, office), then a close match against the 54 demo places, then OpenStreetMap Nominatim (India only), then a loose demo match. Demo places only match on their name or an alias, so "Jaipur Airport" no longer resolves to Pune Airport.
-
-### 6.4 Replanner (`services/replanner.ts`)
-
-Applies a delay or cancellation, re-times the following legs, and checks every connection and the deadline. A broken trip becomes DISRUPTED. The alert goes only to that user's phones over SSE. Replanning starts from the first leg that hasn't departed, excludes the delayed service, keeps the original deadline, and ranks on-time options first, then by cost.
-
-### 6.5 AI copilot (`src/ai`)
-
-| File | Role |
-| --- | --- |
-| `agent.ts` | Provider chain Claude → Gemini → Sarvam → offline. `LLM_PROVIDER` picks the first; any failure falls through. Claude is skipped for 10 minutes after a "no credits" or "bad key" error. |
-| `claudeAgent.ts` | Anthropic Messages API tool loop (`claude-sonnet-5-5`, prompt caching) |
-| `openaiCompat.ts` | Shared OpenAI-style tool loop used by Gemini and Sarvam (up to 5 tool rounds; Gemini's thought signatures are passed back unchanged) |
-| `geminiAgent.ts` | Gemini through `generativelanguage.googleapis.com/v1beta/openai`, model `gemini-3.5-flash-lite` |
-| `sarvamAgent.ts` | Sarvam `sarvam-105b-conversations` |
-| `tools.ts` | `plan_journey`, `replan_trip`, `find_chargers` (default 25 km), `find_parking` (15 km), `book_leg`, `get_trip`, `geocode_place`, `remember`, `recall_memory` |
-| `systemPrompt.ts` | Rules (tools only, reply in the user's language, 2–4 sentences, confirm before booking), plus a context block with profile, memories, time and location |
-| `offline.ts` | Rule-based assistant for the demo's requests in English, Hindi and Marathi |
-| `requestContext.ts` | Passes the user's live location to tools without threading it through every call |
-| `planCache.ts` | Remembers itineraries shown in chat so "book the fastest one" works in a later turn |
-
-**Why Gemini:** Claude needs prepaid API credits, which the account doesn't have. Sarvam worked but used the same credits as voice. Measured Gemini models (one tool call each): `gemini-3.5-flash-lite` about 1.1 s, `gemini-3.5-flash` about 5 s, `gemini-3.8-flash` about 50 s, and `gemini-2.5-flash` is no longer available to new users.
-
-### 6.6 Adapters (data sources)
-
-Every external source sits behind an interface in `adapters/types.ts`. The active implementation is chosen in `adapters/index.ts`:
-
-| Data | Active source | Alternatives |
-| --- | --- | --- |
-| Places | 54 demo places + OpenStreetMap Nominatim | Google Places later |
-| Chargers | `OsmChargerAdapter` (Pune data + OpenStreetMap) | `OpenChargeMapAdapter` if `OPEN_CHARGE_MAP_KEY` is set; mock only if `DEMO_OFFLINE=true` |
-| Parking | `OsmParkingAdapter` (Pune data + OpenStreetMap) | mock only if `DEMO_OFFLINE=true` |
-| City transit, trains, flights, buses | mock JSON | GTFS feeds, IRCTC partner and airline APIs later |
-| Bookings | mock (fake PNRs) | real providers later |
-| Speech | Sarvam | phone text-to-speech and keyboard dictation |
-| Memory | Cognee + local table | local table only |
-
-### 6.7 OpenStreetMap pipeline (`lib/osm.ts`)
-
-- **Nominatim** place search: limited to India, at most one request per second (OpenStreetMap's policy), with results cached. A result within 40 km of a demo place takes that place's city, so local transit still applies.
-- **Overpass** for chargers (`amenity=charging_station`) and parking (`amenity=parking`): one request at a time (the public servers allow two per IP), two mirror servers, a 6-hour cache, and a 3-minute "recently failed" memory.
-- **Database first:** if at least 3 saved results exist for an area, the API answers at once (about 0.2 s) and refreshes from OpenStreetMap in the background. For a new area it waits at most 6 s.
-- New results are batch-inserted. Existing chargers keep their crowd-reported status.
-- Unknown values are never invented: power 0 shows as "Power n/a", price 0 as "Price n/a", parking rate −1 as "Rate n/a", and parking capacity is an estimate by type, marked as such.
-- **Bulk data:** `scripts/fetch-osm-india.ts` downloaded every charger in India (600) and public parking within 8 km of 44 city centres (2,419 lots). The download is resumable. `scripts/import-osm-india.ts` and the seed load it.
-
-### 6.8 Accounts and security (`lib/auth.ts`, `routes/auth.ts`)
-
-- Passwords are hashed with **scrypt** (16-byte salt) and compared in constant time.
-- Sessions are random 32-byte tokens stored server-side, so logging out revokes them.
-- `requireAuth` middleware runs each request inside an AsyncLocalStorage context. Services call `currentUserId()` instead of using a fixed demo user, so every trip, booking, report, reservation, memory and alert is per user.
+**Speed trick:** chargers and parking are read from our own database first, which takes about 0.2 seconds. The app checks OpenStreetMap for new ones quietly in the background.
 
 ---
 
-## 7. Mobile app
+## 7. Accounts and security
 
-### 7.1 App flow
-
-```
-Boot screen (bus animation)  ──backend answers──▶  Logged in?  ──no──▶  Login / Create account
-                                                        │yes
-                                                        ▼
-                         Tabs: Home · Chat · EV · Parking · Trips   (+ Plan, Journey, Charger screens)
-```
-
-- The **boot screen** polls `GET /api/health` every 2 s. After 8 s it explains which server address it is waiting for.
-- The **login screen** has a Log in / Create account switch, a "New to SafarSathi? Create an account" link, and show/hide password. When the keyboard opens, the large animation hides and the form scrolls above the keyboard.
-- App state (profile, alerts, location) is created per account, so nothing carries over between users.
-
-### 7.2 Screens
-
-| Screen | What's on it |
-| --- | --- |
-| **Home** | Logo and "SafarSathi" title, language pill, ☰ menu button, alert banners, "Where to?" search with mic, quick chips, next trip card, and an offline card if the backend is unreachable |
-| **Chat** | Message bubbles, inline cards, language picker, mic and speaker buttons; full-screen "thinking" scene while it works |
-| **EV** | Map or list of chargers, connector and power filters, status legend with counts, bottom sheet for the selected charger |
-| **Parking** | Destination search, "Parking within 15 km of …" with a **Near me** chip, arrival-time chips, map, lot cards with free-spot bar and **Reserve** |
-| **Trips** | Upcoming, Saved plans and Past, with pull to refresh |
-| **Plan** | Up to three route options for a destination |
-| **Journey detail** | Map of the route, leg timeline, Book / Book all, green score, alert banner; long-press the title to simulate a delay |
-| **Charger detail** | Status, power, price, reports, and Working / Busy / Broken buttons |
-| **Account menu** (☰) | Name, email, trip / booked / upcoming counts; Appearance (System / Light / Dark); language; home; EV; shortcuts (Home, My trips, EV, Parking); Log out |
-
-### 7.3 Maps (`components/leaflet-map.tsx`)
-
-`react-native-maps` showed a **black map** in Expo Go on Android, which also hid the charger and parking pins. It was replaced by **Leaflet in a WebView**:
-
-- **Tiles:** CARTO `voyager` (light) and `dark_all` (dark) with the CARTO key; plain OpenStreetMap tiles without a key. Switching the theme swaps tiles live.
-- **Content:** pins coloured by status, labels (free spots), route polylines, and a blue dot for the user.
-- **Behaviour:** "fit" zooms to a route, and "focus" zooms to the nearest results. Pin taps go back to the app.
-- **Loading:** a pin-drop animation covers the map until the first tiles load. Without internet, the map says so.
-
-### 7.4 Location (`lib/location.tsx`)
-
-The app asks for location once, uses the phone's last known position first and then a fresh one, and treats anywhere in India as covered. It is used to centre the EV and Parking maps, as the default trip start, and in chat.
-
-### 7.5 Loading animations
-
-| Where | Scene |
-| --- | --- |
-| App start | Bus drives in on a road with trees and buildings, keeps running, drives off when ready |
-| Login screen | Vehicle carousel: bus → auto → train → plane → EV |
-| Route planning | Start pin and finish flag; the route draws itself while an auto, bus, train or plane travels it (the plane flies an arc) |
-| Chat (thinking) | Pulsing assistant icon with bus, train, plane and charger orbiting, and ripple rings. After 2.5 s: "Checking live schedules and prices…" |
-| EV | EV plugged into a charger: power flows along the cable, a battery fills, a lightning bolt pulses |
-| Parking | Blue **P** sign; a car reverses into a marked bay |
-| Trips | Train, plane and bus tickets fan out, then a **BOOKED** stamp lands |
-| Map | A pin drops with ripples |
-
-All are built with React Native `Animated` (native driver) in `components/scenes.tsx`, `travel-loader.tsx` and `boot-screen.tsx`, and fade in and out over the screen.
-
-### 7.6 Connecting to the backend (`lib/api.ts`)
-
-1. If `EXPO_PUBLIC_API_URL` is an `https://` address (tunnel or cloud), it is used.
-2. Otherwise, in Expo Go, the app uses the address it was loaded from, on port 4000. This follows the laptop when its IP changes between Wi-Fi and hotspot.
-3. Otherwise, `EXPO_PUBLIC_API_URL`, then `http://localhost:4000`.
-
-A timeout and an unreachable server give different error messages. A 401 response signs the user out.
-
-### 7.7 Theme
-
-`lib/theme-preference.tsx` saves System / Light / Dark and calls React Native's `Appearance.setColorScheme`, so every screen, the map tiles and the navigation bar follow it together.
+- **Sign up** with name, email and password, or use **Continue with Google** on the website.
+- Passwords are stored only as scrambled codes (the **scrypt** method), never as plain text.
+- When you log in, the server gives the app a secret **session code**. The phone keeps it in secure storage, so you stay logged in, and **Log out** cancels it on the server.
+- Each person sees only their own trips, alerts, reservations and memories.
+- **Demo account** for presentations: `demo@safarsathi.app` / `demo1234`.
+- **Google sign-in:** Google confirms who you are and sends a signed code. The server checks that code with Google, then logs into, or creates, the account for that email.
 
 ---
 
-## 8. Data
+## 8. Settings and keys
 
-| File (`backend/data`) | Contents |
-| --- | --- |
-| `places.json` | 54 named places (Pune areas, stations, airports; Delhi, Mumbai, Bengaluru, Hyderabad, Goa…) |
-| `transit.json` | Pune Metro (Purple, Aqua), 10 PMPML bus routes, Delhi Airport Express and Yellow Line subset |
-| `trains.json` | 8 trains Pune → Delhi / Mumbai |
-| `flights.json` | 11 flights Pune → Delhi (8) / Bengaluru (3) |
-| `buses.json` | 6 intercity bus routes from Pune |
-| `chargers.pune.json` | 40 chargers (33 Pune + 7 highway), 28 working, 6 busy, 6 broken |
-| `parking.pune.json` | 25 lots with hourly occupancy patterns |
-| `chargers.india.json` | 600 chargers across India from OpenStreetMap |
-| `parking.india.json` | 2,419 public parking lots in 44 cities from OpenStreetMap |
-
-The timetables, prices, PNRs and Pune charger statuses are **demo data** (the app shows a demo-data footer). OpenStreetMap data is real but often incomplete.
-
-The seeded demo user is Aarav: EV owner, CCS2 connector, 300 km range, battery at 30 %, home in Kothrud, office in Hinjewadi Phase 1, plus starter memories.
-
----
-
-## 9. Configuration
-
-Secrets live only in the `.env` files, which git ignores. **Never commit them.**
+Secret keys live only in two `.env` files on the laptop, which are **never uploaded** to GitHub.
 
 ### `backend/.env`
 
-| Variable | Purpose | Current setup |
+| Setting | What it's for | Our setup |
 | --- | --- | --- |
-| `LLM_PROVIDER` | First LLM to try: `claude`, `gemini`, `sarvam`, `offline` | `gemini` |
-| `GEMINI_API_KEY`, `GEMINI_CHAT_MODEL` | Gemini chat | Key set; `gemini-3.5-flash-lite` |
-| `ANTHROPIC_API_KEY` | Claude chat (needs credits) | Key set, no credits, so it's skipped |
-| `SARVAM_API_KEY`, `SARVAM_CHAT_MODEL` | Voice and Sarvam chat | Key set |
-| `COGNEE_API_URL`, `COGNEE_API_KEY` | Long-term memory | Set |
-| `OPEN_CHARGE_MAP_KEY` | Better charger coverage | Not set (OpenStreetMap is used) |
-| `DEMO_OFFLINE` | `true` = offline assistant and Pune-only data, no internet calls | `false` |
-| `DATABASE_URL` | Database | `file:./dev.db` (SQLite). The Atlas URL is kept commented below it |
-| `PORT` | API port | 4000 |
+| `DATABASE_URL` | Address of the MongoDB Atlas database | Cluster `cluster0.8ywplm8`, database `IQOO` |
+| `LLM_PROVIDER` | Which AI to try first | `gemini` |
+| `GEMINI_API_KEY`, `GEMINI_CHAT_MODEL` | Gemini AI | key set, model `gemini-3.5-flash-lite` |
+| `ANTHROPIC_API_KEY` | Claude AI (needs paid credits) | set, but has no credits |
+| `SARVAM_API_KEY` | Voice | set |
+| `COGNEE_API_URL`, `COGNEE_API_KEY` | Memory | set |
+| `GOOGLE_CLIENT_ID` | "Continue with Google" | set |
+| `OPEN_CHARGE_MAP_KEY` | Better charger coverage (optional) | not set |
+| `DEMO_OFFLINE` | `true` = no internet needed (backup for the demo) | `false` |
+| `PORT` | Server port | 4000 |
+
+On this laptop the database address ends with `&tlsCAFile=…`, because the AVG antivirus interferes with secure connections (see section 14). On Render, leave that part out.
 
 ### `mobile/.env`
 
-| Variable | Purpose |
+| Setting | What it's for |
 | --- | --- |
-| `EXPO_PUBLIC_API_URL` | Fallback backend address; an `https://` value always wins (tunnel or cloud) |
-| `EXPO_PUBLIC_CARTO_KEY` | CARTO basemap key (without it, OpenStreetMap tiles are used) |
+| `EXPO_PUBLIC_CARTO_KEY` | Nicer map pictures |
+| `EXPO_PUBLIC_API_URL` | Only for special builds. Normally the app finds the server by itself |
 
 ---
 
-## 10. Running the project
+## 9. How to run it
 
-### First-time setup
+### First time only
 
 ```bash
 cd backend
 npm install
-npm run db:setup          # creates the database and seeds demo data (incl. India chargers/parking)
+npm run db:setup      # creates the database tables and fills in the demo data
 cd ../mobile
 npm install
 ```
 
 ### Every time
 
-Terminal 1:
+**Window 1, the server:**
 
 ```bash
 cd backend
-npm run dev               # wait for "SafarSathi backend listening on http://0.0.0.0:4000"
+npm run dev           # wait for "listening on ... 4000" and "Database connected"
 ```
 
-Terminal 2:
+**Window 2, the app:**
 
 ```bash
 cd mobile
-npx expo start -c
+npx expo start        # shows a QR code
 ```
 
-**On the phone:**
+**On the phone (same Wi-Fi or hotspot as the laptop):**
 
 1. Install **Expo Go** from the Play Store.
-2. Connect the phone and laptop to the **same network**. The phone can share its own hotspot with the laptop.
-3. In Expo Go, scan the QR code **from inside Expo Go**, or tap **Enter URL manually** and type `exp://<laptop-IP>:8081`. Find the IP with `ipconfig`, under the Wi-Fi adapter's IPv4 address. Scanning with the camera or Google Lens opens the web version instead.
-4. Allow location, then log in or create an account.
+2. Open Expo Go → **Enter URL manually** → type `exp://<laptop IP>:8081`. To find the IP, run `ipconfig` on the laptop and look at the Wi-Fi "IPv4 Address". You can also scan the QR code **from inside Expo Go**; don't use the phone camera.
+3. Allow location, then log in.
 
-### Commands
+**Website:** open http://localhost:8081 in the laptop's browser, or press `w` in the Expo window.
+
+### Useful commands
 
 | Where | Command | What it does |
 | --- | --- | --- |
-| backend | `npm run dev` | API with auto-reload |
-| backend | `npm run db:seed` | Reset the demo. **Deletes all accounts and trips**; recreates the demo account |
-| backend | `npx tsx scripts/fetch-osm-india.ts [chargers\|parking]` | Re-download OpenStreetMap data (slow, resumable) |
-| backend | `npx tsx scripts/import-osm-india.ts` | Load the downloaded data without touching accounts |
-| backend | `npm test` | Vitest: planner, replanner, booking |
-| backend | `npm run plan -- Kothrud "Connaught Place" 20:00 [--ev]` | Print planner output |
-| both | `npm run typecheck`, `npm run lint`, `npm run format` | Checks |
+| backend | `npm run dev` | Start the server |
+| backend | `npm run db:seed` | **Reset everything** to demo data (deletes all accounts and trips) |
+| backend | `npx tsx scripts/import-osm-india.ts` | Load the India chargers and parking without deleting accounts |
+| backend | `npm test` | Run the automatic tests |
+| mobile | `npx expo start` | Start the app server |
+| mobile | `npx expo start --tunnel` | Start the app for **any device** (section 10) |
+| mobile | `npx expo export -p web` | Build the website for the cloud |
+
+**Note:** the server can also run in the background, writing to `logs/backend.log` and `logs/expo.log`. To stop it, end the **node.exe** processes in Task Manager.
 
 ---
 
-## 11. Demo script
+## 10. Making it work on any device
 
-Before you start: run `npm run db:seed`, start both servers, open the app and log in as `demo@safarsathi.app` / `demo1234`.
+By default the phone must be on the **same Wi-Fi or hotspot** as the laptop, because the app comes from the laptop. There are two ways around that.
+
+### Way 1: tunnel (works now, laptop must stay on)
+
+A **tunnel** gives the laptop a public internet address.
+
+```bash
+cd mobile
+npx expo start --tunnel
+```
+
+- Expo prints an address like `exp://xxxxx-anonymous-8081.exp.direct`. **Any phone with Expo Go, on any network (Wi-Fi or mobile data)** can open it.
+- The app's server requests go through the same address, because the Expo server passes `/api` on to the backend.
+- **Tested:** app download, login and the API all work through the tunnel.
+- **Limits:** the laptop must stay on and online. The first load takes about 25 seconds, and the website version is slow through the tunnel.
+- **Network warning:** office or college Wi-Fi with a security firewall (for example the "ciscosb 22" network, which uses a **FortiGate** firewall) blocks the tunnel. The **phone hotspot** works, as long as AVG's HTTPS scanning doesn't interfere.
+
+### Way 2: Render cloud (best, no laptop needed)
+
+The code is ready to deploy. `render.yaml` describes the setup, and the backend also serves the website.
+
+**Steps, in your Render account:**
+
+1. Sign in to **render.com** with GitHub, then choose **New → Web Service** (or **New → Blueprint**) and pick `sachin1301-w/safarsathi`.
+2. Fill in:
+   - **Root Directory:** empty
+   - **Build Command:** `cd backend && npm ci && npx prisma generate && cd ../mobile && npm ci && npx expo export -p web`
+   - **Start Command:** `cd backend && npm start`
+   - **Instance type:** **Free ($0)**, not $7
+   - **Health Check Path:** `/api/health`
+3. Add the environment variables:
+   - `NODE_VERSION=22`
+   - `LLM_PROVIDER=gemini`
+   - `GEMINI_CHAT_MODEL=gemini-3.5-flash-lite`
+   - `DEMO_OFFLINE=false`
+   - `DATABASE_URL`: the Atlas address **without** `&tlsCAFile=…`
+   - `GEMINI_API_KEY`, `SARVAM_API_KEY`, `COGNEE_API_URL`, `COGNEE_API_KEY`, `GOOGLE_CLIENT_ID`, `EXPO_PUBLIC_CARTO_KEY`
+4. Click Deploy. The build takes 5–10 minutes. You get a link like `https://safarsathi-xxxx.onrender.com`.
+5. In **MongoDB Atlas → Network Access**, allow `0.0.0.0/0`.
+6. In **Google Cloud**, add the Render link to your OAuth client's Authorized JavaScript origins.
+
+Then **anyone, on any device, can open the link in a browser.** The free plan "sleeps" after 15 minutes without visitors, so the next visit takes about 50 seconds to wake it, while the bus animation plays.
+
+**Later:** an installable **Android APK** (needs a free Expo account) would let the phone app itself work anywhere without Expo Go.
+
+---
+
+## 11. Demo script for the judges
+
+Before you start: start the server and the app, open the app, and log in as `demo@safarsathi.app` / `demo1234`.
 
 1. **Hook (30 s).** "Nearly 3 in 10 government-approved EV chargers in India don't work, and our metros are underused because nobody solves the last mile. Meet SafarSathi."
-2. **Plan (60 s).** In Chat, say or type "Kothrud to Connaught Place, Delhi by 8 PM tomorrow". Open an option with a flight and tap **Book all**; the tickets appear in Trips.
-3. **Anywhere in India (20 s).** Ask "Plan a trip from Pune to Bikaner": a flight to Delhi plus a cab, or a train plus a cab.
-4. **Disruption (60 s).** On the journey screen, long-press the title, pick the flight and 90 minutes, and tap Delay. A red alert appears. Tap **Fix my trip** and accept the new plan.
-5. **EV (40 s).** In the EV tab, report a charger **Broken** and watch the pin turn red. Ask "Plan an EV trip to Mahabaleshwar"; the plan includes a charging stop.
-6. **Language (20 s).** Switch to मराठी, ask "जवळचे पार्किंग कुठे आहे?" and tap the speaker.
-7. **Close (30 s).** Every data source sits behind an adapter, ready for IRCTC partner APIs, Open Charge Map, GTFS feeds and parking operators.
+2. **Plan (60 s).** In Chat, say or type *"Kothrud to Connaught Place, Delhi by 8 PM tomorrow"*. Open an option with a flight and tap **Book all**. The tickets appear in Trips.
+3. **Anywhere in India (20 s).** Ask *"Plan a trip from Pune to Bikaner"*: a flight to Delhi plus a cab, or a train plus a cab.
+4. **Delay (60 s).** On the journey screen, long-press the title, pick the flight and 90 minutes, and tap Delay. A red alert appears. Tap **Fix my trip** and accept the new plan.
+5. **EV (40 s).** In the EV tab, report a charger **Broken** and watch the pin turn red. Ask *"Plan an EV trip to Mahabaleshwar"*; the plan adds a charging stop.
+6. **Parking (20 s).** In the Parking tab, show the free-space estimates and tap **Navigate**.
+7. **Language (20 s).** Switch to मराठी, ask *"जवळचे पार्किंग कुठे आहे?"* and tap the speaker.
+8. **Close (30 s).** Every data source plugs in separately, ready for real IRCTC, airline, charger and parking partners.
 
-"By 8 PM today" only has on-time options before about 2 PM. Later in the day, say "tomorrow".
+**Tips:**
 
-**Backup:** set `DEMO_OFFLINE=true` and restart the backend. The offline assistant answers the demo's requests without any LLM or internet.
+- "By 8 PM today" only works before about 2 PM; later in the day, say "tomorrow".
+- **Backup:** set `DEMO_OFFLINE=true` in `backend/.env` and restart. The demo then works without any AI or internet.
+- Record a video of the demo the night before.
 
 ---
 
-## 12. Testing and measurements
+## 12. Testing and speed
 
-- **Automated:** 10 Vitest tests (planner, replanner, bookings); `tsc` and ESLint on both apps; an Android bundle export after every change.
-- **Checked over HTTP during development:** every endpoint, sign-up / log-in / log-out, per-user trip isolation, and duplicate-email and wrong-password errors.
+**Checks we run after every change:**
+
+- automatic tests (planner, re-planner, bookings)
+- type checks and code-style checks for both parts
+- an Android build
+- a website build
+
+**Website screens** were checked in a real Chrome browser with automatic screenshots.
 
 | Measurement | Result |
 | --- | --- |
-| Chat on Gemini (plan, chargers, Marathi, Hindi) | 2.4–3.9 s |
-| Chat on Sarvam (earlier) | 1.0–1.8 s |
-| Chat "Pune to Bikaner" (includes online place lookup) | 12.9 s |
-| Disruption alert over SSE | 14 ms after the delay |
-| Chargers / parking from the database | about 0.2 s (was up to 14 s before the "database first" change) |
-| Chargers / parking for a brand-new area | at most about 6 s |
-| Sarvam text-to-speech | about 9 s fresh, about 10 ms cached |
+| Chat answer (Gemini) | 2.4–3.9 seconds |
+| Chat "Pune to Bikaner" (includes looking up Bikaner online) | about 13 seconds |
+| Delay alert reaching the phone | 14 milliseconds |
+| Chargers / parking (saved areas) | about 0.2–0.9 seconds (was up to 14 seconds before the fix) |
+| Chargers / parking (a brand-new area) | up to about 6 seconds |
+| Seeding the cloud database | 37 seconds |
+| App download through the tunnel | about 25 seconds the first time |
 
 ---
 
-## 13. Project history
+## 13. The full story: what we did, step by step
 
-All dates are 2–3 October 2026. Commit hashes are in brackets.
+All of this happened on 2–3 October 2026. The code in brackets is the save point (commit) in Git.
 
-### Build phases (from SPEC.md)
+### Part A: the first build (8 phases)
 
-| Phase | What was built |
+| Phase | What we built |
 | --- | --- |
-| 1 [a1630cb] | Monorepo, Express + Prisma + SQLite backend, Expo app, health check, lint and format |
-| 2 [57bbd35] | Prisma schema, all mock data (generated with a seeded RNG), seed, adapter interfaces |
-| 3 [592c23b] | EV charger map and parking finder with predictions and reservations |
-| 4 [90259ab] | Multimodal journey planner with honest Fastest / Cheapest / Greenest badges and tests |
-| 5 [379d7c6] | AI copilot chat with tools, Sarvam voice, Cognee memory and the offline assistant |
-| 6 [1927006] | Mock bookings with PNRs and the Trips tab |
-| 7 [d693931] | Disruption alerts over SSE and replanning |
-| 8 [cf9654e] | Polish, app icon, splash, demo footer; then all 11 UI languages [f80a316] |
+| 1 [a1630cb] | Project set-up: server, app, health check |
+| 2 [57bbd35] | Database design, demo data, data sources |
+| 3 [592c23b] | EV charger map and parking finder |
+| 4 [90259ab] | Trip planner with Fastest / Cheapest / Greenest |
+| 5 [379d7c6] | AI chat with tools, voice and memory |
+| 6 [1927006] | Bookings and the Trips tab |
+| 7 [d693931] | Delay alerts and re-planning |
+| 8 [cf9654e, f80a316] | Polish, app icon, all 11 languages |
 
-### Changes after the build
+### Part B: everything after
 
-| # | Request or problem | What was done |
+| # | What you asked for, or what went wrong | What we did |
 | --- | --- | --- |
-| 1 | Claude API has no free tier; no credits on the account | Copilot made provider-independent; ran on Sarvam [ee65adf] |
-| 2 | Expo showed "Something went wrong" | It had been opened as a web page (QR scanned with the camera), where `react-native-maps` crashes. Added a web fallback [526160e] and explained scanning from inside Expo Go |
-| 3 | Phone couldn't reach the laptop ("site can't be reached") | **McAfee and AVG firewalls** were blocking incoming connections; the user turned them off |
-| 4 | Black map, no chargers, parking not working; wanted current location | Replaced `react-native-maps` with Leaflet in a WebView; added `expo-location`; Parking search fixes [e6fff6d] |
-| 5 | "API KEY REQUIRED" on the map | CARTO basemaps now need a key; added `EXPO_PUBLIC_CARTO_KEY`, with OpenStreetMap tiles as fallback [f96c111] |
-| 6 | Chat not working; switch to Gemini; parking spots not visible; wider radius | Gemini provider with a shared tool loop; parking 3 → 15 km with nearest-lot fallback; EV 150 → 300 km; maps zoom to the results; place-search taps fixed on Android; voice MIME fix (`audio/m4a` → `audio/mp4`) [e489437] |
-| 7 | Chat said "connect to the same Wi-Fi" after switching to the hotspot | The app now finds the backend from Expo Go's own address; first loading animations [0b917ce] |
-| 8 | Pune → Bikaner failed; add login; all-India chargers and parking; bus loading screen | OpenStreetMap place search and hub routing; Overpass adapters and the India data download; email + password accounts; boot screen [32b2781, 3e68540] |
-| 9 | Remove the demo button, add create account, more animations; Google key provided | Create-account link; vehicle loaders. The key was an **API key**, not an OAuth client ID, so Google sign-in was not added [3167b10] |
-| 10 | MongoDB Atlas connection string provided | Schema converted to MongoDB; blocked first by Atlas Network Access, then by AVG certificate interception, then by the password (see section 16) |
-| 11 | Animations too small; theme switch; more account options; "Connected" pill; Reserve button hidden | Full-screen loaders; account sheet with Light / Dark / System; title fixed; Reserve layout fixed; charger and parking requests sped up from 14 s to 0.2 s [8fcebfa] |
-| 12 | Login hidden by the keyboard; a different animation per screen; hamburger menu | Keyboard-aware login and chat; six distinct scenes; ☰ button with a Home shortcut [109cbd4] |
-| 13 | Run on every device, not only the hotspot phone | The app accepts a public `https://` backend address [38be6d9]. Cloudflare tunnels were blocked (port 7844) and localhost.run addresses are blocked by AVG as "malicious", so public access still needs ngrok or the cloud |
-
-### Problems hit along the way
-
-| Problem | Cause | Fix |
-| --- | --- | --- |
-| Claude Code session failed with "SSL certificate verification failed" | AVG re-signs HTTPS traffic with its own certificate | Turn off AVG HTTPS scanning (recommended), or trust AVG's root certificate |
-| `npm install` TLS handshake errors | Same cause | `NODE_OPTIONS=--use-system-ca` |
-| Phone couldn't reach the laptop | McAfee and AVG firewalls | Turned off during development (Windows Firewall stays on) |
-| Black map in Expo Go | `react-native-maps` on Expo Go SDK 57 Android | Leaflet in a WebView |
-| Sarvam rejected voice recordings | Android labels recordings `audio/m4a` | Sent as `audio/mp4` |
-| Charger and parking requests took up to 14 s | Waiting for overloaded OpenStreetMap servers | Database first, background refresh |
-| `prisma generate` failed with EPERM | Old backend watchers held the engine file | Stopped stale `tsx watch` processes |
-| Atlas: "tls handshake eof" | IP not on the Atlas access list | User added `0.0.0.0/0` |
-| Atlas: "invalid peer certificate" | AVG intercepting the database connection | Local certificate bundle (`backend/certs`, not committed) via `tlsCAFile` |
-| Atlas: "bad auth" | Database-user password differs from the one provided | **Open:** reset it in Atlas → Database Access |
+| 1 | Claude needs paid credits | Made the chat work with other AIs; used Sarvam first [ee65adf] |
+| 2 | Expo showed "Something went wrong" | The app was opened as a web page by scanning with the camera. We fixed the web crash and explained scanning from inside Expo Go [526160e] |
+| 3 | Phone couldn't reach the laptop | McAfee and AVG firewalls were blocking it; you turned them off |
+| 4 | Black map, no chargers, parking broken, wanted current location | New map (Leaflet), location support, parking fixes [e6fff6d] |
+| 5 | Map said "API KEY REQUIRED" | Added your CARTO map key [f96c111] |
+| 6 | Switch chat to Gemini; parking not visible; bigger search areas | Gemini added; parking 15 km, EV 300 km; maps zoom to results; voice fix [e489437] |
+| 7 | Chat said "connect to same Wi-Fi" after switching networks | The app now finds the server by itself; first loading animations [0b917ce] |
+| 8 | Pune → Bikaner failed; add login; chargers and parking for all India; bus loading screen | Place search for all India, hub-plus-cab trips, accounts, OpenStreetMap data, bus screen [32b2781, 3e68540] |
+| 9 | Remove demo button, add create account, more animations | Done [3167b10] |
+| 10 | Bigger animations, dark/light mode, better menu, remove "Connected", fix Reserve button | Full-screen animations, account menu, theme switch, layout fixes, faster loading [8fcebfa] |
+| 11 | Login hidden by keyboard; different animation per screen; hamburger menu | Done [109cbd4] |
+| 12 | Detailed documentation | First version of this guide [7892265] |
+| 13 | **Navigate to parking**; **website with hover effects**; public network; **Google login** | Navigate buttons; full website (sidebar, live map, hover); `/api` passed through Expo for tunnels; Google sign-in [9c52a61] |
+| 14 | New MongoDB cluster | Switched to Atlas, moved existing accounts across, faster start-up [82cde7b] |
+| 15 | Run on any device | Code pushed to private GitHub; backend serves the website; Render set-up file [e6e64b1, 28d29b0]; tunnel working on the hotspot |
 
 ---
 
-## 14. Troubleshooting
+## 14. Problems we hit and how we fixed them
 
-| Symptom | What to do |
+| Problem | Why it happened | Fix |
+| --- | --- | --- |
+| "SSL certificate" errors (in tools, npm, the database, tunnels) | **AVG antivirus** re-signs secure connections with its own certificate | Use a certificate file that includes AVG's (database), `--use-system-ca` (npm), or turn off AVG's HTTPS scanning |
+| Phone couldn't reach the laptop | McAfee and AVG **firewalls** | Turned them off during development |
+| Black map on Android | The old map library (`react-native-maps`) doesn't work in Expo Go | Switched to **Leaflet** |
+| Voice recordings rejected | The phone labels audio `audio/m4a` | Send it as `audio/mp4` |
+| Chargers and parking took 14 seconds | Waiting for busy OpenStreetMap servers | Read our database first, update in the background |
+| Free tunnels failed | Cloudflare's port was blocked; localhost.run was flagged as unsafe by AVG; ngrok was broken by AVG and by the **FortiGate** firewall on office Wi-Fi | Expo's own tunnel works on the phone hotspot; the Render cloud avoids all of this |
+| First Atlas database: "bad auth" | Wrong password for that database user | You created a new cluster (IQOO), which worked first time |
+| First database request after start-up timed out | Slow first secure connection (AVG) | The server "warms up" the connection when it starts |
+| Servers stopped by themselves | They were tied to the Claude session | They now run as independent background processes |
+| Google: "Access blocked: no registered origin" | The website address isn't allowed in Google Cloud | Add the origins (section 16) |
+
+---
+
+## 15. If something goes wrong
+
+| What you see | What to do |
 | --- | --- |
-| Boot screen keeps showing "Connecting…" or Home shows the offline card | Start the backend (`npm run dev`). The phone and laptop must share a network. If the phone can't open `http://<laptop-IP>:8081/status`, turn off the McAfee/AVG firewalls or allow Node.js |
-| Expo Go "Something went wrong" | Scan the QR code from inside Expo Go, not with the camera; restart with `npx expo start -c` |
-| Map is blank or shows "API key required" | Check `EXPO_PUBLIC_CARTO_KEY`, or remove it to use OpenStreetMap tiles; restart Expo with `-c` |
-| Chat replies are tagged "Offline assistant" | No LLM reachable: check `GEMINI_API_KEY` and the backend log |
-| "Please log in again" | The session ended, for example after `npm run db:seed`; log in again |
-| No chargers or parking in a new area | First lookups can take up to about 6 s; OpenStreetMap may have no data there |
-| `prisma generate` EPERM on Windows | Stop every running backend (`npm run dev`) and retry |
-| SSL or certificate errors anywhere on this laptop | AVG HTTPS scanning; turn it off in AVG → Web Shield |
+| Stuck on "Connecting to SafarSathi…" | Start the backend (`npm run dev`). Phone and laptop must be on the same network, unless you use the tunnel |
+| Phone can't open `http://<laptop IP>:8081/status` | Turn off the McAfee/AVG firewalls, or try the phone hotspot |
+| Expo Go "Something went wrong" | Open the link from inside Expo Go; restart with `npx expo start -c` |
+| Chat answers are tagged "Offline assistant" | The AI isn't reachable; check `GEMINI_API_KEY` and the backend log |
+| "Please log in again" | Your session ended (for example after `npm run db:seed`); log in again |
+| Google "Access blocked" | See section 16 |
+| Map is blank | Check the internet connection and `EXPO_PUBLIC_CARTO_KEY`; restart Expo with `-c` |
+| No chargers or parking in a new area | Wait a few seconds; OpenStreetMap may have no data there |
 
 ---
 
-## 15. Security notes
+## 16. What is left to do
 
-- **Rotate every key that was pasted into the chat** during development: Anthropic, Sarvam, Cognee, Gemini, CARTO, the Google API key, and the **MongoDB password**. They are only in `.env` files (git-ignored), but they appeared in conversation transcripts.
-- **Atlas access list `0.0.0.0/0`** lets any IP try to connect, so the database password is the only protection. Narrow it once the backend has a fixed address (for example a cloud host).
-- **Turn the McAfee/AVG firewalls back on** after the demo, and consider keeping only one antivirus.
-- Passwords are hashed with scrypt and never stored or logged in plain text. Sessions can be revoked.
-- The certificate bundle in `backend/certs` contains AVG's root certificate. It is local to this laptop and not committed.
+1. **Deploy to Render** (section 10, Way 2). Then the app works everywhere without the laptop.
+2. **Finish Google sign-in.** In Google Cloud → Google Auth Platform → Clients → your client:
+   - Type must be **Web application**.
+   - Under **Authorized JavaScript origins**, add `http://localhost:8081`, `http://localhost`, and your Render link.
+   - Under **Audience**, if the app is in "Testing", add your Gmail addresses as test users.
+   - Changes can take 5 minutes to a few hours.
+3. **Android APK** (optional), so the phone app works anywhere without Expo Go. Needs a free Expo account.
+4. **Change every key and password** that was shared in chat while building: Anthropic, Sarvam, Cognee, Gemini, CARTO, the Google key, and both MongoDB passwords.
+5. **Turn the McAfee/AVG firewalls back on** after the hackathon. Consider removing AVG; McAfee and Windows Defender are enough.
+6. **Nice to have:**
+   - an Open Charge Map key for many more chargers
+   - a native speaker checking the translations
+   - real booking partners (IRCTC, airlines), real payments, live trip tracking
 
 ---
 
-## 16. Open items and next steps
+## 17. Glossary
 
-### MongoDB Atlas (done)
-
-The backend now runs on Atlas (cluster `cluster0.8ywplm8`, database `IQOO`). Prisma creates one collection per model (`User`, `Session`, `Trip`, `Charger`…), so the empty `SAFAR` collection made by hand isn't used. On this laptop the connection uses `tlsCAFile` because AVG re-signs TLS, and the first query after startup is slow, so the backend warms the connection up at boot.
-
-### Use from any phone
-
-Everything is in place: the Expo server forwards `/api` to the backend, and the app uses the tunnel's address. Run `npx expo start --tunnel` in `mobile/` and any phone with Expo Go can open the app from anywhere (the laptop must stay on).
-
-**Blocked on this laptop by AVG:** for ngrok's server AVG substitutes its "AVG Web/Mail Shield Untrusted Root" certificate, so the tunnel can't connect. Fix: AVG → Menu → Settings → Protection → Core Shields → Web Shield → turn off **Enable HTTPS scanning** (or uninstall AVG; McAfee and Windows Defender still protect the laptop). The permanent alternative is a cloud backend (e.g. Render) plus an Android APK from Expo EAS.
-
-### Google sign-in
-
-Website: done. The OAuth client is a **Web application** client with `http://localhost:8081` as an authorised JavaScript origin, and its id is in `GOOGLE_CLIENT_ID`. The backend verifies Google's ID token (audience, issuer, verified email) and logs into, or creates, the account for that email. If the Google project's audience is in "Testing", add each Gmail address as a test user. Phone app: Google sign-in doesn't work in Expo Go; it needs an EAS build with an Android OAuth client (package name `com.safarsathi.app` and the build's SHA-1).
-
-### Other improvements
-
-- Get an Open Charge Map key for much better charger coverage. OpenStreetMap has only about 600 chargers in India.
-- Have native speakers review the translations; the offline assistant only has English, Hindi and Marathi templates.
-- Real provider integrations (IRCTC partner APIs, airlines, GTFS feeds, parking operators), real payments, and live trip tracking.
-- Run the full demo on the phone after the latest UI changes.
+| Word | Meaning |
+| --- | --- |
+| **Backend / server** | The program on the laptop (or in the cloud) that stores data and does the thinking |
+| **Expo / Expo Go** | The toolkit we used to build the app, and the Play Store app that runs it during development |
+| **API** | The way the app talks to the server (for example "give me chargers near here") |
+| **Database (MongoDB Atlas)** | Online storage for accounts, trips, chargers and parking |
+| **Tunnel** | A temporary public internet address for a program running on your laptop |
+| **Render** | A website that runs our server in the cloud for free |
+| **OpenStreetMap** | A free world map made by volunteers; we use it for places, chargers and parking |
+| **OAuth / Client ID** | Google's system for "Continue with Google", and the ID that identifies our app to Google |
+| **Session** | Proof that you're logged in; ends when you log out |
+| **Seed** | Filling the database with starting demo data |
+| **Commit** | A saved checkpoint of the code in Git |
