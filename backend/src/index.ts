@@ -5,6 +5,7 @@ import express from 'express';
 import { describeAdapters } from './adapters';
 import { errorHandler } from './lib/http';
 import { requireAuth } from './lib/auth';
+import { prisma } from './lib/db';
 import { alertsRouter } from './routes/alerts';
 import { authRouter } from './routes/auth';
 import { bookingsRouter } from './routes/bookings';
@@ -38,9 +39,25 @@ app.use('/api', (_req, res) => {
 });
 app.use(errorHandler);
 
+async function warmUpDatabase(attempts = 5) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      await prisma.user.count();
+      console.log('Database connected');
+      return;
+    } catch (err) {
+      if (i === attempts)
+        console.error('Database connection failed:', (err as Error).message.trim());
+    }
+  }
+}
+
 const port = Number(process.env.PORT ?? 4000);
 // Bind to all interfaces so a phone on the same Wi-Fi can reach the laptop.
 app.listen(port, '0.0.0.0', () => {
   console.log(`SafarSathi backend listening on http://0.0.0.0:${port}`);
   console.log('Adapters:', describeAdapters());
+  // Open the database connection now, so users never hit the first query's slow TLS handshake to
+  // MongoDB Atlas (on this laptop AVG's scanning makes that first one time out). Retries until up.
+  void warmUpDatabase();
 });

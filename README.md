@@ -20,7 +20,7 @@ See [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md) for the full project document
 | Green score: CO₂ saved versus driving alone | Every journey card |
 
 ```
-backend/   Express + TypeScript + Prisma (SQLite): REST API, planner, AI agent, adapters
+backend/   Express + TypeScript + Prisma (MongoDB Atlas): REST API, planner, AI agent, adapters
 mobile/    Expo SDK 57 (React Native) + TypeScript + Expo Router
 ```
 
@@ -34,7 +34,7 @@ You need Node.js 20+ and an Android phone with **Expo Go** on the same Wi-Fi as 
 cd backend
 cp .env.example .env        # then fill in the keys (see below)
 npm install
-npm run db:setup            # create the SQLite database and seed demo data
+npm run db:setup            # create the MongoDB collections and seed demo data
 npm run dev                 # http://localhost:4000/api/health -> { "ok": true }
 ```
 
@@ -45,8 +45,10 @@ cd mobile
 cp .env.example .env        # EXPO_PUBLIC_API_URL=http://<your-laptop-LAN-IP>:4000
                             # EXPO_PUBLIC_CARTO_KEY=<key from carto.com/basemaps> (optional; nicer map tiles)
 npm install
-npx expo start              # scan the QR code with Expo Go
+npx expo start              # scan the QR code with Expo Go; press w for the website
 ```
+
+The **website** is the same app in a browser at http://localhost:8081 (sidebar layout, hover effects, live map). It reaches the backend through the Expo server, which forwards `/api`. **Continue with Google** appears there when `GOOGLE_CLIENT_ID` is set in `backend/.env`.
 
 In Expo Go the app finds the backend on the same laptop by itself, so `EXPO_PUBLIC_API_URL` only matters for standalone builds. Create an account in the app, or log in with the seeded account `demo@safarsathi.app` / `demo1234` (created by `npm run db:seed`).
 
@@ -65,7 +67,9 @@ Find your LAN IP with `ipconfig` (Windows, the Wi-Fi adapter's IPv4 address) or 
 | `COGNEE_API_URL`, `COGNEE_API_KEY` | Long-term memory in Cognee | Memory is kept in the local database only |
 | `OPEN_CHARGE_MAP_KEY` | Live chargers from Open Charge Map (better India coverage; free key at openchargemap.org) | OpenStreetMap chargers plus the seeded Pune ones |
 | `DEMO_OFFLINE` | `true` forces the offline assistant and keeps chargers and parking to the seeded Pune data, with no internet calls (backup for the demo) | |
-| `DATABASE_URL`, `PORT` | SQLite file and API port | Defaults: `file:./dev.db`, `4000` |
+| `DATABASE_URL` | MongoDB Atlas connection string (see `.env.example`) | Use `file:./dev.db` with `prisma/sqlite/schema.prisma` to run offline on SQLite |
+| `GOOGLE_CLIENT_ID` | "Continue with Google" on the website (OAuth **Web application** client id) | The Google button is hidden |
+| `PORT` | API port | `4000` |
 
 Never commit `.env`; both apps ignore it.
 

@@ -49,9 +49,11 @@ Related files:
 | Full-screen loading animations, a different scene per screen | Done |
 | Account menu with Light / Dark / System theme | Done |
 | Tested on a real Android phone | The app was opened and used on the developer's phone over a hotspot. The latest UI changes have not yet been checked on a phone. |
-| Database on MongoDB Atlas | **Prepared, not active.** Blocked on the Atlas database-user password (see [section 16](#16-open-items-and-next-steps)). The app runs on a local SQLite database. |
-| App usable from any phone, anywhere | **Not yet.** Free tunnels were blocked on this network; needs ngrok or a cloud deployment (see [section 16](#16-open-items-and-next-steps)). |
-| "Continue with Google" sign-in | **Not done.** Needs a Google OAuth client ID and a custom app build (see [section 16](#16-open-items-and-next-steps)). |
+| Database on MongoDB Atlas | **Active.** Cluster `cluster0.8ywplm8`, database `IQOO`. Accounts and sessions were migrated from SQLite. SQLite remains available offline (`prisma/sqlite/schema.prisma`). |
+| Website | **Done.** The same app in a browser: sidebar layout, hover effects, live Leaflet map, side-by-side Parking |
+| Navigate to parking | **Done.** Navigate button on every lot and in chat results (Google Maps directions) |
+| App usable from any phone, anywhere | **Ready, blocked by AVG.** `npx expo start --tunnel` serves the app and API through one public address, but AVG's HTTPS scanning breaks the tunnel on this laptop (see [section 16](#16-open-items-and-next-steps)). |
+| "Continue with Google" sign-in | **Website: done** (client id configured; first real sign-in still to be tried). Phone app: needs an installable build (see [section 16](#16-open-items-and-next-steps)). |
 
 ---
 
@@ -626,28 +628,19 @@ All dates are 2–3 October 2026. Commit hashes are in brackets.
 
 ## 16. Open items and next steps
 
-### MongoDB Atlas (needs the user)
+### MongoDB Atlas (done)
 
-Done so far: the schema is converted (`backend/prisma/mongodb/schema.prisma`), the access list has `0.0.0.0/0`, the AVG certificate is handled, and the connection string is in `backend/.env` (commented).
-
-Blocked: Atlas rejects the password for `sk39648215_db_user`.
-
-To finish:
-
-1. In Atlas, go to Database Access → Edit `sk39648215_db_user` → Edit Password, and set a password.
-2. Put it in the commented `DATABASE_URL` in `backend/.env` (URL-encode special characters; `#` becomes `%23`) and make that line the active one.
-3. Stop the backend, copy `prisma/mongodb/schema.prisma` over `prisma/schema.prisma`, then run `npx prisma db push` and `npm run db:seed`.
+The backend now runs on Atlas (cluster `cluster0.8ywplm8`, database `IQOO`). Prisma creates one collection per model (`User`, `Session`, `Trip`, `Charger`…), so the empty `SAFAR` collection made by hand isn't used. On this laptop the connection uses `tlsCAFile` because AVG re-signs TLS, and the first query after startup is slow, so the backend warms the connection up at boot.
 
 ### Use from any phone
 
-The phone currently needs to be on the same network as the laptop. Options:
+Everything is in place: the Expo server forwards `/api` to the backend, and the app uses the tunnel's address. Run `npx expo start --tunnel` in `mobile/` and any phone with Expo Go can open the app from anywhere (the laptop must stay on).
 
-- **Quick:** an ngrok tunnel (port 443 works on this network). It needs a free ngrok account and authtoken, and the laptop must stay on.
-- **Permanent (recommended):** host the backend on a cloud service such as Render with MongoDB Atlas, and build an installable Android APK with Expo EAS. It needs GitHub, Render and Expo accounts, and the Atlas password fixed.
+**Blocked on this laptop by AVG:** for ngrok's server AVG substitutes its "AVG Web/Mail Shield Untrusted Root" certificate, so the tunnel can't connect. Fix: AVG → Menu → Settings → Protection → Core Shields → Web Shield → turn off **Enable HTTPS scanning** (or uninstall AVG; McAfee and Windows Defender still protect the laptop). The permanent alternative is a cloud backend (e.g. Render) plus an Android APK from Expo EAS.
 
 ### Google sign-in
 
-It needs an OAuth **client ID** (`…apps.googleusercontent.com`) from Google Cloud Console. The `AIza…` API key that was provided can't sign users in, and its project has no APIs enabled. Google sign-in also doesn't work inside Expo Go; it needs an EAS development build.
+Website: done. The OAuth client is a **Web application** client with `http://localhost:8081` as an authorised JavaScript origin, and its id is in `GOOGLE_CLIENT_ID`. The backend verifies Google's ID token (audience, issuer, verified email) and logs into, or creates, the account for that email. If the Google project's audience is in "Testing", add each Gmail address as a test user. Phone app: Google sign-in doesn't work in Expo Go; it needs an EAS build with an Android OAuth client (package name `com.safarsathi.app` and the build's SHA-1).
 
 ### Other improvements
 

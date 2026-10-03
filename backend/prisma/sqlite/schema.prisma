@@ -1,22 +1,21 @@
-// MongoDB (Atlas). Ids are app-chosen strings mapped to _id. Arrays and nested objects are
-// stored as JSON strings (a holdover from SQLite) so the rest of the code is unchanged.
+// Arrays and nested objects are stored as JSON strings because SQLite has no native JSON column.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String   @id @default(cuid()) @map("_id")
+  id            String   @id @default(cuid())
   name          String
   email         String?  @unique // login; lower-cased
   passwordHash  String? // scrypt, see src/lib/auth.ts
   createdAt     DateTime @default(now())
-  language      String   @default("en-IN") // BCP-47, e.g. en-IN | hi-IN | mr-IN | ta-IN
-  hasEv         Boolean  @default(false)
+  language      String  @default("en-IN") // BCP-47, e.g. en-IN | hi-IN | mr-IN | ta-IN
+  hasEv         Boolean @default(false)
   evRangeKm     Int? // full-battery range
   evConnector   String? // CCS2 | Type2 | GBT | Bharat AC001
   evBatteryPct  Int? // current state of charge, 0..100
@@ -32,7 +31,7 @@ model User {
 
 // Login sessions: the app sends the token as "Authorization: Bearer <token>".
 model Session {
-  token     String   @id @map("_id")
+  token     String   @id
   userId    String
   createdAt DateTime @default(now())
 
@@ -40,7 +39,7 @@ model Session {
 }
 
 model Charger {
-  id           String   @id @map("_id")
+  id           String   @id
   name         String
   operator     String
   lat          Float
@@ -55,7 +54,7 @@ model Charger {
 }
 
 model ChargerReport {
-  id        String   @id @default(cuid()) @map("_id")
+  id        String   @id @default(cuid())
   chargerId String
   userId    String
   status    String // WORKING | BUSY | BROKEN
@@ -67,7 +66,7 @@ model ChargerReport {
 }
 
 model ParkingLot {
-  id            String  @id @map("_id")
+  id            String  @id
   name          String
   lat           Float
   lng           Float
@@ -81,7 +80,7 @@ model ParkingLot {
 }
 
 model ParkingReservation {
-  id        String   @id @map("_id") // human-readable, e.g. PRK-7Q2K9M
+  id        String   @id // human-readable, e.g. PRK-7Q2K9M
   lotId     String
   userId    String
   arriveAt  DateTime
@@ -94,7 +93,7 @@ model ParkingReservation {
 }
 
 model Trip {
-  id           String    @id @default(cuid()) @map("_id")
+  id           String    @id @default(cuid())
   userId       String
   title        String
   status       String // PLANNED | BOOKED | IN_PROGRESS | DISRUPTED | DONE | REPLACED
@@ -112,7 +111,7 @@ model Trip {
 
 // Local copy of everything sent to Cognee, so memory still works offline.
 model Memory {
-  id        String   @id @default(cuid()) @map("_id")
+  id        String   @id @default(cuid())
   userId    String
   kind      String // PLACE | PREFERENCE | TRIP | NOTE
   text      String
