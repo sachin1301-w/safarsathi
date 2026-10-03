@@ -5,3 +5,6 @@ node_modules/
 
 # Local binaries (cloudflared for public tunnels)
 tools/
+
+# Server logs when started in the background
+logs/
