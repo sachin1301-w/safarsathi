@@ -5,3 +5,6 @@ dist/
 *.db-journal
 .cache/
 data/.parking.india.progress.json
+
+# Local TLS bundle (AVG root + public roots), see .env DATABASE_URL
+certs/

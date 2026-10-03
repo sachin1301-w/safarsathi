@@ -1,0 +1,122 @@
+// MongoDB (Atlas). Ids are app-chosen strings mapped to _id. Arrays and nested objects are
+// stored as JSON strings (a holdover from SQLite) so the rest of the code is unchanged.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid()) @map("_id")
+  name          String
+  email         String?  @unique // login; lower-cased
+  passwordHash  String? // scrypt, see src/lib/auth.ts
+  createdAt     DateTime @default(now())
+  language      String   @default("en-IN") // BCP-47, e.g. en-IN | hi-IN | mr-IN | ta-IN
+  hasEv         Boolean  @default(false)
+  evRangeKm     Int? // full-battery range
+  evConnector   String? // CCS2 | Type2 | GBT | Bharat AC001
+  evBatteryPct  Int? // current state of charge, 0..100
+  homePlaceId   String?
+  officePlaceId String?
+
+  trips        Trip[]
+  reports      ChargerReport[]
+  memories     Memory[]
+  reservations ParkingReservation[]
+  sessions     Session[]
+}
+
+// Login sessions: the app sends the token as "Authorization: Bearer <token>".
+model Session {
+  token     String   @id @map("_id")
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Charger {
+  id           String   @id @map("_id")
+  name         String
+  operator     String
+  lat          Float
+  lng          Float
+  powerKw      Float
+  connectors   String // JSON array of connector types
+  status       String // WORKING | BUSY | BROKEN | UNKNOWN
+  pricePerKwh  Float
+  lastVerified DateTime
+
+  reports ChargerReport[]
+}
+
+model ChargerReport {
+  id        String   @id @default(cuid()) @map("_id")
+  chargerId String
+  userId    String
+  status    String // WORKING | BUSY | BROKEN
+  note      String?
+  createdAt DateTime @default(now())
+
+  charger Charger @relation(fields: [chargerId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model ParkingLot {
+  id            String  @id @map("_id")
+  name          String
+  lat           Float
+  lng           Float
+  totalSpots    Int
+  ratePerHour   Float
+  type          String // MALL | STATION | AIRPORT | STREET | MULTILEVEL
+  hourlyPattern String // JSON: 24 numbers, typical occupancy 0..1 per hour
+  hasEvCharging Boolean @default(false)
+
+  reservations ParkingReservation[]
+}
+
+model ParkingReservation {
+  id        String   @id @map("_id") // human-readable, e.g. PRK-7Q2K9M
+  lotId     String
+  userId    String
+  arriveAt  DateTime
+  hours     Float
+  amount    Float
+  createdAt DateTime @default(now())
+
+  lot  ParkingLot @relation(fields: [lotId], references: [id])
+  user User       @relation(fields: [userId], references: [id])
+}
+
+model Trip {
+  id           String    @id @default(cuid()) @map("_id")
+  userId       String
+  title        String
+  status       String // PLANNED | BOOKED | IN_PROGRESS | DISRUPTED | DONE | REPLACED
+  option       String // FASTEST | CHEAPEST | GREENEST
+  legs         String // JSON array of Leg
+  totalMins    Int
+  totalCost    Float
+  co2SavedKg   Float
+  arriveBy     DateTime? // the user's deadline, used when replanning
+  alertMessage String? // latest disruption alert, shown until the trip is fixed
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// Local copy of everything sent to Cognee, so memory still works offline.
+model Memory {
+  id        String   @id @default(cuid()) @map("_id")
+  userId    String
+  kind      String // PLACE | PREFERENCE | TRIP | NOTE
+  text      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

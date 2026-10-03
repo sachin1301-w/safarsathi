@@ -4,7 +4,7 @@ One AI copilot that fixes the whole journey, not just one leg of it.
 
 SafarSathi plans door-to-door trips across metro, bus, auto, bike taxi, cab, train, flight and your EV, books every leg in one place, and replans automatically when something is delayed. It speaks 11 Indian languages.
 
-See [SPEC.md](SPEC.md) for the build specification and [DECISIONS.md](DECISIONS.md) for every choice made along the way.
+See [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md) for the full project documentation, [SPEC.md](SPEC.md) for the build specification and [DECISIONS.md](DECISIONS.md) for every choice made along the way.
 
 ## What's inside
 
