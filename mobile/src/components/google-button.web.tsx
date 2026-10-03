@@ -4,7 +4,8 @@
  * GOOGLE_CLIENT_ID.
  */
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { useAppColorScheme } from '@/lib/theme-preference';
 
 import { useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -39,7 +40,7 @@ function loadGis(): Promise<Google> {
 
 export function GoogleButton({ onError }: { onError: (message: string) => void }) {
   const theme = useTheme();
-  const dark = useColorScheme() === 'dark';
+  const dark = useAppColorScheme() === 'dark';
   const { loginWithGoogle } = useAuth();
   const host = useRef<View>(null);
   const [clientId, setClientId] = useState<string | null>(null);

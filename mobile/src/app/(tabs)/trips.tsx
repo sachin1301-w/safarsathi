@@ -21,6 +21,7 @@ import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { formatDay, formatInr, formatTime } from '@/lib/format';
 import { useT } from '@/lib/i18n';
+import { MenuButton } from '@/lib/menu';
 import { MODE_INFO } from '@/lib/modes';
 import type { Trip } from '@/lib/types';
 
@@ -69,7 +70,7 @@ export default function TripsScreen() {
     : 0;
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.page }]}>
       <ScrollView
         contentContainerStyle={[styles.content, pageWidth()]}
         refreshControl={
@@ -82,8 +83,13 @@ export default function TripsScreen() {
             tintColor={theme.accent}
           />
         }>
-        <Text style={[styles.title, { color: theme.text }]}>{t('trips.title')}</Text>
-        <Text style={{ color: theme.textSecondary }}>{t('trips.subtitle')}</Text>
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.title, { color: theme.text }]}>{t('trips.title')}</Text>
+            <Text style={{ color: theme.textSecondary }}>{t('trips.subtitle')}</Text>
+          </View>
+          <MenuButton />
+        </View>
 
         {error && !sections ? (
           <ErrorState message={error} onRetry={load} />
@@ -184,6 +190,7 @@ function TripCard({ trip, muted }: { trip: Trip; muted?: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   safe: { flex: 1 },
   content: { padding: Spacing.md, gap: Spacing.md, paddingBottom: Spacing.xl },
   title: { fontSize: 28, fontWeight: '800', marginTop: Spacing.sm },

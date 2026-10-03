@@ -1,7 +1,7 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { Platform } from 'react-native';
 
 import { AuthScreen } from '@/components/auth-screen';
 import { BootScreen } from '@/components/boot-screen';
@@ -11,11 +11,25 @@ import { AlertsProvider } from '@/lib/alerts';
 import { api } from '@/lib/api';
 import { AppProvider } from '@/lib/app-context';
 import { AuthProvider, useAuth } from '@/lib/auth';
-import { ThemePreferenceProvider } from '@/lib/theme-preference';
+import { ThemePreferenceProvider, useAppColorScheme } from '@/lib/theme-preference';
 import { LocationProvider } from '@/lib/location';
+import { MenuProvider } from '@/lib/menu';
 
 export default function RootLayout() {
-  const scheme = useColorScheme();
+  // The theme choice must sit above everything that reads it, including the navigation theme.
+  return (
+    <ThemePreferenceProvider>
+      <ThemedRoot />
+    </ThemePreferenceProvider>
+  );
+}
+
+function ThemedRoot() {
+  const scheme = useAppColorScheme();
+  // The website's background (in +html.tsx) follows the same light/dark choice.
+  useEffect(() => {
+    if (Platform.OS === 'web') document.documentElement.dataset.theme = scheme;
+  }, [scheme]);
   const theme = useTheme();
   const navTheme = scheme === 'dark' ? DarkTheme : DefaultTheme;
   return (
@@ -25,16 +39,14 @@ export default function RootLayout() {
         colors: {
           ...navTheme.colors,
           primary: theme.accent,
-          background: theme.background,
+          background: theme.page,
           card: theme.surface,
         },
       }}>
-      <ThemePreferenceProvider>
-        <AuthProvider>
-          <Gate />
-        </AuthProvider>
-      </ThemePreferenceProvider>
-      <StatusBar style="auto" />
+      <AuthProvider>
+        <Gate />
+      </AuthProvider>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
   );
 }
@@ -74,18 +86,20 @@ function Gate() {
     <AppProvider key={auth.userId}>
       <AlertsProvider>
         <LocationProvider>
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: theme.surface },
-              headerTintColor: theme.text,
-              headerTitleStyle: { fontWeight: '700' },
-              contentStyle: { backgroundColor: theme.background },
-            }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="charger/[id]" options={{ title: 'Charger' }} />
-            <Stack.Screen name="plan" options={{ title: 'Choose your route' }} />
-            <Stack.Screen name="journey/[id]" options={{ title: 'Your journey' }} />
-          </Stack>
+          <MenuProvider>
+            <Stack
+              screenOptions={{
+                headerStyle: { backgroundColor: theme.surface },
+                headerTintColor: theme.text,
+                headerTitleStyle: { fontWeight: '700' },
+                contentStyle: { backgroundColor: theme.page },
+              }}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="charger/[id]" options={{ title: 'Charger' }} />
+              <Stack.Screen name="plan" options={{ title: 'Choose your route' }} />
+              <Stack.Screen name="journey/[id]" options={{ title: 'Your journey' }} />
+            </Stack>
+          </MenuProvider>
         </LocationProvider>
       </AlertsProvider>
     </AppProvider>

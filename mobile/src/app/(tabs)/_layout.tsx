@@ -42,6 +42,7 @@ export default function TabLayout() {
               paddingTop: 24,
             }
           : { backgroundColor: theme.background, borderTopColor: theme.border },
+        sceneStyle: { backgroundColor: theme.page },
         tabBarItemStyle: wide
           ? { borderRadius: 12, marginHorizontal: 10, marginVertical: 2 }
           : undefined,

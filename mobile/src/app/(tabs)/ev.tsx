@@ -13,6 +13,7 @@ import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
 import { useT } from '@/lib/i18n';
+import { MenuButton } from '@/lib/menu';
 import { useLocation } from '@/lib/location';
 import type { Charger, ChargerStatus } from '@/lib/types';
 
@@ -83,9 +84,9 @@ export default function EvScreen() {
   const openDetail = (id: string) => router.push({ pathname: '/charger/[id]', params: { id } });
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.page }]}>
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: theme.text }]}>{t('ev.title')}</Text>
           <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{t('ev.subtitle')}</Text>
         </View>
@@ -96,6 +97,7 @@ export default function EvScreen() {
           style={[styles.toggle, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Icon name={view === 'map' ? 'format-list-bulleted' : 'map-outline'} size={22} />
         </Pressable>
+        <MenuButton />
       </View>
 
       <ScrollView

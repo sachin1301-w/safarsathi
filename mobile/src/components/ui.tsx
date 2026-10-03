@@ -21,6 +21,15 @@ export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 export const pageWidth = (max = 880) =>
   (Platform.OS === 'web' ? { width: '100%', maxWidth: max, alignSelf: 'center' } : {}) as ViewStyle;
 
+/**
+ * Website-only data attributes, styled in app/+html.tsx: 'tilt' (3D tilt towards the mouse with a
+ * light reflection), 'glass' (frosted), 'gradientText', 'float', 'glowButton'. Nothing on phones.
+ */
+export const webData = (...keys: ('tilt' | 'glass' | 'gradientText' | 'float' | 'glowButton')[]) =>
+  (Platform.OS === 'web'
+    ? { dataSet: Object.fromEntries(keys.map((k) => [k, ''])) }
+    : {}) as object;
+
 /** Pressable state on web includes `hovered` (react-native-web); always false on phones. */
 export const isHovered = (state: object) => !!(state as { hovered?: boolean }).hovered;
 
@@ -61,7 +70,12 @@ export function Card({
 }) {
   const theme = useTheme();
   const base = [styles.card, { backgroundColor: theme.surface, borderColor: theme.border }, style];
-  if (!onPress) return <View style={base}>{children}</View>;
+  if (!onPress)
+    return (
+      <View style={base} {...webData('glass')}>
+        {children}
+      </View>
+    );
   return (
     <Pressable
       onPress={onPress}
@@ -69,6 +83,7 @@ export function Card({
       // Reserve buttons some cards hold, so cards are plain clickable containers there.
       accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       accessibilityLabel={accessibilityLabel}
+      {...webData('tilt')}
       style={(state) => [
         base,
         webInteractive,

@@ -4,18 +4,12 @@
  * this works in Expo Go, needs no API key, and supports pins, labels, routes and dark mode.
  */
 import { useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  StyleSheet,
-  useColorScheme,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 
 import { PinDropScene } from '@/components/scenes';
 import { useT } from '@/lib/i18n';
+import { useAppColorScheme } from '@/lib/theme-preference';
 
 export interface MapMarker {
   id: string;
@@ -124,7 +118,7 @@ export function LeafletMap({
   style,
 }: LeafletMapProps) {
   const ref = useRef<WebView>(null);
-  const dark = useColorScheme() === 'dark';
+  const dark = useAppColorScheme() === 'dark';
   const t = useT();
   const [ready, setReady] = useState(false);
   // Covers the map until the first tiles arrive, then fades out.

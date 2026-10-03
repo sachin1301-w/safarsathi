@@ -23,6 +23,7 @@ import { api } from '@/lib/api';
 import { useCurrentOrigin } from '@/lib/location';
 import { useApp } from '@/lib/app-context';
 import { useT } from '@/lib/i18n';
+import { MenuButton } from '@/lib/menu';
 import type { Card } from '@/lib/types';
 import { speak, stopSpeaking, useVoiceInput } from '@/lib/voice';
 
@@ -170,7 +171,7 @@ export default function ChatScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.page }]}>
       <View style={[styles.header, { borderColor: theme.border }]}>
         <View style={[styles.avatar, { backgroundColor: theme.accent }]}>
           <Icon name="robot-happy-outline" color={theme.onAccent} />
@@ -190,6 +191,7 @@ export default function ChatScreen() {
           <Icon name="translate" size={18} color={theme.accent} />
           <Text style={[styles.langText, { color: theme.text }]}>{nativeName(language)}</Text>
         </Pressable>
+        <MenuButton />
       </View>
 
       <KeyboardAvoidingView

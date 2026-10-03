@@ -1,10 +1,10 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AccountSheet } from '@/components/account-sheet';
 import { AlertBanner } from '@/components/alert-banner';
+import { WebHero } from '@/components/web-hero';
 import { DemoFooter } from '@/components/demo-footer';
 import { JourneyCard } from '@/components/journey-card';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
@@ -18,11 +18,13 @@ import {
   SectionTitle,
   type IconName,
   pageWidth,
+  webData,
 } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAlerts } from '@/lib/alerts';
 import { useT, type StringKey } from '@/lib/i18n';
+import { MenuButton } from '@/lib/menu';
 import { useApp } from '@/lib/app-context';
 import type { Trip } from '@/lib/types';
 
@@ -45,10 +47,10 @@ function greeting(): StringKey {
 export default function HomeScreen() {
   const theme = useTheme();
   const { profile, setLanguage } = useApp();
-  const [accountOpen, setAccountOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [status, setStatus] = useState<Status>('checking');
   const [query, setQuery] = useState('');
+  const searchRef = useRef<TextInput>(null);
   const [hello] = useState(greeting);
   const t = useT();
   const { alerts, dismiss, refresh } = useAlerts();
@@ -107,9 +109,9 @@ export default function HomeScreen() {
   const voice = () => router.navigate({ pathname: '/chat', params: { voice: String(Date.now()) } });
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.page }]}>
       <ScrollView
-        contentContainerStyle={[styles.content, pageWidth()]}
+        contentContainerStyle={[styles.content, pageWidth(1200)]}
         keyboardShouldPersistTaps="handled">
         <View style={styles.topRow}>
           <View style={[styles.logo, { backgroundColor: theme.accent }]}>
@@ -131,17 +133,7 @@ export default function HomeScreen() {
               {nativeName(profile?.language ?? 'en-IN')}
             </Text>
           </Pressable>
-          <Pressable
-            onPress={() => setAccountOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Menu"
-            hitSlop={8}
-            style={[
-              styles.menuButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}>
-            <Icon name="menu" size={24} color={theme.text} />
-          </Pressable>
+          <MenuButton />
         </View>
 
         {status === 'offline' && (
@@ -175,6 +167,8 @@ export default function HomeScreen() {
           />
         ))}
 
+        <WebHero onPlan={() => searchRef.current?.focus()} />
+
         <View>
           <Text style={[styles.hello, { color: theme.textSecondary }]}>
             {t(hello)}
@@ -184,12 +178,14 @@ export default function HomeScreen() {
         </View>
 
         <View
+          {...webData('glass')}
           style={[
             styles.searchCard,
             { backgroundColor: theme.surface, borderColor: theme.border },
           ]}>
           <Icon name="magnify" size={26} color={theme.accent} />
           <TextInput
+            ref={searchRef}
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={submit}
@@ -246,11 +242,6 @@ export default function HomeScreen() {
         )}
         <DemoFooter />
       </ScrollView>
-      <AccountSheet
-        visible={accountOpen}
-        onClose={() => setAccountOpen(false)}
-        onChangeLanguage={() => setPickerOpen(true)}
-      />
       <LanguagePicker
         visible={pickerOpen}
         value={profile?.language ?? 'en-IN'}

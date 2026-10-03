@@ -4,7 +4,8 @@
  * plus hover effects on pins.
  */
 import { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, useColorScheme, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
+import { useAppColorScheme } from '@/lib/theme-preference';
 
 import { PinDropScene } from '@/components/scenes';
 import { useT } from '@/lib/i18n';
@@ -78,7 +79,7 @@ export function LeafletMap({
   onMapPress,
   style,
 }: LeafletMapProps) {
-  const dark = useColorScheme() === 'dark';
+  const dark = useAppColorScheme() === 'dark';
   const t = useT();
   const host = useRef<View>(null);
   const map = useRef<{ L: L; map: L; tiles: L; layer: L } | null>(null);

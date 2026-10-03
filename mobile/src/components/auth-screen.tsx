@@ -77,7 +77,7 @@ export function AuthScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.page }]}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[

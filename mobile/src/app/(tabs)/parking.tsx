@@ -24,6 +24,7 @@ import { api } from '@/lib/api';
 import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
 import { formatInr, formatKm, formatRate, formatTime } from '@/lib/format';
 import { useT, type StringKey } from '@/lib/i18n';
+import { MenuButton } from '@/lib/menu';
 import { useLocation } from '@/lib/location';
 import { openDirections } from '@/lib/navigate';
 import type { ParkingLot, Place } from '@/lib/types';
@@ -107,12 +108,15 @@ export default function ParkingScreen() {
   useEffect(load, [load]);
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>{t('parking.title')}</Text>
-        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {t('parking.subtitle')}
-        </Text>
+    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.page }]}>
+      <View style={[styles.header, styles.headerRow]}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.title, { color: theme.text }]}>{t('parking.title')}</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+            {t('parking.subtitle')}
+          </Text>
+        </View>
+        <MenuButton />
       </View>
       <View style={styles.searchWrap}>
         <PlaceSearch
@@ -381,6 +385,7 @@ function ReserveSheet({
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   title: { fontSize: 28, fontWeight: '800' },
   subtitle: { fontSize: 14 },
   searchWrap: { paddingHorizontal: Spacing.md, paddingTop: Spacing.md, zIndex: 10 },
