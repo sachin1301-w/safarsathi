@@ -1,12 +1,14 @@
 /**
  * Holiday planner: "N days in <place>" → the special places to see (Wikipedia, famous first), a
- * day-by-day plan grouping nearby sights, hotel options (OpenStreetMap, else estimates), travel
- * there and back (our journey planner) and a full budget. Every price that isn't real data is an
- * estimate and is labelled so. Gemini only writes the overview and tips, from the real sights.
+ * day-by-day plan grouping nearby sights, and three tiers (budget, comfort, luxury), each with real
+ * hotels (TripAdvisor data with live rates for the dates; OpenStreetMap or estimates where there
+ * is none), travel there and back (our journey planner) and a full budget. Every price that isn't
+ * real data is an estimate and is labelled so. Gemini only writes the overview and tips.
  */
 import { lookupPlace } from '../adapters';
 import { postCompletion } from '../ai/completion';
 import { haversineKm } from '../lib/geo';
+import { hotelsByTier, liveRate, type DataHotel } from '../lib/hotels';
 import { HttpError } from '../lib/http';
 import { elementPoint, overpassQuery } from '../lib/osm';
 import { notableHotels, sightsNear, type WikiPlace } from '../lib/wiki';
@@ -56,8 +58,32 @@ export interface HotelOption {
   nights: number;
   rooms: number;
   total: number;
-  /** "openstreetmap": a real hotel with an estimated price; "estimate": no hotel data nearby. */
-  source: 'openstreetmap' | 'estimate';
+  /**
+   * "tripadvisor": a real listed hotel with real prices; "openstreetmap": a real hotel with an
+   * estimated price; "estimate": no hotel data nearby.
+   */
+  source: 'tripadvisor' | 'openstreetmap' | 'estimate';
+  /** "live": the rate for these dates on a booking site; "range": its usual price; "estimate". */
+  priceSource: 'live' | 'range' | 'estimate';
+  /** Booking site with the cheapest live rate, and the best few offers. */
+  provider?: string;
+  offers?: { name: string; rate: number }[];
+  /** Usual nightly range (INR) from TripAdvisor. */
+  priceMin?: number;
+  priceMax?: number;
+  rating?: number;
+  reviews?: number;
+  photo?: string;
+  url?: string;
+  distanceKm?: number;
+}
+
+/** One way to do the holiday: its hotels, travel and full budget. */
+export interface TierPlan {
+  style: HolidayStyle;
+  hotels: HotelOption[];
+  travel: { option: Itinerary; perPerson: number; total: number } | null;
+  budget: { lines: BudgetLine[]; total: number; perPerson: number; hotelId: string | null };
 }
 
 export interface BudgetLine {
@@ -82,7 +108,11 @@ export interface HolidayPlan {
   travel: { option: Itinerary; perPerson: number; total: number } | null;
   travelNote?: string;
   budget: { lines: BudgetLine[]; total: number; perPerson: number; hotelId: string | null };
+  /** All three tiers side by side; hotels, travel and budget above are tiers[style]. */
+  tiers: Record<HolidayStyle, TierPlan>;
 }
+
+const STYLES: HolidayStyle[] = ['budget', 'comfort', 'luxury'];
 
 const SIGHTS_PER_DAY = 3;
 /** Sights further than this from the destination are dropped. */
@@ -161,7 +191,8 @@ function buildDays(
 const vary = (id: string) =>
   0.85 + ([...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % 30) / 100;
 
-async function findHotels(
+/** Hotels from OpenStreetMap or Wikipedia with estimated prices, for places without TripAdvisor data. */
+async function fallbackHotels(
   dest: Place,
   style: HolidayStyle,
   nights: number,
@@ -172,11 +203,18 @@ async function findHotels(
   const price = (id: string, s: HolidayStyle) =>
     Math.round((ROOM[s] * factor * vary(id)) / 50) * 50;
   const option = (
-    o: Omit<HotelOption, 'nights' | 'rooms' | 'total' | 'pricePerNight'>,
+    o: Omit<HotelOption, 'nights' | 'rooms' | 'total' | 'pricePerNight' | 'priceSource'>,
     s: HolidayStyle,
   ): HotelOption => {
     const pricePerNight = price(o.id, s);
-    return { ...o, pricePerNight, nights, rooms, total: pricePerNight * nights * rooms };
+    return {
+      ...o,
+      pricePerNight,
+      nights,
+      rooms,
+      total: pricePerNight * nights * rooms,
+      priceSource: 'estimate',
+    };
   };
   // Luxury: notable hotels from Wikipedia (heritage palaces, landmark hotels) when there are any.
   if (style === 'luxury' && famous.length)
@@ -263,6 +301,77 @@ async function findHotels(
       style,
     ),
   );
+}
+
+/** Runs `fn` over items, at most `limit` at a time. */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (t: T) => Promise<R>) {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (next < items.length) {
+        const i = next++;
+        out[i] = await fn(items[i]);
+      }
+    }),
+  );
+  return out;
+}
+
+/**
+ * Three hotels per tier: real TripAdvisor-listed hotels near the destination, priced with live
+ * rates for the dates (else their usual price); OpenStreetMap or estimates where there are none.
+ */
+async function tierHotels(
+  dest: Place,
+  nights: number,
+  rooms: number,
+  checkIn: Date,
+  famous: WikiPlace[],
+): Promise<Record<HolidayStyle, HotelOption[]>> {
+  const checkOut = new Date(checkIn.getTime() + nights * 86_400_000);
+  const picks = hotelsByTier(dest);
+  const listed = STYLES.flatMap((style) => picks[style].map((h) => ({ style, h })));
+  const rates = await mapLimit(listed, 4, ({ h }) => liveRate(h.key, checkIn, checkOut));
+  const toOption = (h: DataHotel & { km: number }, i: number): HotelOption => {
+    const live = rates[i];
+    const pricePerNight = live?.rate ?? h.min ?? 0;
+    return {
+      id: `ta-${h.key}`,
+      name: h.name,
+      kind: h.type.toLowerCase(),
+      lat: h.lat,
+      lng: h.lng,
+      pricePerNight,
+      nights,
+      rooms,
+      total: pricePerNight * nights * rooms,
+      source: 'tripadvisor',
+      priceSource: live ? 'live' : 'range',
+      provider: live?.provider,
+      offers: live?.offers,
+      priceMin: h.min ?? undefined,
+      priceMax: h.max ?? undefined,
+      rating: h.rating ?? undefined,
+      reviews: h.reviews,
+      photo: h.photo,
+      url: h.url,
+      distanceKm: Math.round(h.km * 10) / 10,
+    };
+  };
+  const out = {} as Record<HolidayStyle, HotelOption[]>;
+  for (const style of STYLES) {
+    const real = listed
+      .map((x, i) => ({ ...x, i }))
+      .filter((x) => x.style === style)
+      .map((x) => toOption(x.h, x.i))
+      // Live rates can move a hotel's price; cheapest first within the tier.
+      .sort((a, b) => a.pricePerNight - b.pricePerNight);
+    out[style] = real.length
+      ? real
+      : await fallbackHotels(dest, style, nights, rooms, famous).catch(() => []);
+  }
+  return out;
 }
 
 /** A short overview and tips written by Gemini from the real sights; plain text if unavailable. */
@@ -353,70 +462,101 @@ export async function planHoliday(req: HolidayRequest): Promise<HolidayPlan> {
       .slice(0, days * SIGHTS_PER_DAY)
       .map(toSight),
   );
-  const [sights, hotels, travel, { overview, tips }] = await Promise.all([
+  const [sights, hotels, options, { overview, tips }] = await Promise.all([
     sightsPromise,
-    wikiPromise.then(() => findHotels(dest, req.style, nights, rooms, notableHotels(points))),
+    wikiPromise.then(() => tierHotels(dest, nights, rooms, start, notableHotels(points))),
     planForUser({
       from: req.from ?? 'home',
       to: { name: dest.name, lat: dest.lat, lng: dest.lng },
       departAt: start,
     })
-      .then((r) => [...r.options].sort((a, b) => a.totalCost - b.totalCost)[0] ?? null)
+      .then((r) => r.options)
       .catch((err: Error) => ({ error: err.message }) as const),
     sightsPromise.then((s) => writeOverview(dest, days, req.style, s)),
   ]);
   const itinerary = buildDays(sights, dest, days);
-
-  const travelPlan =
-    travel && !('error' in travel)
-      ? { option: travel, perPerson: travel.totalCost, total: travel.totalCost * travellers * 2 }
-      : null;
-  const hotel = hotels[0] ?? null;
   const tickets = sights.reduce((s, x) => s + x.ticket, 0) * travellers;
-  const lines: BudgetLine[] = [
-    {
-      key: 'travel',
-      label: 'Travel there and back',
-      amount: travelPlan?.total ?? 0,
-      note: travelPlan
-        ? `Cheapest option, ₹${travelPlan.perPerson.toLocaleString('en-IN')} per person each way`
-        : 'Not included (no route from your start point)',
-    },
-    {
-      key: 'hotel',
-      label: 'Hotel',
-      amount: hotel?.total ?? 0,
-      note: hotel
-        ? `${nights} night${nights > 1 ? 's' : ''} × ${rooms} room${rooms > 1 ? 's' : ''} at about ₹${hotel.pricePerNight.toLocaleString('en-IN')}/night (estimate)`
-        : '',
-    },
-    {
-      key: 'food',
-      label: 'Food',
-      amount: FOOD[req.style] * travellers * days,
-      note: `About ₹${FOOD[req.style].toLocaleString('en-IN')} per person per day (estimate)`,
-    },
-    {
-      key: 'local',
-      label: 'Local travel',
-      amount: LOCAL[req.style] * days,
-      note: `Autos and cabs, about ₹${LOCAL[req.style].toLocaleString('en-IN')} a day (estimate)`,
-    },
-    {
-      key: 'tickets',
-      label: 'Entry tickets',
-      amount: tickets,
-      note: 'Typical Indian-visitor prices (estimate)',
-    },
-  ];
-  const subtotal = lines.reduce((s, l) => s + l.amount, 0);
-  lines.push({
-    key: 'buffer',
-    label: 'Buffer (10%)',
-    amount: Math.round(subtotal * 0.1),
-    note: 'Shopping, tips and surprises',
-  });
-  const total = lines.reduce((s, l) => s + l.amount, 0);
+
+  // Budget and comfort travel the cheapest way; luxury takes the fastest option.
+  const byCost = 'error' in options ? [] : [...options].sort((a, b) => a.totalCost - b.totalCost);
+  const pickTravel = (style: HolidayStyle) =>
+    style === 'luxury' ? [...byCost].sort((a, b) => a.totalMins - b.totalMins)[0] : byCost[0];
+  const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+
+  const tier = (style: HolidayStyle): TierPlan => {
+    const option = pickTravel(style);
+    const travel = option
+      ? { option, perPerson: option.totalCost, total: option.totalCost * travellers * 2 }
+      : null;
+    const hotel = hotels[style][0] ?? null;
+    const priceNote = !hotel
+      ? ''
+      : hotel.priceSource === 'live'
+        ? ` (live rate on ${hotel.provider})`
+        : hotel.priceSource === 'range'
+          ? ' (usual price)'
+          : ' (estimate)';
+    const lines: BudgetLine[] = [
+      {
+        key: 'travel',
+        label: 'Travel there and back',
+        amount: travel?.total ?? 0,
+        note: travel
+          ? `${style === 'luxury' ? 'Fastest' : 'Cheapest'} option, ${inr(travel.perPerson)} per person each way`
+          : 'Not included (no route from your start point)',
+      },
+      {
+        key: 'hotel',
+        label: hotel ? `Hotel: ${hotel.name}` : 'Hotel',
+        amount: hotel?.total ?? 0,
+        note: hotel
+          ? `${nights} night${nights > 1 ? 's' : ''} × ${rooms} room${rooms > 1 ? 's' : ''} at ${inr(hotel.pricePerNight)}/night${priceNote}`
+          : 'No hotel found nearby',
+      },
+      {
+        key: 'food',
+        label: 'Food',
+        amount: FOOD[style] * travellers * days,
+        note: `About ${inr(FOOD[style])} per person per day (estimate)`,
+      },
+      {
+        key: 'local',
+        label: 'Local travel',
+        amount: LOCAL[style] * days,
+        note: `Autos and cabs, about ${inr(LOCAL[style])} a day (estimate)`,
+      },
+      {
+        key: 'tickets',
+        label: 'Entry tickets',
+        amount: tickets,
+        note: 'Typical Indian-visitor prices (estimate)',
+      },
+    ];
+    const subtotal = lines.reduce((s, l) => s + l.amount, 0);
+    lines.push({
+      key: 'buffer',
+      label: 'Buffer (10%)',
+      amount: Math.round(subtotal * 0.1),
+      note: 'Shopping, tips and surprises',
+    });
+    const total = lines.reduce((s, l) => s + l.amount, 0);
+    return {
+      style,
+      hotels: hotels[style],
+      travel,
+      budget: {
+        lines,
+        total,
+        perPerson: Math.round(total / travellers),
+        hotelId: hotel?.id ?? null,
+      },
+    };
+  };
+  const tiers = Object.fromEntries(STYLES.map((s) => [s, tier(s)])) as Record<
+    HolidayStyle,
+    TierPlan
+  >;
+  const chosen = tiers[req.style];
 
   return {
     destination: dest,
@@ -429,9 +569,10 @@ export async function planHoliday(req: HolidayRequest): Promise<HolidayPlan> {
     tips,
     highlights: sights.slice(0, 6),
     itinerary,
-    hotels,
-    travel: travelPlan,
-    travelNote: travel && 'error' in travel ? travel.error : undefined,
-    budget: { lines, total, perPerson: Math.round(total / travellers), hotelId: hotel?.id ?? null },
+    hotels: chosen.hotels,
+    travel: chosen.travel,
+    travelNote: 'error' in options ? options.error : undefined,
+    budget: chosen.budget,
+    tiers,
   };
 }

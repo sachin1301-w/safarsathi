@@ -121,12 +121,21 @@ Other files in the project:
 - Tell it **where** and **how many days** (1 to 14), how many people (1 to 12), and the style: **Budget**, **Comfort** or **Luxury**.
 - **Special places to visit:** the most famous sights there, with photos and a short note, ranked by how many people read about them on Wikipedia. Each one has a **Navigate** button.
 - **Day by day:** about 3 nearby sights per day, grouped so you don't zigzag across the city.
-- **Getting there:** the cheapest real route from your home, with a **Book travel** button.
-- **Where to stay:** three hotels with a price per night and the total. **Book hotel & save holiday** books one (demo, no payment) and gives a reference like `HTL-UZP7RM`.
-- **Full budget:** travel there and back, hotel, food, local travel, entry tickets and a 10% buffer, with the total and the cost per person.
+- **Budget, Comfort and Luxury side by side:** three cards show each style's total, cost per person and cheapest hotel. Tap one to see its own hotels, travel and budget.
+  - Budget: hotels under about ₹3,000 a night, local food, autos, the cheapest travel.
+  - Comfort: hotels of about ₹3,000 to ₹8,000 a night, restaurants, cabs.
+  - Luxury: hotels from about ₹8,000 a night, the fastest travel.
+- **Getting there:** a real route from your home (cheapest for Budget and Comfort, fastest for Luxury), with a **Book travel** button.
+- **Where to stay:** three **real hotels** per style, with photo, rating, number of reviews and distance from the centre.
+  - **Live price:** the price per night for your dates from booking sites (Booking.com, Agoda and others), with the cheapest site named, e.g. "Live · Booking.com". Other sites' prices are listed too.
+  - If no site has a price for those dates, the hotel's **usual price** is shown and marked "Usual price".
+  - "Reviews & photos" opens the hotel's TripAdvisor page.
+  - **Book hotel & save holiday** books the chosen one (demo, no payment) and gives a reference like `HTL-UZP7RM`.
+- **Full budget:** travel there and back, hotel, food, local travel, entry tickets and a 10% buffer, with the total and the cost per person. Picking a different hotel updates the budget at once.
 - Open it from **Holidays** (website top bar and left dock), the card on Home, the ☰ menu, or just ask the chat: "I have 5 days off, plan Goa for 2 people".
 - Saved holidays appear in **My trips** under "Holidays".
-- **Honest numbers:** travel prices come from the journey planner. Hotel, food, local travel and ticket prices are **estimates** and are marked that way.
+- **Honest numbers:** hotel prices are real (live rates or the hotel's usual price). Travel prices come from the journey planner. Food, local travel and ticket prices are **estimates** and are marked that way.
+- **Hotel data for all of India:** a saved list of the top hotels in about 340 tourist places, in every state. A few small places aren't on TripAdvisor's lists (for example Chittorgarh, Thanjavur, Kohima); there the plan uses OpenStreetMap hotels with prices marked "Estimate".
 
 ### AI assistant (chat)
 
@@ -231,7 +240,7 @@ There are two parts:
 | Voice | **Sarvam AI** |
 | Memory | **Cognee**, plus a copy in our database |
 | Holiday sights and photos | **Wikipedia** (free, no key) |
-| Holiday hotels | **OpenStreetMap**; famous hotels from Wikipedia for luxury stays; otherwise estimates |
+| Holiday hotels | **TripAdvisor** hotel list and prices via **Xotelo** (free, no key), saved in `backend/data/hotels.india.json`; live rates for your dates from Xotelo; **OpenStreetMap** where there's no listing |
 
 **Honest data:** if OpenStreetMap doesn't know a charger's power or price, or a parking lot's rate, the app shows "n/a" and never invents a number. Demo screens carry a small "Demo data" note.
 
@@ -323,6 +332,7 @@ npx expo start        # shows a QR code
 | backend | `npm run dev` | Start the server |
 | backend | `npm run db:seed` | **Reset everything** to demo data (deletes all accounts and trips) |
 | backend | `npx tsx scripts/import-osm-india.ts` | Load the India chargers and parking without deleting accounts |
+| backend | `npx tsx scripts/fetch-hotels-india.ts` | Download the hotel list for India's tourist places again (about 30 minutes) |
 | backend | `npm test` | Run the automatic tests |
 | mobile | `npx expo start` | Start the app server |
 | mobile | `npx expo start --tunnel` | Start the app for **any device** (section 10) |

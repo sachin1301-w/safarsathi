@@ -255,11 +255,24 @@ export const TOOLS = [
             day: d.day,
             places: d.sights.map((s) => s.name),
           })),
-          hotels: plan.hotels.map((h) => ({ name: h.name, estPricePerNightInr: h.pricePerNight })),
+          hotels: plan.hotels.map((h) => ({
+            name: h.name,
+            pricePerNightInr: h.pricePerNight,
+            price:
+              h.priceSource === 'live'
+                ? `live rate on ${h.provider}`
+                : h.priceSource === 'range'
+                  ? 'usual price'
+                  : 'estimate',
+            rating: h.rating,
+          })),
           budgetInr: Object.fromEntries(plan.budget.lines.map((l) => [l.label, l.amount])),
           totalInr: plan.budget.total,
           perPersonInr: plan.budget.perPerson,
-          note: 'Hotel, food, local travel and ticket amounts are estimates; travel is from the journey planner.',
+          allStylesTotalInr: Object.fromEntries(
+            Object.values(plan.tiers).map((t) => [t.style, t.budget.total]),
+          ),
+          note: 'Hotel prices marked "live rate" are real rates for these dates; food, local travel and tickets are estimates; travel is from the journey planner.',
         },
         cards: [
           {

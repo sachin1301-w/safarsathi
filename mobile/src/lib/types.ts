@@ -154,7 +154,26 @@ export interface HotelOption {
   nights: number;
   rooms: number;
   total: number;
-  source: 'openstreetmap' | 'estimate';
+  /** tripadvisor: real hotel and prices; openstreetmap: real hotel, estimated price. */
+  source: 'tripadvisor' | 'openstreetmap' | 'estimate';
+  /** live: the rate for these dates on a booking site; range: its usual price. */
+  priceSource?: 'live' | 'range' | 'estimate';
+  provider?: string;
+  offers?: { name: string; rate: number }[];
+  priceMin?: number;
+  priceMax?: number;
+  rating?: number;
+  reviews?: number;
+  photo?: string;
+  url?: string;
+  distanceKm?: number;
+}
+
+export interface HolidayTier {
+  style: HolidayStyle;
+  hotels: HotelOption[];
+  travel: { option: Itinerary; perPerson: number; total: number } | null;
+  budget: { lines: BudgetLine[]; total: number; perPerson: number; hotelId: string | null };
 }
 
 export interface BudgetLine {
@@ -179,6 +198,8 @@ export interface HolidayPlan {
   travel: { option: Itinerary; perPerson: number; total: number } | null;
   travelNote?: string;
   budget: { lines: BudgetLine[]; total: number; perPerson: number; hotelId: string | null };
+  /** Budget, comfort and luxury side by side (plans saved before tiers existed don't have it). */
+  tiers?: Record<HolidayStyle, HolidayTier>;
 }
 
 export interface SavedHoliday {

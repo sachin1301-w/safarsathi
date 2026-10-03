@@ -5,7 +5,16 @@
  */
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Image,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TabScene } from '@/components/tab-scene';
@@ -18,8 +27,10 @@ import {
   ErrorState,
   FadeIn,
   Icon,
+  isHovered,
   pageWidth,
   type IconName,
+  webInteractive,
 } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -28,12 +39,44 @@ import { MenuButton } from '@/lib/menu';
 import { MODE_INFO } from '@/lib/modes';
 import { openDirections } from '@/lib/navigate';
 import { openItinerary } from '@/lib/open-itinerary';
-import type { HolidayPlan, HolidayStyle, SavedHoliday, Sight } from '@/lib/types';
+import type {
+  BudgetLine,
+  HolidayPlan,
+  HolidayStyle,
+  HolidayTier,
+  HotelOption,
+  SavedHoliday,
+  Sight,
+} from '@/lib/types';
 
-const STYLES: { value: HolidayStyle; label: string; icon: IconName }[] = [
-  { value: 'budget', label: 'Budget', icon: 'wallet-outline' },
-  { value: 'comfort', label: 'Comfort', icon: 'sofa-outline' },
-  { value: 'luxury', label: 'Luxury', icon: 'crown-outline' },
+const STYLES: {
+  value: HolidayStyle;
+  label: string;
+  icon: IconName;
+  color: string;
+  blurb: string;
+}[] = [
+  {
+    value: 'budget',
+    label: 'Budget',
+    icon: 'wallet-outline',
+    color: '#22C55E',
+    blurb: 'Guest houses, local food, autos',
+  },
+  {
+    value: 'comfort',
+    label: 'Comfort',
+    icon: 'sofa-outline',
+    color: '#00BFA6',
+    blurb: 'Good hotels, restaurants, cabs',
+  },
+  {
+    value: 'luxury',
+    label: 'Luxury',
+    icon: 'crown-outline',
+    color: '#E9B949',
+    blurb: 'Top hotels and resorts, fastest travel',
+  },
 ];
 const IDEAS = [
   'Goa',
@@ -278,18 +321,37 @@ function PlanView({
   onSaved: (h: SavedHoliday) => void;
 }) {
   const theme = useTheme();
-  const [hotelId, setHotelId] = useState(saved ? null : plan.budget.hotelId);
+  const [tier, setTier] = useState<HolidayStyle>(plan.style);
+  const tiers: Record<HolidayStyle, HolidayTier> | null = plan.tiers ?? null;
+  // Plans saved before tiers existed carry just one.
+  const view: HolidayTier = tiers?.[tier] ?? {
+    style: plan.style,
+    hotels: plan.hotels,
+    travel: plan.travel,
+    budget: plan.budget,
+  };
+  const [hotelId, setHotelId] = useState(saved ? null : view.budget.hotelId);
   const [booking, setBooking] = useState(false);
   const [bookError, setBookError] = useState<string | null>(null);
   const hero = plan.highlights.find((s) => s.photo)?.photo;
-  const max = Math.max(...plan.budget.lines.map((l) => l.amount), 1);
-  const styleLabel = STYLES.find((s) => s.value === plan.style)?.label ?? plan.style;
+  const hotel = view.hotels.find((h) => h.id === hotelId) ?? null;
+  const budget = saved ? view.budget : withHotel(view.budget, hotel);
+  const max = Math.max(...budget.lines.map((l) => l.amount), 1);
+  const styleInfo = STYLES.find((s) => s.value === view.style) ?? STYLES[1];
+
+  const chooseTier = (t: HolidayStyle) => {
+    setTier(t);
+    setHotelId(tiers?.[t].budget.hotelId ?? null);
+  };
 
   const book = () => {
     setBooking(true);
     setBookError(null);
     api
-      .saveHoliday(plan, hotelId ?? undefined)
+      .saveHoliday(
+        { ...plan, style: view.style, hotels: view.hotels, travel: view.travel, budget },
+        hotelId ?? undefined,
+      )
       .then(onSaved)
       .catch((e: Error) => setBookError(e.message))
       .finally(() => setBooking(false));
@@ -307,18 +369,18 @@ function PlanView({
           <View style={styles.heroText}>
             <Text style={styles.heroEyebrow}>
               {plan.days} DAYS · {plan.nights} NIGHTS · {plan.travellers} TRAVELLER
-              {plan.travellers > 1 ? 'S' : ''} · {styleLabel.toUpperCase()}
+              {plan.travellers > 1 ? 'S' : ''} · {styleInfo.label.toUpperCase()}
             </Text>
             <Text style={styles.heroTitle}>{plan.destination.name}</Text>
             <Text style={styles.heroDate}>From {formatDay(plan.startDate)}</Text>
             <View style={styles.heroTotalRow}>
               <View>
                 <Text style={styles.heroTotalLabel}>Estimated total</Text>
-                <Text style={styles.heroTotal}>{formatInr(plan.budget.total)}</Text>
+                <Text style={styles.heroTotal}>{formatInr(budget.total)}</Text>
               </View>
               <View>
                 <Text style={styles.heroTotalLabel}>Per person</Text>
-                <Text style={styles.heroPer}>{formatInr(plan.budget.perPerson)}</Text>
+                <Text style={styles.heroPer}>{formatInr(budget.perPerson)}</Text>
               </View>
             </View>
           </View>
@@ -341,10 +403,60 @@ function PlanView({
 
       <Text style={[styles.overview, { color: theme.text }]}>{plan.overview}</Text>
 
+      {/* Budget / comfort / luxury side by side */}
+      {tiers && !saved && (
+        <Section icon="tune-variant" title="Choose your style">
+          <View style={styles.tiers}>
+            {STYLES.map((s) => {
+              const t = tiers[s.value];
+              const active = s.value === tier;
+              const from = Math.min(...t.hotels.map((h) => h.pricePerNight).filter((p) => p > 0));
+              return (
+                <Pressable
+                  key={s.value}
+                  onPress={() => chooseTier(s.value)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`${s.label}: ${formatInr(t.budget.total)}`}
+                  style={(state) => [
+                    styles.tier,
+                    {
+                      backgroundColor: active ? s.color + '1F' : theme.surface,
+                      borderColor: active ? s.color : theme.border,
+                      transform: [{ translateY: isHovered(state) && !active ? -3 : 0 }],
+                    },
+                    webInteractive,
+                  ]}>
+                  <View style={styles.tierHead}>
+                    <View style={[styles.tierIcon, { backgroundColor: s.color + '2E' }]}>
+                      <Icon name={s.icon} size={20} color={s.color} />
+                    </View>
+                    <Text style={[styles.tierName, { color: theme.text }]}>{s.label}</Text>
+                    {active && <Icon name="check-circle" size={20} color={s.color} />}
+                  </View>
+                  <Text style={[styles.tierTotal, { color: theme.text }]}>
+                    {formatInr(t.budget.total)}
+                  </Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+                    {formatInr(t.budget.perPerson)} per person
+                  </Text>
+                  {Number.isFinite(from) && (
+                    <Text style={{ color: s.color, fontSize: 13, fontWeight: '700' }}>
+                      Hotels from {formatInr(from)}/night
+                    </Text>
+                  )}
+                  <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{s.blurb}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Section>
+      )}
+
       {/* Budget */}
-      <Section icon="calculator-variant-outline" title="Your budget">
+      <Section icon="calculator-variant-outline" title={`${styleInfo.label} budget`}>
         <Card style={{ gap: 14 }}>
-          {plan.budget.lines.map((l) => (
+          {budget.lines.map((l) => (
             <View key={l.key} style={{ gap: 6 }}>
               <View style={styles.budgetRow}>
                 <Icon name={BUDGET_ICON[l.key]} size={20} color={BUDGET_COLOR[l.key]} />
@@ -369,12 +481,12 @@ function PlanView({
           <View style={[styles.totalRow, { borderTopColor: theme.border }]}>
             <Text style={[styles.totalLabel, { color: theme.text }]}>Total</Text>
             <Text style={[styles.totalAmount, { color: theme.accent }]}>
-              {formatInr(plan.budget.total)}
+              {formatInr(budget.total)}
             </Text>
           </View>
           <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
-            Hotel, food, local travel and tickets are estimates; travel comes from the journey
-            planner.
+            Hotel prices are real (live rates for your dates where shown); food, local travel and
+            tickets are estimates; travel comes from the journey planner.
           </Text>
         </Card>
       </Section>
@@ -434,30 +546,30 @@ function PlanView({
       {/* Getting there */}
       <Section icon="train-car" title="Getting there">
         <Card style={{ gap: 10 }}>
-          {plan.travel ? (
+          {view.travel ? (
             <>
               <View style={styles.legs}>
-                {plan.travel.option.legs.map((l, i) => (
+                {view.travel.option.legs.map((l, i) => (
                   <View key={l.id ?? i} style={styles.legChip}>
                     <Icon name={MODE_INFO[l.mode].icon} size={18} color={MODE_INFO[l.mode].color} />
                     <Text style={{ color: theme.text, fontWeight: '600', fontSize: 13 }}>
                       {MODE_INFO[l.mode].label}
                     </Text>
-                    {i < plan.travel!.option.legs.length - 1 && (
+                    {i < view.travel!.option.legs.length - 1 && (
                       <Icon name="chevron-right" size={16} color={theme.textSecondary} />
                     )}
                   </View>
                 ))}
               </View>
               <Text style={{ color: theme.textSecondary }}>
-                {plan.travel.option.title} · {formatDuration(plan.travel.option.totalMins)} ·{' '}
-                {formatInr(plan.travel.perPerson)} per person each way
+                {view.travel.option.title} · {formatDuration(view.travel.option.totalMins)} ·{' '}
+                {formatInr(view.travel.perPerson)} per person each way
               </Text>
               <Button
                 label="Book travel"
                 icon="ticket-confirmation-outline"
                 variant="secondary"
-                onPress={() => openItinerary(plan.travel!.option)}
+                onPress={() => openItinerary(view.travel!.option)}
               />
             </>
           ) : (
@@ -469,36 +581,16 @@ function PlanView({
       </Section>
 
       {/* Hotels */}
-      <Section icon="bed-outline" title="Where to stay">
-        {plan.hotels.map((h) => {
-          const chosen = (saved?.hotelName ?? null) === h.name || hotelId === h.id;
-          return (
-            <Card
-              key={h.id}
-              onPress={saved ? undefined : () => setHotelId(h.id)}
-              style={[styles.hotel, chosen && { borderColor: theme.accent, borderWidth: 2 }]}>
-              <Icon
-                name={chosen ? 'radiobox-marked' : 'radiobox-blank'}
-                size={22}
-                color={theme.accent}
-              />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: theme.text, fontWeight: '800' }}>{h.name}</Text>
-                <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
-                  {h.stars ? '★'.repeat(h.stars) + ' · ' : ''}
-                  {formatInr(h.pricePerNight)}/night (est.) · {h.nights} night
-                  {h.nights > 1 ? 's' : ''} × {h.rooms} room{h.rooms > 1 ? 's' : ''}
-                </Text>
-                {h.source === 'estimate' && (
-                  <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
-                    No hotel listings nearby: a typical {plan.style} stay.
-                  </Text>
-                )}
-              </View>
-              <Text style={{ color: theme.text, fontWeight: '800' }}>{formatInr(h.total)}</Text>
-            </Card>
-          );
-        })}
+      <Section icon="bed-outline" title={`${styleInfo.label} hotels`}>
+        {view.hotels.map((h) => (
+          <HotelCard
+            key={h.id}
+            hotel={h}
+            style={view.style}
+            chosen={(saved?.hotelName ?? null) === h.name || hotelId === h.id}
+            onPress={saved ? undefined : () => setHotelId(h.id)}
+          />
+        ))}
         {!saved && (
           <>
             <Button
@@ -527,9 +619,142 @@ function PlanView({
         </Card>
       </Section>
       <Text style={{ color: theme.textSecondary, fontSize: 12, textAlign: 'center' }}>
-        Places and photos from Wikipedia · hotels from OpenStreetMap · prices are estimates
+        Places and photos from Wikipedia · hotels and prices from TripAdvisor (Xotelo), live rates
+        for your dates where available
       </Text>
     </View>
+  );
+}
+
+/** The tier's budget with the hotel line (and the buffer and totals) for the chosen hotel. */
+function withHotel(
+  budget: HolidayTier['budget'],
+  hotel: HotelOption | null,
+): HolidayTier['budget'] {
+  if (!hotel || hotel.id === budget.hotelId) return budget;
+  const travellers = budget.total / Math.max(1, budget.perPerson);
+  const lines: BudgetLine[] = budget.lines.map((l) =>
+    l.key === 'hotel'
+      ? {
+          ...l,
+          label: `Hotel: ${hotel.name}`,
+          amount: hotel.total,
+          note: `${hotel.nights} night${hotel.nights > 1 ? 's' : ''} × ${hotel.rooms} room${hotel.rooms > 1 ? 's' : ''} at ${formatInr(hotel.pricePerNight)}/night${priceNote(hotel)}`,
+        }
+      : l,
+  );
+  const buffer = lines.find((l) => l.key === 'buffer');
+  const rest = lines.filter((l) => l.key !== 'buffer').reduce((s, l) => s + l.amount, 0);
+  if (buffer) buffer.amount = Math.round(rest * 0.1);
+  const total = lines.reduce((s, l) => s + l.amount, 0);
+  return {
+    lines,
+    total,
+    perPerson: Math.round(total / Math.max(1, Math.round(travellers))),
+    hotelId: hotel.id,
+  };
+}
+
+function priceNote(h: HotelOption) {
+  return h.priceSource === 'live'
+    ? ` (live rate on ${h.provider})`
+    : h.priceSource === 'range'
+      ? ' (usual price)'
+      : ' (estimate)';
+}
+
+function HotelCard({
+  hotel: h,
+  style,
+  chosen,
+  onPress,
+}: {
+  hotel: HotelOption;
+  style: HolidayStyle;
+  chosen: boolean;
+  onPress?: () => void;
+}) {
+  const theme = useTheme();
+  const others = (h.offers ?? []).slice(1);
+  return (
+    <Card
+      onPress={onPress}
+      style={[styles.hotel, chosen && { borderColor: theme.accent, borderWidth: 2 }]}
+      accessibilityLabel={`${h.name}, ${formatInr(h.pricePerNight)} a night`}>
+      {h.photo ? (
+        <Image source={{ uri: h.photo }} style={styles.hotelPhoto} resizeMode="cover" />
+      ) : (
+        <View
+          style={[styles.hotelPhoto, styles.hotelNoPhoto, { backgroundColor: theme.surfaceAlt }]}>
+          <Icon name="bed-outline" size={28} color={theme.textSecondary} />
+        </View>
+      )}
+      <View style={{ flex: 1, gap: 3 }}>
+        <View style={styles.hotelTop}>
+          <Icon
+            name={chosen ? 'radiobox-marked' : 'radiobox-blank'}
+            size={20}
+            color={theme.accent}
+          />
+          <Text style={[styles.hotelName, { color: theme.text }]} numberOfLines={2}>
+            {h.name}
+          </Text>
+        </View>
+        <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+          {h.rating ? `★ ${h.rating.toFixed(1)}` : ''}
+          {h.reviews ? ` (${h.reviews.toLocaleString('en-IN')} reviews)` : ''}
+          {h.rating ? ' · ' : ''}
+          {h.kind}
+          {h.distanceKm != null ? ` · ${h.distanceKm} km from centre` : ''}
+        </Text>
+        <View style={styles.priceRow}>
+          <Text style={[styles.hotelPrice, { color: theme.text }]}>
+            {formatInr(h.pricePerNight)}
+            <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
+              /night
+            </Text>
+          </Text>
+          {h.priceSource === 'live' ? (
+            <Badge label={`Live · ${h.provider}`} color="#22C55E" />
+          ) : h.priceSource === 'range' ? (
+            <Badge label="Usual price" color={theme.accentSoft} textColor={theme.text} />
+          ) : (
+            <Badge label="Estimate" color={theme.surfaceAlt} textColor={theme.text} />
+          )}
+        </View>
+        {others.length > 0 && (
+          <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+            Also {others.map((o) => `${o.name} ${formatInr(o.rate)}`).join(' · ')}
+          </Text>
+        )}
+        {h.priceMin != null && h.priceMax != null && (
+          <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+            Usually {formatInr(h.priceMin)}–{formatInr(h.priceMax)} a night
+          </Text>
+        )}
+        {h.source === 'estimate' && (
+          <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+            No hotel listings nearby: a typical {style} stay.
+          </Text>
+        )}
+        <View style={styles.hotelBottom}>
+          <Text style={{ color: theme.text, fontWeight: '800' }}>
+            {formatInr(h.total)}{' '}
+            <Text style={{ color: theme.textSecondary, fontWeight: '600', fontSize: 12 }}>
+              for {h.nights} night{h.nights > 1 ? 's' : ''} × {h.rooms} room
+              {h.rooms > 1 ? 's' : ''}
+            </Text>
+          </Text>
+          {h.url && (
+            <Pressable onPress={() => Linking.openURL(h.url!)} accessibilityRole="link" hitSlop={8}>
+              <Text style={{ color: theme.accent, fontWeight: '700', fontSize: 13 }}>
+                Reviews & photos ↗
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
+    </Card>
   );
 }
 
@@ -674,6 +899,39 @@ const styles = StyleSheet.create({
   daySight: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   legs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 4 },
   legChip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  hotel: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  hotel: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  hotelPhoto: { width: 104, height: 104, borderRadius: Radius.md },
+  hotelNoPhoto: { alignItems: 'center', justifyContent: 'center' },
+  hotelTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  hotelName: { flex: 1, fontWeight: '800', fontSize: 16 },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  hotelPrice: { fontSize: 20, fontWeight: '900' },
+  hotelBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 2,
+  },
+  tiers: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+  tier: {
+    flexGrow: 1,
+    flexBasis: 200,
+    borderWidth: 2,
+    borderRadius: Radius.lg,
+    padding: 16,
+    gap: 4,
+  },
+  tierHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  tierIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tierName: { flex: 1, fontSize: 17, fontWeight: '800' },
+  tierTotal: { fontSize: 24, fontWeight: '900' },
   tip: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
 });
