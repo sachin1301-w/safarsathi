@@ -20,6 +20,8 @@ interface AuthState {
   userId: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, language?: string) => Promise<void>;
+  /** Signs in with the ID token from Google's button (website). */
+  loginWithGoogle: (credential: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -63,13 +65,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       start(await api.signup({ name, email, password, language })),
     [start],
   );
+  const loginWithGoogle = useCallback(
+    async (credential: string) => start(await api.googleLogin(credential)),
+    [start],
+  );
   const logout = useCallback(async () => {
     await api.logout().catch(() => undefined);
     signOutLocally();
   }, [signOutLocally]);
 
   return (
-    <AuthContext.Provider value={{ status, userId, login, signup, logout }}>
+    <AuthContext.Provider value={{ status, userId, login, signup, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

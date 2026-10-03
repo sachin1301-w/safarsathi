@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DemoFooter } from '@/components/demo-footer';
@@ -25,6 +25,7 @@ import { DEFAULT_CENTER, useApp } from '@/lib/app-context';
 import { formatInr, formatKm, formatRate, formatTime } from '@/lib/format';
 import { useT, type StringKey } from '@/lib/i18n';
 import { useLocation } from '@/lib/location';
+import { openDirections } from '@/lib/navigate';
 import type { ParkingLot, Place } from '@/lib/types';
 
 const ARRIVAL_OPTIONS: { label: StringKey; offsetMins: number }[] = [
@@ -57,6 +58,8 @@ export default function ParkingScreen() {
   const t = useT();
   const { profile } = useApp();
   const location = useLocation();
+  // Wide screens (website, tablets): map and list side by side.
+  const wide = useWindowDimensions().width >= 900;
 
   const [destination, setDestination] = useState<Place | null>(null);
   const [offsetMins, setOffsetMins] = useState(0);
@@ -145,59 +148,61 @@ export default function ParkingScreen() {
         ))}
       </ScrollView>
 
-      <View style={styles.mapWrap}>
-        <LeafletMap
-          style={StyleSheet.absoluteFill}
-          center={center}
-          zoom={14}
-          focus={focus}
-          user={location.coords}
-          markers={(lots ?? []).map((lot) => ({
-            id: lot.id,
-            lat: lot.lat,
-            lng: lot.lng,
-            color: availabilityColor(lot),
-            glyph: 'parking' as const,
-            label: `${lot.predictedFreeSpots}`,
-            selected: lot.id === selected?.id,
-          }))}
-          onMarkerPress={(id) => setSelected(lots?.find((l) => l.id === id) ?? null)}
-          onMapPress={() => setSelected(null)}
-        />
-      </View>
-
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-        {error ? (
-          <ErrorState message={error} onRetry={load} />
-        ) : !lots ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : lots.length === 0 ? (
-          <EmptyState
-            icon="parking"
-            title="No parking found"
-            message="Try a nearby landmark, mall or station."
+      <View style={[styles.body, wide && styles.bodyWide]}>
+        <View style={[styles.mapWrap, wide && styles.mapWrapWide]}>
+          <LeafletMap
+            style={StyleSheet.absoluteFill}
+            center={center}
+            zoom={14}
+            focus={focus}
+            user={location.coords}
+            markers={(lots ?? []).map((lot) => ({
+              id: lot.id,
+              lat: lot.lat,
+              lng: lot.lng,
+              color: availabilityColor(lot),
+              glyph: 'parking' as const,
+              label: `${lot.predictedFreeSpots}`,
+              selected: lot.id === selected?.id,
+            }))}
+            onMarkerPress={(id) => setSelected(lots?.find((l) => l.id === id) ?? null)}
+            onMapPress={() => setSelected(null)}
           />
-        ) : (
-          [...lots]
-            .sort((a, b) => (a.id === selected?.id ? -1 : b.id === selected?.id ? 1 : 0))
-            .map((lot, i) => (
-              <FadeIn key={lot.id} delay={Math.min(i, 8) * 40}>
-                <LotCard
-                  lot={lot}
-                  highlighted={lot.id === selected?.id}
-                  onPress={() => setSelected(lot)}
-                  onReserve={() =>
-                    setReserving({ lot, arriveAt: new Date(Date.now() + offsetMins * 60_000) })
-                  }
-                />
-              </FadeIn>
-            ))
-        )}
-        <DemoFooter />
-      </ScrollView>
+        </View>
+
+        <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+          {error ? (
+            <ErrorState message={error} onRetry={load} />
+          ) : !lots ? (
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
+          ) : lots.length === 0 ? (
+            <EmptyState
+              icon="parking"
+              title="No parking found"
+              message="Try a nearby landmark, mall or station."
+            />
+          ) : (
+            [...lots]
+              .sort((a, b) => (a.id === selected?.id ? -1 : b.id === selected?.id ? 1 : 0))
+              .map((lot, i) => (
+                <FadeIn key={lot.id} delay={Math.min(i, 8) * 40}>
+                  <LotCard
+                    lot={lot}
+                    highlighted={lot.id === selected?.id}
+                    onPress={() => setSelected(lot)}
+                    onReserve={() =>
+                      setReserving({ lot, arriveAt: new Date(Date.now() + offsetMins * 60_000) })
+                    }
+                  />
+                </FadeIn>
+              ))
+          )}
+          <DemoFooter />
+        </ScrollView>
+      </View>
 
       <ReserveSheet
         lot={reserving?.lot ?? null}
@@ -261,12 +266,21 @@ function LotCard({
           {free} of {lot.estimated ? '~' : ''}
           {lot.totalSpots} spots predicted free{lot.estimated ? ' (estimate)' : ''}
         </Text>
+      </View>
+      <View style={styles.lotActions}>
+        <Button
+          label="Navigate"
+          icon="navigation-variant"
+          variant="secondary"
+          onPress={() => openDirections(lot.lat, lot.lng)}
+          style={styles.lotAction}
+        />
         <Button
           label={t('parking.reserve')}
           icon="calendar-check"
           onPress={onReserve}
           disabled={free === 0}
-          style={styles.reserve}
+          style={styles.lotAction}
         />
       </View>
     </Card>
@@ -381,6 +395,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   list: { flex: 1 },
+  body: { flex: 1 },
+  bodyWide: { flexDirection: 'row', gap: Spacing.md, paddingRight: Spacing.md },
+  mapWrapWide: {
+    flex: 1.3,
+    height: 'auto',
+    alignSelf: 'stretch',
+    marginRight: 0,
+    marginBottom: Spacing.md,
+  },
   listContent: { padding: Spacing.md, paddingBottom: Spacing.xl * 2, gap: Spacing.sm },
   lotTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   lotIcon: {
@@ -401,7 +424,8 @@ const styles = StyleSheet.create({
   },
   // The text wraps; the button keeps its full size.
   spots: { flex: 1, fontSize: 13 },
-  reserve: { minHeight: 42, paddingHorizontal: Spacing.md, flexShrink: 0 },
+  lotActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
+  lotAction: { flex: 1, minHeight: 44 },
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: {
     borderTopLeftRadius: Radius.lg,

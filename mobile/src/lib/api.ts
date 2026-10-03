@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
 import type {
   Charger,
@@ -15,18 +16,27 @@ import type {
   Trip,
 } from './types';
 
+const isIp = (host: string) => /^(\d{1,3}\.){3}\d{1,3}$/.test(host) || host === 'localhost';
+
 /**
- * A public https EXPO_PUBLIC_API_URL (a tunnel or cloud backend) always wins, so any phone
- * anywhere can use it. Otherwise the backend runs on the same laptop as the Expo dev server,
- * so in Expo Go use the address the app was loaded from; that follows the laptop when its IP
- * changes (Wi-Fi vs phone hotspot) without editing .env.
+ * Where the backend is, in order:
+ * 1. A public https EXPO_PUBLIC_API_URL (a cloud backend) always wins.
+ * 2. In a browser, the page's own origin: the dev server forwards /api to the backend.
+ * 3. In Expo Go over a tunnel (`npx expo start --tunnel`), the tunnel's https address: Metro
+ *    forwards /api to the backend, so any phone on any network works.
+ * 4. In Expo Go on the same network, the laptop's IP on port 4000. This follows the laptop when
+ *    its IP changes (Wi-Fi vs phone hotspot) without editing .env.
  */
 function apiUrl() {
   const configured = process.env.EXPO_PUBLIC_API_URL;
   if (configured?.startsWith('https://')) return configured.replace(/\/$/, '');
-  const host = Constants.expoConfig?.hostUri?.split(':')[0];
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.origin)
+    return window.location.origin;
+  const hostUri = Constants.expoConfig?.hostUri;
+  const host = hostUri?.split(':')[0];
+  if (host && !isIp(host) && host !== '127.0.0.1') return `https://${hostUri}`;
   if (host && host !== 'localhost' && host !== '127.0.0.1') return `http://${host}:4000`;
-  return process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
+  return configured ?? 'http://localhost:4000';
 }
 
 const API_URL = apiUrl();
@@ -89,6 +99,8 @@ export const api = {
     post<AuthResponse>('/auth/signup', body),
   login: (body: { email: string; password: string }) => post<AuthResponse>('/auth/login', body),
   logout: () => post<{ ok: boolean }>('/auth/logout', {}),
+  authConfig: () => request<{ googleClientId: string | null }>('/auth/config'),
+  googleLogin: (credential: string) => post<AuthResponse>('/auth/google', { credential }),
 
   me: () => request<Profile>('/me'),
   updateMe: (patch: { language?: string; evBatteryPct?: number }) =>

@@ -52,6 +52,53 @@ authRouter.post('/auth/login', async (req, res) => {
   res.json({ token: await createSession(user.id), user: { id: user.id, name: user.name } });
 });
 
+/** Public sign-in settings for the app: the Google OAuth client id (not a secret). */
+authRouter.get('/auth/config', (_req, res) => {
+  res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID?.trim() || null });
+});
+
+const googleBody = z.object({ credential: z.string().min(20) });
+
+interface GoogleToken {
+  aud: string;
+  iss: string;
+  sub: string;
+  email?: string;
+  email_verified?: string | boolean;
+  name?: string;
+  exp: string;
+}
+
+/**
+ * "Continue with Google": the app sends the ID token Google gave it. Google's tokeninfo endpoint
+ * checks the signature and expiry; we check it was issued for our client id and that the email
+ * is verified, then log into that email's account or create one.
+ */
+authRouter.post('/auth/google', async (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  if (!clientId) throw new HttpError(503, "Google sign-in isn't set up on this server.");
+  const { credential } = validate(googleBody, req.body);
+  const check = await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
+    { signal: AbortSignal.timeout(10_000) },
+  ).catch(() => null);
+  if (!check?.ok) throw new HttpError(401, 'Google sign-in failed. Please try again.');
+  const token = (await check.json()) as GoogleToken;
+  const issuerOk =
+    token.iss === 'accounts.google.com' || token.iss === 'https://accounts.google.com';
+  const verified = token.email_verified === true || token.email_verified === 'true';
+  if (token.aud !== clientId || !issuerOk || !token.email || !verified)
+    throw new HttpError(401, 'Google sign-in failed. Please try again.');
+
+  const email = token.email.toLowerCase();
+  const user =
+    (await prisma.user.findUnique({ where: { email } })) ??
+    (await prisma.user.create({
+      data: { name: token.name?.trim() || email.split('@')[0], email },
+    }));
+  res.json({ token: await createSession(user.id), user: { id: user.id, name: user.name } });
+});
+
 authRouter.post('/auth/logout', requireAuth, async (_req, res) => {
   const token = currentToken();
   if (token) await deleteSession(token);

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,7 +17,7 @@ import { ChatCards } from '@/components/chat-cards';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
 import { OrbitScene } from '@/components/scenes';
 import { FullScreenLoader } from '@/components/travel-loader';
-import { Chip, FadeIn, Icon } from '@/components/ui';
+import { Chip, FadeIn, Icon, pageWidth } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useCurrentOrigin } from '@/lib/location';
@@ -197,7 +198,7 @@ export default function ChatScreen() {
         behavior="padding">
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.messages}
+          contentContainerStyle={[styles.messages, pageWidth(820)]}
           keyboardShouldPersistTaps="handled">
           {messages.length === 0 && (
             <View style={styles.welcome}>
@@ -272,7 +273,12 @@ export default function ChatScreen() {
         )}
 
         <View
-          style={[styles.inputBar, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          style={[
+            styles.inputBar,
+            { backgroundColor: theme.surface, borderColor: theme.border },
+            pageWidth(820),
+            Platform.OS === 'web' && styles.inputBarWeb,
+          ]}>
           <Pressable
             onPress={onMic}
             accessibilityRole="button"
@@ -393,6 +399,8 @@ const styles = StyleSheet.create({
   tag: { fontSize: 11, fontWeight: '600' },
   speaker: { padding: 2 },
   hint: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.xs, fontSize: 13 },
+  // Website: a floating rounded bar rather than a full-width strip.
+  inputBarWeb: { borderWidth: 1, borderRadius: 20, marginBottom: Spacing.md },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',

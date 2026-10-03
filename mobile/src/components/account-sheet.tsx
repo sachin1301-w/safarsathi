@@ -1,11 +1,20 @@
 /** Account menu: profile, trip stats, appearance, language, shortcuts and log out. */
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { nativeName } from '@/components/language-picker';
-import { FadeIn, Icon, type IconName } from '@/components/ui';
+import { FadeIn, Icon, type IconName, pageWidth } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-context';
@@ -60,18 +69,21 @@ export function AccountSheet({
     router.navigate(path);
   };
 
-  const confirmLogout = () =>
+  const doLogout = () => {
+    onClose();
+    logout();
+  };
+  const confirmLogout = () => {
+    // Alert.alert does nothing in a browser, so the website uses the browser's own dialog.
+    if (Platform.OS === 'web') {
+      if (window.confirm('Log out? Your trips stay saved in your account.')) doLogout();
+      return;
+    }
     Alert.alert('Log out?', 'Your trips stay saved in your account.', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log out',
-        style: 'destructive',
-        onPress: () => {
-          onClose();
-          logout();
-        },
-      },
+      { text: 'Log out', style: 'destructive', onPress: doLogout },
     ]);
+  };
 
   const name = profile?.name ?? 'Traveller';
 
@@ -85,6 +97,7 @@ export function AccountSheet({
       <View
         style={[
           styles.sheet,
+          pageWidth(560),
           { backgroundColor: theme.background, paddingBottom: insets.bottom + Spacing.md },
         ]}>
         <View style={[styles.handle, { backgroundColor: theme.border }]} />

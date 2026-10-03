@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { GoogleButton } from '@/components/google-button';
 import { TravelLoader } from '@/components/travel-loader';
-import { Button, FadeIn, Icon, type IconName } from '@/components/ui';
+import { Button, FadeIn, Icon, type IconName, pageWidth } from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 
@@ -80,6 +81,7 @@ export function AuthScreen() {
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[
+          pageWidth(460),
           styles.content,
           keyboard > 0 && { justifyContent: 'flex-start', paddingBottom: keyboard + Spacing.lg },
         ]}
@@ -170,6 +172,8 @@ export function AuthScreen() {
             onPress={submit}
             disabled={busy}
           />
+
+          <GoogleButton onError={setError} />
 
           <Pressable
             onPress={() => switchMode(mode === 'login' ? 'signup' : 'login')}

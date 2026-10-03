@@ -3,6 +3,7 @@ import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import {
   ActivityIndicator,
   Animated,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -15,6 +16,24 @@ import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { useT } from '@/lib/i18n';
 
 export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+/** On the website, keeps reading-width pages centred instead of stretched across the monitor. */
+export const pageWidth = (max = 880) =>
+  (Platform.OS === 'web' ? { width: '100%', maxWidth: max, alignSelf: 'center' } : {}) as ViewStyle;
+
+/** Pressable state on web includes `hovered` (react-native-web); always false on phones. */
+export const isHovered = (state: object) => !!(state as { hovered?: boolean }).hovered;
+
+/** Smooth hover transitions and a pointer cursor on the website; nothing on phones. */
+export const webInteractive = (
+  Platform.OS === 'web'
+    ? {
+        cursor: 'pointer',
+        transitionDuration: '160ms',
+        transitionProperty: 'transform, box-shadow, background-color, border-color, opacity',
+      }
+    : {}
+) as ViewStyle;
 
 export function Icon({
   name,
@@ -46,9 +65,16 @@ export function Card({
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="button"
+      // On the website a "button" role renders a <button>, which can't contain the Navigate /
+      // Reserve buttons some cards hold, so cards are plain clickable containers there.
+      accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => [base, pressed && styles.pressed]}>
+      style={(state) => [
+        base,
+        webInteractive,
+        isHovered(state) && [styles.cardHover, { borderColor: theme.accent }],
+        state.pressed && styles.pressed,
+      ]}>
       {children}
     </Pressable>
   );
@@ -93,10 +119,12 @@ export function Button({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
-      style={({ pressed }) => [
+      style={(state) => [
         styles.button,
+        webInteractive,
         { backgroundColor: bg, opacity: disabled ? 0.5 : 1 },
-        pressed && styles.pressed,
+        isHovered(state) && !disabled && styles.buttonHover,
+        state.pressed && styles.pressed,
         style,
       ]}>
       {loading ? (
@@ -132,13 +160,15 @@ export function Chip({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={label}
-      style={({ pressed }) => [
+      style={(state) => [
         styles.chip,
+        webInteractive,
         {
           backgroundColor: selected ? theme.accentSoft : theme.surface,
           borderColor: selected ? active : theme.border,
         },
-        pressed && styles.pressed,
+        isHovered(state) && { borderColor: active, backgroundColor: theme.accentSoft },
+        state.pressed && styles.pressed,
       ]}>
       {icon && (
         <MaterialCommunityIcons
@@ -311,6 +341,21 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   pressed: { opacity: 0.75 },
+  // Website hover: lift with a stronger shadow.
+  cardHover: {
+    transform: [{ translateY: -3 }],
+    shadowColor: '#000',
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  buttonHover: {
+    transform: [{ translateY: -1 }],
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
   button: {
     minHeight: TouchTarget,
     borderRadius: Radius.md,

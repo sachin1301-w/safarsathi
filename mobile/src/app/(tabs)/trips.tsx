@@ -15,6 +15,7 @@ import {
   Icon,
   SectionTitle,
   SkeletonCard,
+  pageWidth,
 } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -70,7 +71,7 @@ export default function TripsScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, pageWidth()]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

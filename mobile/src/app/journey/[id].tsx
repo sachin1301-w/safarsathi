@@ -9,7 +9,7 @@ import { LeafletMap } from '@/components/leaflet-map';
 import { LegRow } from '@/components/leg-row';
 import { SimulateDelaySheet } from '@/components/simulate-delay';
 import { TripStatusChip } from '@/components/trip-status';
-import { Button, Card, ErrorState, Icon } from '@/components/ui';
+import { Button, Card, ErrorState, Icon, pageWidth } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { useAlerts } from '@/lib/alerts';
 import { useT } from '@/lib/i18n';
@@ -83,7 +83,7 @@ export default function JourneyDetailScreen() {
   const anyBookable = trip.legs.some((l) => BOOKABLE_MODES.includes(l.mode));
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView contentContainerStyle={[styles.content, pageWidth(820)]}>
       <Stack.Screen options={{ title: 'Your journey' }} />
 
       <View>

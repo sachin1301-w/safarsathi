@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { DemoFooter } from '@/components/demo-footer';
 import {
@@ -11,11 +11,13 @@ import {
   Icon,
   SectionTitle,
   type IconName,
+  pageWidth,
 } from '@/components/ui';
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { formatKw, formatPerKwh, timeAgo } from '@/lib/format';
 import { useT } from '@/lib/i18n';
+import { openDirections } from '@/lib/navigate';
 import type { Charger, ChargerReport, ChargerStatus } from '@/lib/types';
 
 type Reportable = Exclude<ChargerStatus, 'UNKNOWN'>;
@@ -69,13 +71,10 @@ export default function ChargerDetailScreen() {
   }
 
   const color = StatusColors[charger.status];
-  const navigate = () =>
-    Linking.openURL(
-      `https://www.google.com/maps/dir/?api=1&destination=${charger.lat},${charger.lng}&travelmode=driving`,
-    );
+  const navigate = () => openDirections(charger.lat, charger.lng);
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView contentContainerStyle={[styles.content, pageWidth(720)]}>
       <Stack.Screen options={{ title: charger.operator }} />
 
       <View style={[styles.hero, { backgroundColor: color }]}>

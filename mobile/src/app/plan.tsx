@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { JourneyCard } from '@/components/journey-card';
 import { RouteScene } from '@/components/scenes';
 import { FullScreenLoader } from '@/components/travel-loader';
-import { Chip, ErrorState, FadeIn, SkeletonCard } from '@/components/ui';
+import { Chip, ErrorState, FadeIn, SkeletonCard, pageWidth } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-context';
@@ -53,7 +53,7 @@ export default function PlanScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, pageWidth(760)]}>
         <Stack.Screen options={{ title: 'Choose your route' }} />
         <View>
           <Text style={[styles.route, { color: theme.text }]}>

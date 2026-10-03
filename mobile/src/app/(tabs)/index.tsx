@@ -9,7 +9,16 @@ import { DemoFooter } from '@/components/demo-footer';
 import { JourneyCard } from '@/components/journey-card';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
 import { TripStatusChip } from '@/components/trip-status';
-import { Button, Card, Chip, FadeIn, Icon, SectionTitle, type IconName } from '@/components/ui';
+import {
+  Button,
+  Card,
+  Chip,
+  FadeIn,
+  Icon,
+  SectionTitle,
+  type IconName,
+  pageWidth,
+} from '@/components/ui';
 import { Radius, Spacing, TouchTarget, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAlerts } from '@/lib/alerts';
@@ -99,7 +108,9 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: theme.background }]}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[styles.content, pageWidth()]}
+        keyboardShouldPersistTaps="handled">
         <View style={styles.topRow}>
           <View style={[styles.logo, { backgroundColor: theme.accent }]}>
             <Icon name="map-marker-path" size={22} color={theme.onAccent} />

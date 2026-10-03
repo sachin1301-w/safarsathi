@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 
 import { JourneyCard } from '@/components/journey-card';
 import { Badge, Card, Icon } from '@/components/ui';
 import { Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { formatKm, formatKw, formatPerKwh, formatRate } from '@/lib/format';
+import { openDirections } from '@/lib/navigate';
 import { useT } from '@/lib/i18n';
 import { openItinerary } from '@/lib/open-itinerary';
 import type { Card as ChatCard } from '@/lib/types';
@@ -76,6 +77,15 @@ export function ChatCards({ cards }: { cards: ChatCard[] }) {
                       {formatRate(p.ratePerHour)}
                       {p.distanceKm !== undefined ? ` · ${formatKm(p.distanceKm)}` : ''}
                     </Text>
+                    <Pressable
+                      onPress={() => openDirections(p.lat, p.lng)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Navigate to ${p.name}`}
+                      hitSlop={8}
+                      style={styles.navLink}>
+                      <Icon name="navigation-variant" size={16} color={theme.accent} />
+                      <Text style={{ color: theme.accent, fontWeight: '700' }}>Navigate</Text>
+                    </Pressable>
                   </Card>
                 ))}
               </ScrollView>
@@ -105,6 +115,7 @@ export function ChatCards({ cards }: { cards: ChatCard[] }) {
 }
 
 const styles = StyleSheet.create({
+  navLink: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   wrap: { gap: Spacing.sm, marginTop: Spacing.sm },
   row: { gap: Spacing.sm, paddingRight: Spacing.md },
   mini: { width: 200, gap: 6 },
