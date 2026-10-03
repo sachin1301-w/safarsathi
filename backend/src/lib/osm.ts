@@ -128,38 +128,46 @@ let queue: Promise<unknown> = Promise.resolve();
  * Elements tagged amenity=`amenity` within `radiusKm` of a point. Cached per ~1 km cell, so
  * repeated screen loads don't hit the public servers. Throws if every mirror fails.
  */
-export async function overpassAmenity(
+export function overpassAmenity(
   amenity: string,
   lat: number,
   lng: number,
   radiusKm: number,
   limit: number,
 ): Promise<OsmElement[]> {
-  const key = `${amenity}|${lat.toFixed(2)},${lng.toFixed(2)}|${radiusKm}`;
-  const hit = overpassCache.get(key);
-  if (hit && Date.now() - hit.at < OVERPASS_TTL_MS) return hit.elements;
-  if (Date.now() - (failedAt.get(key) ?? 0) < FAILURE_TTL_MS)
-    throw new Error('Overpass failed recently for this area');
+  const r = Math.round(radiusKm * 1000);
+  return overpassQuery(
+    `${amenity}|${lat.toFixed(2)},${lng.toFixed(2)}|${radiusKm}`,
+    `nwr["amenity"="${amenity}"](around:${r},${lat},${lng});`,
+    limit,
+  );
+}
 
-  const run = queue.then(() => fetchOverpass(key, amenity, lat, lng, radiusKm, limit));
+/**
+ * Any Overpass selection (e.g. `nwr["tourism"="museum"](around:…);`), cached under `key`, one
+ * request at a time, falling back to a mirror. Throws if every mirror fails.
+ */
+export function overpassQuery(key: string, selection: string, limit: number, timeoutMs = 7000) {
+  const hit = overpassCache.get(key);
+  if (hit && Date.now() - hit.at < OVERPASS_TTL_MS) return Promise.resolve(hit.elements);
+  if (Date.now() - (failedAt.get(key) ?? 0) < FAILURE_TTL_MS)
+    return Promise.reject(new Error('Overpass failed recently for this area'));
+  const run = queue.then(() => fetchOverpass(key, selection, limit, timeoutMs));
   queue = run.catch(() => undefined);
   return run;
 }
 
 async function fetchOverpass(
   key: string,
-  amenity: string,
-  lat: number,
-  lng: number,
-  radiusKm: number,
+  selection: string,
   limit: number,
+  timeoutMs: number,
 ): Promise<OsmElement[]> {
   // Another queued request may have fetched this area meanwhile.
   const hit = overpassCache.get(key);
   if (hit) return hit.elements;
 
-  const r = Math.round(radiusKm * 1000);
-  const query = `[out:json][timeout:15];nwr["amenity"="${amenity}"](around:${r},${lat},${lng});out center ${limit};`;
+  const query = `[out:json][timeout:20];(${selection});out center tags ${limit};`;
   let lastError: unknown;
   for (const mirror of OVERPASS_MIRRORS) {
     try {
@@ -170,7 +178,7 @@ async function fetchOverpass(
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({ data: query }).toString(),
-        signal: AbortSignal.timeout(7000),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       if (!res.ok) throw new Error(`Overpass ${res.status}`);
       const body = (await res.json()) as { elements: OsmElement[] };

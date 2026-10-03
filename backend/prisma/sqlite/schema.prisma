@@ -14,8 +14,8 @@ model User {
   email         String?  @unique // login; lower-cased
   passwordHash  String? // scrypt, see src/lib/auth.ts
   createdAt     DateTime @default(now())
-  language      String  @default("en-IN") // BCP-47, e.g. en-IN | hi-IN | mr-IN | ta-IN
-  hasEv         Boolean @default(false)
+  language      String   @default("en-IN") // BCP-47, e.g. en-IN | hi-IN | mr-IN | ta-IN
+  hasEv         Boolean  @default(false)
   evRangeKm     Int? // full-battery range
   evConnector   String? // CCS2 | Type2 | GBT | Bharat AC001
   evBatteryPct  Int? // current state of charge, 0..100
@@ -27,6 +27,7 @@ model User {
   memories     Memory[]
   reservations ParkingReservation[]
   sessions     Session[]
+  holidays     Holiday[]
 }
 
 // Login sessions: the app sends the token as "Authorization: Bearer <token>".
@@ -118,4 +119,21 @@ model Memory {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+}
+
+// A planned holiday: the full plan as JSON, plus the hotel booking once booked.
+model Holiday {
+  id          String   @id @default(cuid())
+  userId      String
+  destination String
+  days        Int
+  travellers  Int
+  style       String // budget | comfort | luxury
+  plan        String // JSON HolidayPlan
+  totalBudget Float
+  hotelName   String?
+  hotelRef    String? // demo booking reference, e.g. HTL-7Q2K9M
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

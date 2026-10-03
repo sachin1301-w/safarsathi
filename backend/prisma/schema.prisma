@@ -28,6 +28,7 @@ model User {
   memories     Memory[]
   reservations ParkingReservation[]
   sessions     Session[]
+  holidays     Holiday[]
 }
 
 // Login sessions: the app sends the token as "Authorization: Bearer <token>".
@@ -119,4 +120,21 @@ model Memory {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+}
+
+// A planned holiday: the full plan as JSON, plus the hotel booking once booked.
+model Holiday {
+  id          String   @id @default(cuid()) @map("_id")
+  userId      String
+  destination String
+  days        Int
+  travellers  Int
+  style       String // budget | comfort | luxury
+  plan        String // JSON HolidayPlan
+  totalBudget Float
+  hotelName   String?
+  hotelRef    String? // demo booking reference, e.g. HTL-7Q2K9M
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

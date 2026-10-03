@@ -15,6 +15,7 @@ import { bookingsRouter } from './routes/bookings';
 import { chargersRouter } from './routes/chargers';
 import { chatRouter } from './routes/chat';
 import { healthRouter } from './routes/health';
+import { holidaysRouter } from './routes/holidays';
 import { journeysRouter } from './routes/journeys';
 import { parkingRouter } from './routes/parking';
 import { profileRouter } from './routes/profile';
@@ -32,6 +33,7 @@ app.use(
   chargersRouter,
   parkingRouter,
   journeysRouter,
+  holidaysRouter,
   bookingsRouter,
   alertsRouter,
   chatRouter,

@@ -7,6 +7,7 @@ import { currentUserId } from '../lib/auth';
 import { prisma } from '../lib/db';
 import { formatIst, parseTime } from '../lib/time';
 import { withPrediction } from '../services/parkingPredictor';
+import { planHoliday } from '../services/holiday';
 import { PlanError } from '../services/planner';
 import { bookAll, BookingError, bookLeg } from '../services/bookings';
 import { ReplanError, replanTrip } from '../services/replanner';
@@ -222,6 +223,59 @@ export const TOOLS = [
           })),
         },
         cards: lots.length ? [{ type: 'parking', data: lots }] : [],
+      };
+    },
+  }),
+
+  tool({
+    name: 'plan_holiday',
+    description:
+      'Plan a holiday: N days at a destination. Returns the special places to visit (from Wikipedia), a day-by-day plan, hotel options and a full estimated budget (travel there and back, hotel, food, local travel, entry tickets). Use for requests like "5 days in Goa" or "plan a trip to Jaipur for 3 days".',
+    schema: z.object({
+      destination: z.string().describe('City or place, e.g. "Goa", "Jaipur", "Manali"'),
+      days: z.number().int().min(1).max(14),
+      travellers: z.number().int().min(1).max(12).optional().describe('Default 2'),
+      style: z.enum(['budget', 'comfort', 'luxury']).optional().describe('Default comfort'),
+    }),
+    async run(input) {
+      const plan = await planHoliday({
+        destination: input.destination,
+        days: input.days,
+        travellers: input.travellers ?? 2,
+        style: input.style ?? 'comfort',
+      });
+      return {
+        result: {
+          destination: `${plan.destination.name}, ${plan.destination.city}`,
+          days: plan.days,
+          travellers: plan.travellers,
+          style: plan.style,
+          mustSee: plan.highlights.map((s) => ({ name: s.name, about: s.description })),
+          dayByDay: plan.itinerary.map((d) => ({
+            day: d.day,
+            places: d.sights.map((s) => s.name),
+          })),
+          hotels: plan.hotels.map((h) => ({ name: h.name, estPricePerNightInr: h.pricePerNight })),
+          budgetInr: Object.fromEntries(plan.budget.lines.map((l) => [l.label, l.amount])),
+          totalInr: plan.budget.total,
+          perPersonInr: plan.budget.perPerson,
+          note: 'Hotel, food, local travel and ticket amounts are estimates; travel is from the journey planner.',
+        },
+        cards: [
+          {
+            type: 'holiday',
+            data: {
+              destination: plan.destination.name,
+              days: plan.days,
+              travellers: plan.travellers,
+              style: plan.style,
+              total: plan.budget.total,
+              perPerson: plan.budget.perPerson,
+              highlights: plan.highlights.slice(0, 3).map((s) => s.name),
+              photo: plan.highlights.find((s) => s.photo)?.photo,
+            },
+          },
+        ],
       };
     },
   }),

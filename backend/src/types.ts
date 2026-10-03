@@ -116,7 +116,20 @@ export type Card =
   | { type: 'itinerary'; data: Itinerary }
   | { type: 'chargers'; data: Charger[] }
   | { type: 'parking'; data: ParkingLot[] }
-  | { type: 'booking'; data: { tripId: string; bookingRef: string } };
+  | { type: 'booking'; data: { tripId: string; bookingRef: string } }
+  | { type: 'holiday'; data: HolidayCard };
+
+/** Summary of a holiday plan for a chat card; the app opens the full plan from it. */
+export interface HolidayCard {
+  destination: string;
+  days: number;
+  travellers: number;
+  style: 'budget' | 'comfort' | 'luxury';
+  total: number;
+  perPerson: number;
+  highlights: string[];
+  photo?: string;
+}
 
 export interface Place {
   id: string;

@@ -4,49 +4,18 @@
  */
 import type { Card } from '../types';
 import type { AgentContext, ChatTurn, ProviderReply } from './agent';
+import { type Completion, type Message } from './completion';
 import { runTool, TOOL_DEFINITIONS, type ToolOutput } from './tools';
 
+export { postCompletion } from './completion';
+export type { Completion, Message, ToolCall } from './completion';
+
 const MAX_TOOL_ROUNDS = 5;
-
-export interface ToolCall {
-  id: string;
-  type: 'function';
-  function: { name: string; arguments: string };
-}
-
-export type Message =
-  | { role: 'system' | 'user'; content: string }
-  | { role: 'assistant'; content: string | null; tool_calls?: ToolCall[] }
-  | { role: 'tool'; tool_call_id: string; content: string };
-
-export interface Completion {
-  choices: {
-    finish_reason: string;
-    message: { content: string | null; tool_calls?: ToolCall[] | null };
-  }[];
-}
 
 export const TOOLS = TOOL_DEFINITIONS.map((t) => ({
   type: 'function' as const,
   function: { name: t.name, description: t.description, parameters: t.input_schema },
 }));
-
-/** POSTs a chat completion; `body` is merged into the shared request fields. */
-export async function postCompletion(
-  name: string,
-  url: string,
-  headers: Record<string, string>,
-  body: Record<string, unknown>,
-): Promise<Completion> {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify({ temperature: 0.2, ...body }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!res.ok) throw new Error(`${name} chat failed (${res.status}): ${await res.text()}`);
-  return (await res.json()) as Completion;
-}
 
 /** Reasoning models can leave <think> blocks in the visible text. */
 const cleanReply = (text: string | null) =>
