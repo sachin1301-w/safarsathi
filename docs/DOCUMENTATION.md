@@ -116,6 +116,18 @@ Other files in the project:
 - **Reserve** books a demo spot. **Navigate** opens Google Maps directions. This button is on every parking card and in chat results.
 - Covers all of India: 25 hand-made lots in Pune and about 2,400 lots in 44 big cities from OpenStreetMap, plus live lookups elsewhere. For OpenStreetMap lots the number of spaces is an **estimate** and is marked that way. If the price isn't known, the card says "Rate n/a".
 
+### Plan a holiday
+
+- Tell it **where** and **how many days** (1 to 14), how many people (1 to 12), and the style: **Budget**, **Comfort** or **Luxury**.
+- **Special places to visit:** the most famous sights there, with photos and a short note, ranked by how many people read about them on Wikipedia. Each one has a **Navigate** button.
+- **Day by day:** about 3 nearby sights per day, grouped so you don't zigzag across the city.
+- **Getting there:** the cheapest real route from your home, with a **Book travel** button.
+- **Where to stay:** three hotels with a price per night and the total. **Book hotel & save holiday** books one (demo, no payment) and gives a reference like `HTL-UZP7RM`.
+- **Full budget:** travel there and back, hotel, food, local travel, entry tickets and a 10% buffer, with the total and the cost per person.
+- Open it from **Holidays** (website top bar and left dock), the card on Home, the ☰ menu, or just ask the chat: "I have 5 days off, plan Goa for 2 people".
+- Saved holidays appear in **My trips** under "Holidays".
+- **Honest numbers:** travel prices come from the journey planner. Hotel, food, local travel and ticket prices are **estimates** and are marked that way.
+
 ### AI assistant (chat)
 
 - Understands normal sentences in many languages.
@@ -141,9 +153,10 @@ Other files in the project:
   | Parking | A car reverses into a parking bay under a "P" sign |
   | Trips | Tickets fan out, then a "BOOKED" stamp lands |
   | Map | A pin drops with ripples |
+  | Holidays | A plane, train, bus and car take turns |
 
 - **Dark mode / light mode:** choose System, Light or Dark from the menu.
-- **Website:** a left sidebar on big screens, cards that lift when your mouse moves over them, and a live map.
+- **Website:** a 3D night city that moves as you scroll, a HUD top bar, left and right docks, a robot mascot that opens the chat, cards that tilt towards your mouse, and a Close button on every page.
 
 ---
 
@@ -161,7 +174,8 @@ Other files in the project:
 | **EV** | Charger map or list, filters, colour key with counts |
 | **Charger** | Details, reports, Working / Busy / Broken buttons, Navigate |
 | **Parking** | Search, "Near me", arrival time, map, cards with Navigate and Reserve. On the website the map and list sit side by side |
-| **Trips** | Upcoming, Saved plans, Past |
+| **Holidays** | Destination, days, travellers and style; then the photo header with the total, budget bars, special places, day-by-day plan, getting there, hotels and tips |
+| **Trips** | Holidays, Upcoming, Saved plans, Past |
 
 ---
 
@@ -216,6 +230,8 @@ There are two parts:
 | AI chat | **Google Gemini** |
 | Voice | **Sarvam AI** |
 | Memory | **Cognee**, plus a copy in our database |
+| Holiday sights and photos | **Wikipedia** (free, no key) |
+| Holiday hotels | **OpenStreetMap**; famous hotels from Wikipedia for luxury stays; otherwise estimates |
 
 **Honest data:** if OpenStreetMap doesn't know a charger's power or price, or a parking lot's rate, the app shows "n/a" and never invents a number. Demo screens carry a small "Demo data" note.
 
@@ -445,6 +461,10 @@ All of this happened on 2–3 October 2026. The code in brackets is the save poi
 | 13 | **Navigate to parking**; **website with hover effects**; public network; **Google login** | Navigate buttons; full website (sidebar, live map, hover); `/api` passed through Expo for tunnels; Google sign-in [9c52a61] |
 | 14 | New MongoDB cluster | Switched to Atlas, moved existing accounts across, faster start-up [82cde7b] |
 | 15 | Run on any device | Code pushed to private GitHub; backend serves the website; Render set-up file [e6e64b1, 28d29b0]; tunnel working on the hotspot |
+| 16 | Home button in the menu did nothing; dull website; no light mode on website | Menu on every tab; 3D website; light mode fixed [d87ed9d] |
+| 17 | Make it like techfest.org | Cinematic 3D city that moves as you scroll, HUD top bar and docks, robot mascot [6ffd6e0] |
+| 18 | Tabs showed through each other; Close button on every page | Only the open tab is shown; Close button top-right [9f0d2f2] |
+| 19 | **Holiday planner**: special places, budget, hotel booking | Holidays page, chat card, Home and website shortcuts, saved holidays in My trips [b0ba061 and the next commit] |
 
 ---
 

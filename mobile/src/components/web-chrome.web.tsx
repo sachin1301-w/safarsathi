@@ -1,6 +1,6 @@
 /**
  * Website frame around every tab (wide screens): an angled HUD top bar with the brand and links,
- * a left dock for the five sections, a right dock for theme / language / menu, and a floating
+ * a left dock for the sections, a right dock for theme / language / menu, and a floating
  * robot mascot that opens the copilot chat. Narrow browsers get just the mascot.
  * Styled with data attributes from app/+html.tsx.
  */
@@ -21,8 +21,11 @@ import { useAppColorScheme, useThemePreference } from '@/lib/theme-preference';
 
 const fixed = (s: object) => ({ position: 'fixed', ...s }) as unknown as ViewStyle;
 
+type TabPath = '/' | '/chat' | '/ev' | '/parking' | '/trips' | '/holiday';
+const TAB_PATHS: string[] = ['/', '/chat', '/ev', '/parking', '/trips', '/holiday'];
+
 const DOCK: {
-  path: '/' | '/chat' | '/ev' | '/parking' | '/trips';
+  path: TabPath;
   label: string;
   icon: IconName;
 }[] = [
@@ -30,16 +33,17 @@ const DOCK: {
   { path: '/chat', label: 'Copilot', icon: 'robot-happy-outline' },
   { path: '/ev', label: 'EV', icon: 'ev-station' },
   { path: '/parking', label: 'Parking', icon: 'parking' },
+  { path: '/holiday', label: 'Holidays', icon: 'island' },
   { path: '/trips', label: 'Trips', icon: 'ticket-confirmation-outline' },
 ];
 
-const NAV: { path: '/' | '/chat' | '/ev' | '/parking' | '/trips'; label: string; tag?: string }[] =
-  [
-    { path: '/chat', label: 'PLAN A TRIP', tag: 'AI' },
-    { path: '/ev', label: 'EV CHARGERS' },
-    { path: '/parking', label: 'PARKING' },
-    { path: '/trips', label: 'MY TRIPS' },
-  ];
+const NAV: { path: TabPath; label: string; tag?: string }[] = [
+  { path: '/chat', label: 'PLAN A TRIP', tag: 'AI' },
+  { path: '/holiday', label: 'HOLIDAYS', tag: 'NEW' },
+  { path: '/ev', label: 'EV CHARGERS' },
+  { path: '/parking', label: 'PARKING' },
+  { path: '/trips', label: 'MY TRIPS' },
+];
 
 /** Space the tab screens need on wide screens so the docks and top bar don't cover content. */
 export const CHROME_INSETS = { left: 104, right: 88, top: 84 };
@@ -47,6 +51,9 @@ export const WIDE_CHROME = 1000;
 
 export function WebChrome() {
   const wide = useWindowDimensions().width >= WIDE_CHROME;
+  const path = usePathname();
+  // Pushed screens (route choice, journey, charger) have their own header and back button.
+  if (!TAB_PATHS.includes(path)) return null;
   return (
     <>
       {wide && <TopBar />}
@@ -192,9 +199,7 @@ function CloseButton({ wide }: { wide: boolean }) {
       accessibilityRole="button"
       accessibilityLabel="Close and go back to Home"
       style={(state) => [
-        wide
-          ? fixed({ top: 18, right: 26 })
-          : fixed({ left: 14, bottom: 84 }),
+        wide ? fixed({ top: 18, right: 26 }) : fixed({ left: 14, bottom: 84 }),
         styles.close,
         webInteractive,
         { backgroundColor: theme.surface, borderColor: theme.border },

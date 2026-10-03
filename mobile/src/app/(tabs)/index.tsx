@@ -224,6 +224,22 @@ function AppHome() {
           ))}
         </View>
 
+        <Card
+          onPress={() => router.navigate('/holiday')}
+          style={styles.holiday}
+          accessibilityLabel="Plan a holiday">
+          <View style={[styles.holidayIcon, { backgroundColor: theme.accentSoft }]}>
+            <Icon name="island" size={28} color={theme.accent} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.holidayTitle, { color: theme.text }]}>Plan a holiday</Text>
+            <Text style={{ color: theme.textSecondary }}>
+              Places to see, hotels and the full budget for any trip
+            </Text>
+          </View>
+          <Icon name="chevron-right" color={theme.textSecondary} />
+        </Card>
+
         {nextTrip && (
           <View style={styles.section}>
             <SectionTitle action={<TripStatusChip status={nextTrip.status} />}>
@@ -307,4 +323,13 @@ const styles = StyleSheet.create({
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   section: { gap: Spacing.sm },
+  holiday: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  holidayIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  holidayTitle: { fontSize: 17, fontWeight: '800' },
 });

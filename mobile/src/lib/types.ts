@@ -114,7 +114,85 @@ export type Card =
   | { type: 'itinerary'; data: Itinerary }
   | { type: 'chargers'; data: Charger[] }
   | { type: 'parking'; data: ParkingLot[] }
-  | { type: 'booking'; data: { tripId: string; bookingRef: string } };
+  | { type: 'booking'; data: { tripId: string; bookingRef: string } }
+  | { type: 'holiday'; data: HolidayCard };
+
+export type HolidayStyle = 'budget' | 'comfort' | 'luxury';
+
+export interface HolidayCard {
+  destination: string;
+  days: number;
+  travellers: number;
+  style: HolidayStyle;
+  total: number;
+  perPerson: number;
+  highlights: string[];
+  photo?: string;
+}
+
+export interface Sight {
+  name: string;
+  description: string;
+  summary: string;
+  category: string;
+  lat: number;
+  lng: number;
+  photo?: string;
+  url: string;
+  /** Estimated entry ticket per person, INR. */
+  ticket: number;
+}
+
+export interface HotelOption {
+  id: string;
+  name: string;
+  kind: string;
+  stars?: number;
+  lat: number;
+  lng: number;
+  pricePerNight: number;
+  nights: number;
+  rooms: number;
+  total: number;
+  source: 'openstreetmap' | 'estimate';
+}
+
+export interface BudgetLine {
+  key: 'travel' | 'hotel' | 'food' | 'local' | 'tickets' | 'buffer';
+  label: string;
+  amount: number;
+  note: string;
+}
+
+export interface HolidayPlan {
+  destination: Place;
+  days: number;
+  nights: number;
+  travellers: number;
+  style: HolidayStyle;
+  startDate: string;
+  overview: string;
+  tips: string[];
+  highlights: Sight[];
+  itinerary: { day: number; title: string; sights: Sight[]; distanceKm: number }[];
+  hotels: HotelOption[];
+  travel: { option: Itinerary; perPerson: number; total: number } | null;
+  travelNote?: string;
+  budget: { lines: BudgetLine[]; total: number; perPerson: number; hotelId: string | null };
+}
+
+export interface SavedHoliday {
+  id: string;
+  destination: string;
+  days: number;
+  travellers: number;
+  style: HolidayStyle;
+  totalBudget: number;
+  hotelName: string | null;
+  hotelRef: string | null;
+  createdAt: string;
+  plan: HolidayPlan;
+}
 
 export interface Place {
   id: string;

@@ -64,7 +64,7 @@ export function AccountSheet({
       .catch(() => undefined);
   }, [visible]);
 
-  const go = (path: '/' | '/trips' | '/ev' | '/parking') => {
+  const go = (path: '/' | '/trips' | '/ev' | '/parking' | '/holiday') => {
     onClose();
     router.navigate(path);
   };
@@ -213,6 +213,7 @@ export function AccountSheet({
             <View
               style={[styles.group, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <Row icon="home-variant" label="Home" onPress={() => go('/')} />
+              <Row icon="island" label="Plan a holiday" onPress={() => go('/holiday')} />
               <Row icon="ticket-outline" label="My trips" onPress={() => go('/trips')} />
               <Row icon="ev-station" label="EV chargers near me" onPress={() => go('/ev')} />
               <Row icon="parking" label="Parking near me" onPress={() => go('/parking')} />

@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { Fragment, useCallback, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TabScene } from '@/components/tab-scene';
@@ -24,7 +24,7 @@ import { formatDay, formatInr, formatTime } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { MenuButton } from '@/lib/menu';
 import { MODE_INFO } from '@/lib/modes';
-import type { Trip } from '@/lib/types';
+import type { SavedHoliday, Trip } from '@/lib/types';
 
 interface Sections {
   upcoming: Trip[];
@@ -60,8 +60,14 @@ function TripsScreen() {
   const [sections, setSections] = useState<Sections | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [holidays, setHolidays] = useState<SavedHoliday[]>([]);
 
   const load = useCallback(() => {
+    // Holidays are extra; if they fail to load the trips still show.
+    api
+      .holidays()
+      .then(setHolidays)
+      .catch(() => undefined);
     api
       .trips()
       .then((trips) => {
@@ -107,7 +113,7 @@ function TripsScreen() {
             <SkeletonCard />
             <SkeletonCard />
           </>
-        ) : total === 0 ? (
+        ) : total === 0 && !holidays.length ? (
           <EmptyState
             icon="ticket-outline"
             title={t('trips.empty')}
@@ -118,6 +124,7 @@ function TripsScreen() {
           />
         ) : (
           <>
+            <HolidaySection holidays={holidays} />
             <TripSection title={t('trips.upcoming')} trips={sections.upcoming} />
             <TripSection title={t('trips.saved')} trips={sections.planned} />
             <TripSection title={t('trips.past')} trips={sections.past} muted />
@@ -143,6 +150,53 @@ function TripSection({ title, trips, muted }: { title: string; trips: Trip[]; mu
       {trips.map((t) => (
         <TripCard key={t.id} trip={t} muted={muted} />
       ))}
+    </View>
+  );
+}
+
+function HolidaySection({ holidays }: { holidays: SavedHoliday[] }) {
+  const theme = useTheme();
+  if (!holidays.length) return null;
+  return (
+    <View style={styles.section}>
+      <SectionTitle>Holidays</SectionTitle>
+      {holidays.map((h) => {
+        const photo = h.plan.highlights.find((s) => s.photo)?.photo;
+        return (
+          <Card
+            key={h.id}
+            onPress={() => router.navigate({ pathname: '/holiday', params: { id: h.id } })}
+            style={styles.holiday}
+            accessibilityLabel={`${h.days}-day holiday in ${h.destination}`}>
+            {photo ? (
+              <Image source={{ uri: photo }} style={styles.holidayPhoto} />
+            ) : (
+              <View
+                style={[
+                  styles.holidayPhoto,
+                  styles.holidayIcon,
+                  { backgroundColor: theme.accentSoft },
+                ]}>
+                <Icon name="island" size={28} color={theme.accent} />
+              </View>
+            )}
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[styles.tripTitle, { color: theme.text }]} numberOfLines={1}>
+                {h.days} days in {h.destination}
+              </Text>
+              <Text style={{ color: theme.textSecondary }}>
+                {formatDay(h.plan.startDate)} · {h.travellers} travellers ·{' '}
+                {formatInr(h.totalBudget)}
+              </Text>
+              {h.hotelRef && (
+                <Text style={{ color: theme.accent, fontWeight: '600' }} numberOfLines={1}>
+                  Hotel booked · {h.hotelName} · {h.hotelRef}
+                </Text>
+              )}
+            </View>
+          </Card>
+        );
+      })}
     </View>
   );
 }
@@ -199,6 +253,9 @@ function TripCard({ trip, muted }: { trip: Trip; muted?: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  holiday: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  holidayPhoto: { width: 64, height: 64, borderRadius: Radius.md },
+  holidayIcon: { alignItems: 'center', justifyContent: 'center' },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   safe: { flex: 1 },
   content: { padding: Spacing.md, gap: Spacing.md, paddingBottom: Spacing.xl },

@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 
 import { JourneyCard } from '@/components/journey-card';
 import { Badge, Card, Icon } from '@/components/ui';
 import { Spacing, StatusColors, useTheme } from '@/constants/theme';
-import { formatKm, formatKw, formatPerKwh, formatRate } from '@/lib/format';
+import { formatInr, formatKm, formatKw, formatPerKwh, formatRate } from '@/lib/format';
 import { openDirections } from '@/lib/navigate';
 import { useT } from '@/lib/i18n';
 import { openItinerary } from '@/lib/open-itinerary';
@@ -105,6 +105,56 @@ export function ChatCards({ cards }: { cards: ChatCard[] }) {
                 </View>
               </Card>
             );
+          case 'holiday': {
+            const h = card.data;
+            return (
+              <Card
+                key={i}
+                style={styles.holiday}
+                accessibilityLabel={`Open ${h.days}-day holiday plan for ${h.destination}`}
+                onPress={() =>
+                  router.push({
+                    pathname: '/holiday',
+                    params: {
+                      destination: h.destination,
+                      days: String(h.days),
+                      travellers: String(h.travellers),
+                      style: h.style,
+                    },
+                  })
+                }>
+                {h.photo && <Image source={{ uri: h.photo }} style={styles.holidayPhoto} />}
+                <View style={styles.holidayBody}>
+                  <View style={styles.parkingTop}>
+                    <Icon name="island" color={theme.accent} />
+                    <Text style={[styles.miniTitle, { color: theme.text, flex: 1 }]}>
+                      {h.days} days in {h.destination}
+                    </Text>
+                    <Badge label={h.style} color={theme.accent} />
+                  </View>
+                  <Text style={[styles.free, { color: theme.text }]}>
+                    {formatInr(h.total)}{' '}
+                    <Text style={[styles.miniMeta, { color: theme.textSecondary }]}>
+                      total · {formatInr(h.perPerson)} per person · {h.travellers} travellers
+                    </Text>
+                  </Text>
+                  {h.highlights.length > 0 && (
+                    <Text
+                      style={[styles.miniMeta, { color: theme.textSecondary }]}
+                      numberOfLines={2}>
+                      See: {h.highlights.join(' · ')}
+                    </Text>
+                  )}
+                  <View style={styles.navLink}>
+                    <Text style={{ color: theme.accent, fontWeight: '700' }}>
+                      Full plan, hotels and budget
+                    </Text>
+                    <Icon name="arrow-right" size={16} color={theme.accent} />
+                  </View>
+                </View>
+              </Card>
+            );
+          }
           default:
             return null;
         }
@@ -123,4 +173,7 @@ const styles = StyleSheet.create({
   miniMeta: { fontSize: 13 },
   parkingTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   free: { fontSize: 16, fontWeight: '800' },
+  holiday: { padding: 0, overflow: 'hidden' },
+  holidayPhoto: { width: '100%', height: 130 },
+  holidayBody: { padding: Spacing.md, gap: 6 },
 });

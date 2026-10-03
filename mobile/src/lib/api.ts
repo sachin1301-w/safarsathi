@@ -2,6 +2,9 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import type {
+  HolidayPlan,
+  HolidayStyle,
+  SavedHoliday,
   Charger,
   ChatResponse,
   ChatTurn,
@@ -136,6 +139,17 @@ export const api = {
   saveTrip: (itinerary: Itinerary) => post<Trip>('/trips', itinerary),
   trip: (id: string) => request<Trip>(`/trips/${id}`),
   trips: () => request<Trip[]>('/trips'),
+
+  planHoliday: (body: {
+    destination: string;
+    days: number;
+    travellers: number;
+    style: HolidayStyle;
+  }) => post<HolidayPlan>('/holidays/plan', body, 90_000),
+  saveHoliday: (plan: HolidayPlan, hotelId?: string) =>
+    post<SavedHoliday>('/holidays', { plan, hotelId }),
+  holidays: () => request<SavedHoliday[]>('/holidays'),
+  holiday: (id: string) => request<SavedHoliday>(`/holidays/${id}`),
   bookLeg: (tripId: string, legId: string) =>
     post<{ bookingRef: string }>('/bookings', { tripId, legId }),
   bookAll: (tripId: string) => post<Trip>(`/trips/${tripId}/book-all`, {}),

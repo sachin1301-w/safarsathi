@@ -77,6 +77,8 @@ export default function TabLayout() {
             }}
           />
         ))}
+        {/* Reached from Home, the menu, the website nav and chat; no tab button of its own. */}
+        <Tabs.Screen name="holiday" options={{ href: null, title: 'Holidays' }} />
       </Tabs>
       <WebChrome />
     </>

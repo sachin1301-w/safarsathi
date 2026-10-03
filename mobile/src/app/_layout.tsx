@@ -92,7 +92,8 @@ function Gate() {
                 headerStyle: { backgroundColor: theme.surface },
                 headerTintColor: theme.text,
                 headerTitleStyle: { fontWeight: '700' },
-                contentStyle: { backgroundColor: theme.page },
+                // Pushed screens are opaque so the tabs underneath never show through on the web.
+                contentStyle: { backgroundColor: theme.background },
               }}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="charger/[id]" options={{ title: 'Charger' }} />

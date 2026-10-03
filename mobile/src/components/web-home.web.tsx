@@ -22,7 +22,16 @@ import { AlertBanner } from '@/components/alert-banner';
 import { CinematicScene } from '@/components/cinematic-scene';
 import { DemoFooter } from '@/components/demo-footer';
 import { JourneyCard } from '@/components/journey-card';
-import { Button, Card, Chip, Icon, webData, type IconName } from '@/components/ui';
+import {
+  Button,
+  Card,
+  Chip,
+  Icon,
+  isHovered,
+  webData,
+  webInteractive,
+  type IconName,
+} from '@/components/ui';
 import { CHROME_INSETS } from '@/components/web-chrome';
 import { Radius, Spacing, StatusColors, useTheme } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -256,6 +265,9 @@ export function WebHome() {
           </View>
         </View>
 
+        {/* ---------- Plan a holiday ---------- */}
+        <HolidaySection big={big} />
+
         {/* ---------- Why SafarSathi ---------- */}
         <View style={styles.section}>
           <SectionHeading eyebrow="WHY SAFARSATHI" title="One copilot for every leg" />
@@ -349,6 +361,112 @@ const FEATURES: { icon: IconName; title: string; text: string }[] = [
     text: 'See the CO₂ you save on every trip compared with driving alone.',
   },
 ];
+
+/** Destinations shown as tiles; each opens a ready-made plan. */
+const GETAWAYS: { name: string; tag: string; icon: IconName; tint: string }[] = [
+  { name: 'Goa', tag: 'Beaches & forts', icon: 'beach', tint: '#0EA5E9' },
+  { name: 'Jaipur', tag: 'Pink City palaces', icon: 'castle', tint: '#F472B6' },
+  { name: 'Udaipur', tag: 'City of Lakes', icon: 'waves', tint: '#6366F1' },
+  { name: 'Manali', tag: 'Snow & valleys', icon: 'image-filter-hdr', tint: '#22C55E' },
+  { name: 'Varanasi', tag: 'Ghats & temples', icon: 'candle', tint: '#F59E0B' },
+  { name: 'Munnar', tag: 'Tea hills of Kerala', icon: 'leaf', tint: '#10B981' },
+];
+
+function HolidaySection({ big }: { big: boolean }) {
+  const theme = useTheme();
+  const [where, setWhere] = useState('');
+  const [days, setDays] = useState(5);
+  const open = (destination: string) => {
+    if (!destination.trim()) return router.navigate('/holiday');
+    router.navigate({
+      pathname: '/holiday',
+      params: {
+        destination: destination.trim(),
+        days: String(days),
+        travellers: '2',
+        style: 'comfort',
+      },
+    });
+  };
+  return (
+    <View style={styles.section}>
+      <SectionHeading eyebrow="PLAN A HOLIDAY" title="Days off? We'll plan every rupee" />
+      <View style={[styles.cards, big && styles.cardsRow]}>
+        <View style={[styles.cardCol, big && { flex: 1 }]} {...reveal(0)}>
+          <Card style={styles.hudCard}>
+            <FrameTitle icon="island" title="Where do you want to go?" />
+            <Text style={[styles.cardText, { color: theme.textSecondary }]}>
+              Pick a place and how many days. The AI picks the special places to see, plans each
+              day, suggests hotels, and shows the full budget: travel, hotel, food, local rides and
+              tickets.
+            </Text>
+            <View
+              style={[
+                styles.search,
+                { backgroundColor: theme.surface, borderColor: theme.border },
+              ]}>
+              <Icon name="map-marker-outline" size={22} color={theme.accent} />
+              <TextInput
+                value={where}
+                onChangeText={setWhere}
+                onSubmitEditing={() => open(where)}
+                placeholder="Goa, Jaipur, Ladakh…"
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.searchInput, { color: theme.text }]}
+                accessibilityLabel="Holiday destination"
+              />
+              <Pressable
+                onPress={() => open(where)}
+                accessibilityRole="button"
+                accessibilityLabel="Plan holiday"
+                style={[styles.go, { backgroundColor: theme.accent }]}>
+                <Icon name="arrow-right" size={22} color={theme.onAccent} />
+              </Pressable>
+            </View>
+            <View style={styles.chips}>
+              {[3, 5, 7, 10].map((d) => (
+                <Chip
+                  key={d}
+                  label={`${d} days`}
+                  selected={days === d}
+                  onPress={() => setDays(d)}
+                />
+              ))}
+            </View>
+          </Card>
+        </View>
+        <View style={[styles.cardCol, big && { flex: 1.3 }]} {...reveal(1)}>
+          <View style={styles.getaways}>
+            {GETAWAYS.map((g) => (
+              <Pressable
+                key={g.name}
+                onPress={() => open(g.name)}
+                accessibilityRole="button"
+                accessibilityLabel={`Plan ${days} days in ${g.name}`}
+                style={(state) => [
+                  styles.getaway,
+                  {
+                    backgroundColor: theme.surface,
+                    borderColor: isHovered(state) ? g.tint : theme.border,
+                    transform: [{ translateY: isHovered(state) ? -4 : 0 }],
+                  },
+                  webInteractive,
+                ]}
+                {...webData('tilt')}>
+                <View style={[styles.getawayIcon, { backgroundColor: g.tint + '26' }]}>
+                  <Icon name={g.icon} size={26} color={g.tint} />
+                </View>
+                <Text style={[styles.getawayName, { color: theme.text }]}>{g.name}</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 13 }}>{g.tag}</Text>
+                <Text style={[styles.getawayCta, { color: g.tint }]}>{days} days →</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
   const theme = useTheme();
@@ -467,6 +585,26 @@ const styles = StyleSheet.create({
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   features: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.lg },
   feature: { flexGrow: 1, flexBasis: 260 },
+  getaways: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+  getaway: {
+    flexGrow: 1,
+    flexBasis: 180,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    padding: 18,
+    gap: 4,
+    transitionDuration: '200ms',
+  } as object,
+  getawayIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  getawayName: { fontSize: 19, fontWeight: '800' },
+  getawayCta: { fontWeight: '800', marginTop: 6 },
   featureCard: { padding: 24, gap: 10, minHeight: 200 },
   featureIcon: {
     width: 52,
