@@ -150,7 +150,8 @@ function speedKmh(mode: Mode, at: Date, highway: boolean): number {
   return roadMode && isPeak(at) ? base / 2 : base;
 }
 
-function fare(mode: Mode, km: number): number {
+/** Road fare for a vehicle of this mode over this distance (₹); 0 for walking and transit. */
+export function roadFare(mode: Mode, km: number): number {
   switch (mode) {
     case 'AUTO':
       return 26 + Math.max(0, km - 1.5) * 17; // Pune RTO style: ₹26 for the first 1.5 km
@@ -183,7 +184,7 @@ function directSegment(mode: Mode, a: Point, b: Point, at: Date, highway?: boole
     from: a,
     to: b,
     durationMins: Math.max(1, Math.ceil(mins)),
-    cost: Math.round(fare(mode, km)),
+    cost: Math.round(roadFare(mode, km)),
     distanceKm: round1(km),
     provider,
   };

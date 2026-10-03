@@ -125,7 +125,13 @@ Other files in the project:
   - Budget: hotels under about ₹3,000 a night, local food, autos, the cheapest travel.
   - Comfort: hotels of about ₹3,000 to ₹8,000 a night, restaurants, cabs.
   - Luxury: hotels from about ₹8,000 a night, the fastest travel.
-- **Getting there:** a real route from your home (cheapest for Budget and Comfort, fastest for Luxury), with a **Book travel** button.
+- **Getting there:** each style travels its own way, with a **Book travel** button:
+  - Budget: the cheapest route; sleeper (SL) train, standard bus seat or saver air fare; metro or auto to the station; hatchback for long cab rides.
+  - Comfort: the same route upgraded; AC 3-tier (3A) train, AC sleeper bus or flexi air fare; a cab to and from the station or airport; sedan.
+  - Luxury: the fastest route; First AC train, premium AC sleeper bus or business-class flight; cabs; SUV.
+  - Real class fares from the timetable are used when we have them; other upgraded fares are estimated from typical price ratios and marked "estimates".
+  - Seats are paid per person; a cab is shared (one car for up to 4 people).
+- The **Budget / Comfort / Luxury** buttons in the form and the three style cards switch the whole plan at once: total, hotels, travel and budget.
 - **Where to stay:** three **real hotels** per style, with photo, rating, number of reviews and distance from the centre.
   - **Live price:** the price per night for your dates from booking sites (Booking.com, Agoda and others), with the cheapest site named, e.g. "Live · Booking.com". Other sites' prices are listed too.
   - If no site has a price for those dates, the hotel's **usual price** is shown and marked "Usual price".

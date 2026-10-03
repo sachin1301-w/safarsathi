@@ -172,7 +172,14 @@ export interface HotelOption {
 export interface HolidayTier {
   style: HolidayStyle;
   hotels: HotelOption[];
-  travel: { option: Itinerary; perPerson: number; total: number } | null;
+  /** This style's way of travelling: its class, cabs and route ("AC 3-tier (3A) train · …"). */
+  travel: {
+    option: Itinerary;
+    perPerson: number;
+    total: number;
+    summary?: string;
+    estimated?: boolean;
+  } | null;
   budget: { lines: BudgetLine[]; total: number; perPerson: number; hotelId: string | null };
 }
 

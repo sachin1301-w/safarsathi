@@ -152,6 +152,7 @@ function HolidayScreen() {
         .then((h) => {
           setSaved(h);
           setPlan(h.plan);
+          setStyle(h.plan.style);
         })
         .catch((e: Error) => setError(e.message));
     } else if (params.destination) {
@@ -263,7 +264,10 @@ function HolidayScreen() {
         {error && (
           <ErrorState message={error} onRetry={() => run(destination, days, travellers, style)} />
         )}
-        {plan && !loading && <PlanView plan={plan} saved={saved} onSaved={setSaved} />}
+        {plan && !loading && (
+          // The style buttons in the form and the cards in the plan switch the same view.
+          <PlanView plan={plan} saved={saved} onSaved={setSaved} tier={style} onTier={setStyle} />
+        )}
       </ScrollView>
       <FullScreenLoader
         visible={loading}
@@ -315,13 +319,18 @@ function PlanView({
   plan,
   saved,
   onSaved,
+  tier: wanted,
+  onTier,
 }: {
   plan: HolidayPlan;
   saved: SavedHoliday | null;
   onSaved: (h: SavedHoliday) => void;
+  tier: HolidayStyle;
+  onTier: (t: HolidayStyle) => void;
 }) {
   const theme = useTheme();
-  const [tier, setTier] = useState<HolidayStyle>(plan.style);
+  // A saved holiday stays in the style it was booked in.
+  const tier = saved ? plan.style : wanted;
   const tiers: Record<HolidayStyle, HolidayTier> | null = plan.tiers ?? null;
   // Plans saved before tiers existed carry just one.
   const view: HolidayTier = tiers?.[tier] ?? {
@@ -330,7 +339,10 @@ function PlanView({
     travel: plan.travel,
     budget: plan.budget,
   };
-  const [hotelId, setHotelId] = useState(saved ? null : view.budget.hotelId);
+  // The hotel picked in each style (default: the style's first, cheapest hotel).
+  const [picked, setPicked] = useState<Partial<Record<HolidayStyle, string>>>({});
+  const hotelId = saved ? null : (picked[tier] ?? view.budget.hotelId);
+  const setHotelId = (id: string) => setPicked((p) => ({ ...p, [tier]: id }));
   const [booking, setBooking] = useState(false);
   const [bookError, setBookError] = useState<string | null>(null);
   const hero = plan.highlights.find((s) => s.photo)?.photo;
@@ -339,10 +351,7 @@ function PlanView({
   const max = Math.max(...budget.lines.map((l) => l.amount), 1);
   const styleInfo = STYLES.find((s) => s.value === view.style) ?? STYLES[1];
 
-  const chooseTier = (t: HolidayStyle) => {
-    setTier(t);
-    setHotelId(tiers?.[t].budget.hotelId ?? null);
-  };
+  const chooseTier = onTier;
 
   const book = () => {
     setBooking(true);
@@ -564,6 +573,19 @@ function PlanView({
               <Text style={{ color: theme.textSecondary }}>
                 {view.travel.option.title} · {formatDuration(view.travel.option.totalMins)} ·{' '}
                 {formatInr(view.travel.perPerson)} per person each way
+              </Text>
+              {!!view.travel.summary && (
+                <View style={styles.travelHow}>
+                  <Icon name={styleInfo.icon} size={18} color={styleInfo.color} />
+                  <Text style={{ color: theme.text, flex: 1, fontWeight: '600' }}>
+                    {styleInfo.label}: {view.travel.summary}
+                  </Text>
+                </View>
+              )}
+              <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+                {formatInr(view.travel.total)} for {plan.travellers} traveller
+                {plan.travellers > 1 ? 's' : ''}, there and back
+                {view.travel.estimated ? ' · upgraded class fares are estimates' : ''}
               </Text>
               <Button
                 label="Book travel"
@@ -915,6 +937,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   tiers: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+  travelHow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tier: {
     flexGrow: 1,
     flexBasis: 200,

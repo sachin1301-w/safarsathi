@@ -12,7 +12,8 @@ import { hotelsByTier, liveRate, type DataHotel } from '../lib/hotels';
 import { HttpError } from '../lib/http';
 import { elementPoint, overpassQuery } from '../lib/osm';
 import { notableHotels, sightsNear, type WikiPlace } from '../lib/wiki';
-import type { Itinerary, Place, Point } from '../types';
+import type { Place, Point } from '../types';
+import { travelForStyle, type TierTravel } from './holidayTravel';
 import { planForUser } from './trips';
 
 export type HolidayStyle = 'budget' | 'comfort' | 'luxury';
@@ -82,7 +83,7 @@ export interface HotelOption {
 export interface TierPlan {
   style: HolidayStyle;
   hotels: HotelOption[];
-  travel: { option: Itinerary; perPerson: number; total: number } | null;
+  travel: TierTravel | null;
   budget: { lines: BudgetLine[]; total: number; perPerson: number; hotelId: string | null };
 }
 
@@ -105,7 +106,7 @@ export interface HolidayPlan {
   highlights: Sight[];
   itinerary: HolidayDay[];
   hotels: HotelOption[];
-  travel: { option: Itinerary; perPerson: number; total: number } | null;
+  travel: TierTravel | null;
   travelNote?: string;
   budget: { lines: BudgetLine[]; total: number; perPerson: number; hotelId: string | null };
   /** All three tiers side by side; hotels, travel and budget above are tiers[style]. */
@@ -477,17 +478,12 @@ export async function planHoliday(req: HolidayRequest): Promise<HolidayPlan> {
   const itinerary = buildDays(sights, dest, days);
   const tickets = sights.reduce((s, x) => s + x.ticket, 0) * travellers;
 
-  // Budget and comfort travel the cheapest way; luxury takes the fastest option.
-  const byCost = 'error' in options ? [] : [...options].sort((a, b) => a.totalCost - b.totalCost);
-  const pickTravel = (style: HolidayStyle) =>
-    style === 'luxury' ? [...byCost].sort((a, b) => a.totalMins - b.totalMins)[0] : byCost[0];
+  const routes = 'error' in options ? [] : options;
   const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
   const tier = (style: HolidayStyle): TierPlan => {
-    const option = pickTravel(style);
-    const travel = option
-      ? { option, perPerson: option.totalCost, total: option.totalCost * travellers * 2 }
-      : null;
+    // Each style travels its own way (class, cabs, route): see holidayTravel.ts.
+    const travel = travelForStyle(routes, style, travellers);
     const hotel = hotels[style][0] ?? null;
     const priceNote = !hotel
       ? ''
@@ -502,7 +498,7 @@ export async function planHoliday(req: HolidayRequest): Promise<HolidayPlan> {
         label: 'Travel there and back',
         amount: travel?.total ?? 0,
         note: travel
-          ? `${style === 'luxury' ? 'Fastest' : 'Cheapest'} option, ${inr(travel.perPerson)} per person each way`
+          ? `${style === 'luxury' ? 'Fastest' : 'Cheapest'} route: ${travel.summary}. About ${inr(travel.perPerson)} per person each way${travel.estimated ? ' (upgraded fares estimated)' : ''}`
           : 'Not included (no route from your start point)',
       },
       {
