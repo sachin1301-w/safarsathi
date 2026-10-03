@@ -1,4 +1,7 @@
 import 'dotenv/config';
+
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import cors from 'cors';
 import express from 'express';
 
@@ -37,6 +40,20 @@ app.use(
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
+
+// The website (Expo web export in mobile/dist), served from the same address as the API so one
+// public URL works on any device. Present after `npx expo export -p web` (the cloud build does it).
+const webDir = resolve(import.meta.dirname, '..', '..', 'mobile', 'dist');
+if (existsSync(webDir)) {
+  app.use(express.static(webDir, { extensions: ['html'] }));
+  // Pages with an id in the path were exported once as a template, e.g. journey/[id].html.
+  app.use((req, res, next) => {
+    if (req.method !== 'GET') return next();
+    const page = /^\/(journey|charger)\/[^/]+\/?$/.exec(req.path)?.[1];
+    res.sendFile(join(webDir, page ? `${page}/[id].html` : 'index.html'));
+  });
+  console.log('Serving the website from', webDir);
+}
 app.use(errorHandler);
 
 async function warmUpDatabase(attempts = 5) {

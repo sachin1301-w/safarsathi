@@ -1,0 +1,38 @@
+# Render blueprint: one web service that runs the backend API and serves the website from the
+# same https address, so SafarSathi works on any device and network without the laptop.
+# Render dashboard -> New -> Blueprint -> pick this repo; then fill in the secret values.
+services:
+  - type: web
+    name: safarsathi
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: >-
+      cd backend && npm ci && npx prisma generate &&
+      cd ../mobile && npm ci && npx expo export -p web
+    startCommand: cd backend && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_CHAT_MODEL
+        value: gemini-3.5-flash-lite
+      - key: DEMO_OFFLINE
+        value: "false"
+      # Secrets: set these in the Render dashboard (never commit them).
+      - key: DATABASE_URL # MongoDB Atlas URL ending in /IQOO?retryWrites=true&w=majority (no tlsCAFile)
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: COGNEE_API_URL
+        sync: false
+      - key: COGNEE_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: EXPO_PUBLIC_CARTO_KEY # map tiles for the website build
+        sync: false
