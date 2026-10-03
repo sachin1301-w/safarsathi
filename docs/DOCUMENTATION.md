@@ -1,6 +1,6 @@
 # SafarSathi: Complete Project Guide
 
-**SafarSathi** ("travel companion") is an app that plans your whole trip across India, from your door to your destination. It uses autos, bike taxis, cabs, metro, city buses, trains, flights, intercity buses and your own electric car (EV). It books every part of the trip in one place, finds EV chargers and parking, and makes a new plan for you if something is delayed. You can type or speak to it in 11 Indian languages.
+**SafarSathi** ("travel companion") is an app that plans your whole trip across India, from your door to your destination. It uses autos, bike taxis, cabs, metro, city buses, trains, flights, intercity buses and your own electric car (EV). It books every part of the trip in one place, finds EV chargers and parking, plans whole holidays with real hotel prices, and makes a new plan for you if something is delayed. You can type or speak to it in 11 Indian languages.
 
 We built it for the **iQOO Grand Finale hackathon** (Mobility theme). It runs as a **phone app** (Android, through Expo Go) and as a **website**.
 
@@ -54,9 +54,10 @@ Other files in the project:
 | EV charger map | ✅ Working, all of India |
 | Parking finder, reservations and **Navigate** | ✅ Working, all of India |
 | Bookings and the Trips list | ✅ Working (demo tickets) |
+| Holiday planner (places to see, real hotels, full budget, Budget / Comfort / Luxury) | ✅ Working, 337 tourist places across India |
 | Delay alerts and automatic re-planning | ✅ Working |
 | Login and sign-up (email and password) | ✅ Working |
-| Website version | ✅ Working (desktop and phone browsers) |
+| Website version | ✅ Working (desktop and phone browsers), 3D design, new login page |
 | "Continue with Google" | ⚠️ Built; you must finish the Google Cloud setup (section 16) |
 | Online database (MongoDB Atlas) | ✅ Working |
 | Any phone, any network (through a tunnel) | ✅ Working while the laptop is on |
@@ -76,6 +77,7 @@ Other files in the project:
 | Every ticket needs a different app | One trip, one "Book all" button |
 | A delay breaks the rest of your journey | Automatic alert and a new plan in one tap |
 | Many apps are English-only | Text and voice in 11 Indian languages |
+| Planning a holiday means checking many sites for places, hotels and tickets, and the total cost is a surprise | One page with the places to see, real hotels with today's prices, travel, and every cost added up, for Budget, Comfort and Luxury |
 
 **Who it is for:** daily metro and bus users, people travelling between cities, EV owners, and first-time or older travellers who prefer speaking in their own language.
 
@@ -118,30 +120,46 @@ Other files in the project:
 
 ### Plan a holiday
 
-- Tell it **where** and **how many days** (1 to 14), how many people (1 to 12), and the style: **Budget**, **Comfort** or **Luxury**.
-- **Special places to visit:** the most famous sights there, with photos and a short note, ranked by how many people read about them on Wikipedia. Each one has a **Navigate** button.
-- **Day by day:** about 3 nearby sights per day, grouped so you don't zigzag across the city.
-- **Budget, Comfort and Luxury side by side:** three cards show each style's total, cost per person and cheapest hotel. Tap one to see its own hotels, travel and budget.
-  - Budget: hotels under about ₹3,000 a night, local food, autos, the cheapest travel.
-  - Comfort: hotels of about ₹3,000 to ₹8,000 a night, restaurants, cabs.
-  - Luxury: hotels from about ₹8,000 a night, the fastest travel.
-- **Getting there:** each style travels its own way, with a **Book travel** button:
-  - Budget: the cheapest route; sleeper (SL) train, standard bus seat or saver air fare; metro or auto to the station; hatchback for long cab rides.
-  - Comfort: the same route upgraded; AC 3-tier (3A) train, AC sleeper bus or flexi air fare; a cab to and from the station or airport; sedan.
-  - Luxury: the fastest route; First AC train, premium AC sleeper bus or business-class flight; cabs; SUV.
-  - Real class fares from the timetable are used when we have them; other upgraded fares are estimated from typical price ratios and marked "estimates".
-  - Seats are paid per person; a cab is shared (one car for up to 4 people).
-- The **Budget / Comfort / Luxury** buttons in the form and the three style cards switch the whole plan at once: total, hotels, travel and budget.
-- **Where to stay:** three **real hotels** per style, with photo, rating, number of reviews and distance from the centre.
-  - **Live price:** the price per night for your dates from booking sites (Booking.com, Agoda and others), with the cheapest site named, e.g. "Live · Booking.com". Other sites' prices are listed too.
-  - If no site has a price for those dates, the hotel's **usual price** is shown and marked "Usual price".
-  - "Reviews & photos" opens the hotel's TripAdvisor page.
-  - **Book hotel & save holiday** books the chosen one (demo, no payment) and gives a reference like `HTL-UZP7RM`.
-- **Full budget:** travel there and back, hotel, food, local travel, entry tickets and a 10% buffer, with the total and the cost per person. Picking a different hotel updates the budget at once.
-- Open it from **Holidays** (website top bar and left dock), the card on Home, the ☰ menu, or just ask the chat: "I have 5 days off, plan Goa for 2 people".
-- Saved holidays appear in **My trips** under "Holidays".
-- **Honest numbers:** hotel prices are real (live rates or the hotel's usual price). Travel prices come from the journey planner. Food, local travel and ticket prices are **estimates** and are marked that way.
-- **Hotel data for all of India:** a saved list of the top hotels in about 340 tourist places, in every state. A few small places aren't on TripAdvisor's lists (for example Chittorgarh, Thanjavur, Kohima); there the plan uses OpenStreetMap hotels with prices marked "Estimate".
+Tell the app **where** you want to go, **for how many days** (1 to 14) and **how many people** (1 to 12). It plans the whole holiday and shows every cost.
+
+**What you get:**
+
+- **Places to see:** the most famous sights there, each with a photo and a short note. The most popular ones come first (based on how many people read about them on Wikipedia). Each has a **Navigate** button.
+- **Day by day:** about 3 places a day. Places close to each other go on the same day, so you don't keep crossing the city.
+- **Three styles: Budget, Comfort and Luxury.** Three cards show the total for each style, side by side. Tap a card, or a style button at the top of the page, and **everything changes at once**: the total, the hotels, the travel and the budget.
+- **Hotels:** 3 real hotels for each style, with photo, star rating, number of reviews and distance from the city centre. "Reviews & photos" opens the hotel's TripAdvisor page.
+- **Getting there:** how you travel there and back in that style, with a **Book travel** button.
+- **Full budget:** travel, hotel, food, local travel, entry tickets, and 10% extra for shopping and surprises. You see the total and the cost per person. Pick a different hotel and the budget updates straight away.
+- **Book hotel & save holiday** books the hotel (a demo: no money is taken) and gives you a booking number like `HTL-UZP7RM`. Saved holidays appear in **My trips** under "Holidays".
+
+**How the three styles are different:**
+
+| | Budget | Comfort | Luxury |
+| --- | --- | --- | --- |
+| Hotel, per night | under about ₹3,000 | about ₹3,000 to ₹8,000 | over about ₹8,000 |
+| Route | cheapest | cheapest | fastest |
+| Train | Sleeper | AC 3-tier | First AC |
+| Bus | normal seat | AC sleeper | premium AC sleeper (Volvo type) |
+| Flight | cheapest fare | flexible fare (seat and meal included) | business class |
+| To the station or airport | metro, bus or auto | cab | cab |
+| Long cab rides | small car | sedan | SUV (Innova type) |
+| Food, per person per day | about ₹700 | about ₹1,500 | about ₹3,500 |
+| Autos and cabs in the city, per day | about ₹600 | about ₹1,800 | about ₹4,000 |
+
+**Example:** Jaipur, 3 days, 4 people, starting from Pune: Budget **₹41,384**, Comfort **₹90,895**, Luxury **₹2,72,334**. Hotel prices change every day, so your numbers will be a little different.
+
+**Where the prices come from (honest numbers):**
+
+- **Hotels: real prices.** We saved a list of about **23,000 hotels in 337 tourist places across India** (from TripAdvisor, through a free service called Xotelo). When you plan, the app asks booking sites such as Booking.com, Agoda and Trip.com for the price **on your dates**. Each hotel shows one of these labels:
+  - **"Live · Booking.com"**: today's price for your dates, from that site. Prices from other sites are shown underneath.
+  - **"Usual price"**: no site had a price for those dates, so we show what the hotel normally costs.
+  - **"Estimate"**: there is no listed hotel nearby (a few small towns such as Thanjavur or Kohima). We show a real hotel from OpenStreetMap with a typical price.
+- Only hotels with good reviews (3.5 stars or more, and at least 10 reviews) are suggested first.
+- **Travel: from the trip planner.** When we know the real ticket price for a class (for example AC 3-tier), we use it. Other upgrades, such as business class, are worked out from the normal price difference between classes, and the app says "estimate".
+- Train, bus and flight tickets are counted **per person**. A cab is **shared**: one car for up to 4 people.
+- **Food, local travel and entry tickets** are estimates, and they are marked that way.
+
+**How to open it:** **Holidays** in the website's top bar or left dock, the "Plan a holiday" card on Home, the ☰ menu, or just ask the chat: *"I have 5 days off, plan Goa for 2 people"*.
 
 ### AI assistant (chat)
 
@@ -170,6 +188,7 @@ Other files in the project:
   | Map | A pin drops with ripples |
   | Holidays | A plane, train, bus and car take turns |
 
+- **Login page:** on the website, the same 3D city moves slowly behind a glass login box, with the glowing SAFARSATHI title and four feature cards. On the phone, glowing coloured lights drift and stars twinkle behind the form, with the vehicle animation on top.
 - **Dark mode / light mode:** choose System, Light or Dark from the menu.
 - **Website:** a 3D night city that moves as you scroll, a HUD top bar, left and right docks, a robot mascot that opens the chat, cards that tilt towards your mouse, and a Close button on every page.
 
@@ -180,7 +199,7 @@ Other files in the project:
 | Screen | What you see |
 | --- | --- |
 | **Startup** | Bus animation while the app connects to the server |
-| **Login** | Log in, Create account, and "Continue with Google" (website). The form moves up when the keyboard opens |
+| **Login** | Glowing title, moving background, and a glass box with Log in, Create account and "Continue with Google" (website). The form moves up when the keyboard opens |
 | **Home** | "SafarSathi" title, language button, ☰ menu, alerts, "Where to?" search with mic, quick buttons, your next trip |
 | **☰ Menu** | Your name and email; counts of trips, booked and upcoming; Appearance (System / Light / Dark); language; home; your EV; shortcuts (Home, Trips, EV, Parking); Log out |
 | **Chat** | Messages, result cards, mic, speaker and language buttons |
@@ -189,7 +208,7 @@ Other files in the project:
 | **EV** | Charger map or list, filters, colour key with counts |
 | **Charger** | Details, reports, Working / Busy / Broken buttons, Navigate |
 | **Parking** | Search, "Near me", arrival time, map, cards with Navigate and Reserve. On the website the map and list sit side by side |
-| **Holidays** | Destination, days, travellers and style; then the photo header with the total, budget bars, special places, day-by-day plan, getting there, hotels and tips |
+| **Holidays** | Destination, days, people and style; then a big photo with the total, the three style cards, the budget, places to see, the day-by-day plan, getting there, hotels and tips |
 | **Trips** | Holidays, Upcoming, Saved plans, Past |
 
 ---
@@ -207,7 +226,9 @@ There are two parts:
          └──── live delay alerts (instant) ◀──────────┤──▶  Gemini AI (chat)
                                                       ├──▶  Sarvam AI (voice)
                                                       ├──▶  Cognee (memory)
-                                                      └──▶  OpenStreetMap (places, chargers, parking)
+                                                      ├──▶  OpenStreetMap (places, chargers, parking)
+                                                      ├──▶  Wikipedia (holiday places and photos)
+                                                      └──▶  Xotelo (hotel prices for your dates)
 ```
 
 **What happens when you ask the chat a question:**
@@ -225,6 +246,7 @@ There are two parts:
 | --- | --- |
 | Trip planner (`backend/src/services/planner.ts`) | Builds and compares the trip options |
 | Re-planner (`replanner.ts`) | Handles delays and makes new plans |
+| Holiday planner (`holiday.ts`, `holidayTravel.ts`, `backend/src/lib/hotels.ts`) | Places to see, day-by-day plan, hotels and live prices, travel for each style, the budget |
 | AI assistant (`backend/src/ai/`) | Chat, tools, prompts, the list of AIs to try |
 | Data sources (`backend/src/adapters/`) | One module per source (chargers, parking, places, voice, memory…) |
 | Login (`backend/src/lib/auth.ts`) | Passwords, sessions, Google sign-in |
@@ -283,6 +305,7 @@ Secret keys live only in two `.env` files on the laptop, which are **never uploa
 | `OPEN_CHARGE_MAP_KEY` | Better charger coverage (optional) | not set |
 | `DEMO_OFFLINE` | `true` = no internet needed (backup for the demo) | `false` |
 | `PORT` | Server port | 4000 |
+| `USD_INR` | Dollar-to-rupee rate for the hotels' usual prices (optional) | not set, so 88 is used |
 
 On this laptop the database address ends with `&tlsCAFile=…`, because the AVG antivirus interferes with secure connections (see section 14). On Render, leave that part out.
 
@@ -329,7 +352,10 @@ npx expo start        # shows a QR code
 2. Open Expo Go → **Enter URL manually** → type `exp://<laptop IP>:8081`. To find the IP, run `ipconfig` on the laptop and look at the Wi-Fi "IPv4 Address". You can also scan the QR code **from inside Expo Go**; don't use the phone camera.
 3. Allow location, then log in.
 
-**Website:** open http://localhost:8081 in the laptop's browser, or press `w` in the Expo window.
+**Website:** there are two ways to open it.
+
+- **While you are changing the code:** http://localhost:8081 (the Expo window). Changes show up straight away.
+- **The finished website:** the backend serves it at **http://localhost:4000** on the laptop, and at **http://<laptop IP>:4000** on any phone or computer on the same Wi-Fi (for example `http://192.168.224.126:4000`). After changing the app, rebuild it with `npx expo export -p web` in the `mobile` folder.
 
 ### Useful commands
 
@@ -407,8 +433,9 @@ Before you start: start the server and the app, open the app, and log in as `dem
 4. **Delay (60 s).** On the journey screen, long-press the title, pick the flight and 90 minutes, and tap Delay. A red alert appears. Tap **Fix my trip** and accept the new plan.
 5. **EV (40 s).** In the EV tab, report a charger **Broken** and watch the pin turn red. Ask *"Plan an EV trip to Mahabaleshwar"*; the plan adds a charging stop.
 6. **Parking (20 s).** In the Parking tab, show the free-space estimates and tap **Navigate**.
-7. **Language (20 s).** Switch to मराठी, ask *"जवळचे पार्किंग कुठे आहे?"* and tap the speaker.
-8. **Close (30 s).** Every data source plugs in separately, ready for real IRCTC, airline, charger and parking partners.
+7. **Holiday (40 s).** Open **Holidays**, tap the **Goa** tile (5 days). Show the places to see, then tap **Budget**, **Comfort** and **Luxury** and watch the total, hotels and travel change. Point out a "Live · Booking.com" price.
+8. **Language (20 s).** Switch to मराठी, ask *"जवळचे पार्किंग कुठे आहे?"* and tap the speaker.
+9. **Close (30 s).** Every data source plugs in separately, ready for real IRCTC, airline, charger and parking partners.
 
 **Tips:**
 
@@ -438,6 +465,8 @@ Before you start: start the server and the app, open the app, and log in as `dem
 | Chargers / parking (a brand-new area) | up to about 6 seconds |
 | Seeding the cloud database | 37 seconds |
 | App download through the tunnel | about 25 seconds the first time |
+| A full holiday plan (places, 9 hotels with live prices, travel, budget) | about 13 to 17 seconds |
+| Downloading the hotel list for all of India (done once) | about 45 minutes |
 
 ---
 
@@ -480,7 +509,11 @@ All of this happened on 2–3 October 2026. The code in brackets is the save poi
 | 16 | Home button in the menu did nothing; dull website; no light mode on website | Menu on every tab; 3D website; light mode fixed [d87ed9d] |
 | 17 | Make it like techfest.org | Cinematic 3D city that moves as you scroll, HUD top bar and docks, robot mascot [6ffd6e0] |
 | 18 | Tabs showed through each other; Close button on every page | Only the open tab is shown; Close button top-right [9f0d2f2] |
-| 19 | **Holiday planner**: special places, budget, hotel booking | Holidays page, chat card, Home and website shortcuts, saved holidays in My trips [b0ba061 and the next commit] |
+| 19 | **Holiday planner**: special places, budget, hotel booking | Holidays page, chat card, Home and website shortcuts, saved holidays in My trips [b0ba061, 33c06b0] |
+| 20 | Login page looked dull | New login page in the website's style: 3D city, glowing title, glass box; moving lights and stars on the phone [3a73d66] |
+| 21 | Run the website and share the link | Website at `http://localhost:4000` and `http://<laptop IP>:4000`; the public tunnel didn't connect on this network (section 10) |
+| 22 | Separate Budget / Comfort / Luxury; real hotel prices, not random ones; hotel data for all tourist cities | Saved list of about 23,000 real hotels in 337 places; live prices for your dates; three styles side by side [43c1969] |
+| 23 | Prices and travel must change with the style | Each style travels its own way (class, cabs, route); the style buttons switch the whole plan; cabs shared per car [f28d436] |
 
 ---
 
@@ -498,6 +531,16 @@ All of this happened on 2–3 October 2026. The code in brackets is the save poi
 | First database request after start-up timed out | Slow first secure connection (AVG) | The server "warms up" the connection when it starts |
 | Servers stopped by themselves | They were tied to the Claude session | They now run as independent background processes |
 | Google: "Access blocked: no registered origin" | The website address isn't allowed in Google Cloud | Add the origins (section 16) |
+| Wikipedia said "too many requests" | We asked it too many questions at once | Ask one question at a time, with a short pause, and remember the answers |
+| TripAdvisor's own website blocks programs (error 403) | It only lets real people in browsers through | We used **Xotelo**, a free service that shares TripAdvisor hotel prices, and found each city from TripAdvisor's India-wide hotel lists |
+| The same hotel was suggested twice | TripAdvisor lists some hotels under two areas | Keep only one copy of each hotel |
+| A hotel with no reviews (★0) was suggested | Some listings are brand new or empty | Only hotels with a real rating are suggested; well-reviewed ones first |
+| Hotel prices were too random | The first version guessed prices | Real prices: live rates for your dates, or the hotel's usual price |
+| Budget and Comfort had the same travel cost | Both used the cheapest route as it was | Each style now rides in its own class, with cabs and cars to match |
+| A cab was charged once per person | The trip planner prices one traveller | Tickets are per person; a cab is shared by up to 4 people |
+| "Internal server error" when logging in, now and then | The online database (MongoDB Atlas) sometimes takes too long to answer | Try again after a few seconds |
+| The Expo app server stopped by itself | Unknown; nothing in its log | Start it again (`npx expo start` in the `mobile` folder) |
+| The public tunnel said "took too long to connect" | This network blocks it (like the FortiGate Wi-Fi) | Use the laptop's Wi-Fi address on the same network, switch to the phone hotspot, or deploy to Render |
 
 ---
 
@@ -513,6 +556,10 @@ All of this happened on 2–3 October 2026. The code in brackets is the save poi
 | Google "Access blocked" | See section 16 |
 | Map is blank | Check the internet connection and `EXPO_PUBLIC_CARTO_KEY`; restart Expo with `-c` |
 | No chargers or parking in a new area | Wait a few seconds; OpenStreetMap may have no data there |
+| A holiday hotel says "Usual price", not "Live" | No booking site had a price for those dates, or the price service was busy. The usual price is still a real price; plan again later for live prices |
+| A holiday shows "Estimate" hotels | That town has no listed hotels nearby; the plan uses OpenStreetMap hotels with typical prices |
+| A holiday takes long to load | Normal: it checks 9 hotels on several booking sites. Wait up to about 20 seconds |
+| The website doesn't open on another device | Both must be on the same Wi-Fi; use `http://<laptop IP>:4000`. If it still fails, the firewall (AVG) may be blocking port 4000 |
 
 ---
 
@@ -527,10 +574,12 @@ All of this happened on 2–3 October 2026. The code in brackets is the save poi
 3. **Android APK** (optional), so the phone app works anywhere without Expo Go. Needs a free Expo account.
 4. **Change every key and password** that was shared in chat while building: Anthropic, Sarvam, Cognee, Gemini, CARTO, the Google key, and both MongoDB passwords.
 5. **Turn the McAfee/AVG firewalls back on** after the hackathon. Consider removing AVG; McAfee and Windows Defender are enough.
-6. **Nice to have:**
+6. **Refresh the hotel list** every few months: `npx tsx scripts/fetch-hotels-india.ts` in the `backend` folder (about 45 minutes). Live prices are fetched every time anyway.
+7. **Nice to have:**
    - an Open Charge Map key for many more chargers
    - a native speaker checking the translations
-   - real booking partners (IRCTC, airlines), real payments, live trip tracking
+   - real booking partners (IRCTC, airlines, hotels), real payments, live trip tracking
+   - real train, bus and flight timetables for all of India (today we have a few, all from Pune), so every style's travel price is real
 
 ---
 
@@ -549,3 +598,8 @@ All of this happened on 2–3 October 2026. The code in brackets is the save poi
 | **Session** | Proof that you're logged in; ends when you log out |
 | **Seed** | Filling the database with starting demo data |
 | **Commit** | A saved checkpoint of the code in Git |
+| **Style (Budget / Comfort / Luxury)** | How comfortable the holiday is: which hotels, which class of train or flight, and how much food and local travel cost |
+| **Live price / live rate** | Today's price for your exact dates, straight from a booking site |
+| **Usual price** | What a hotel normally costs per night, when no live price is available |
+| **Xotelo** | A free service that shares TripAdvisor hotel lists and booking-site prices |
+| **Class (SL, 3A, 1A…)** | Train ticket types: Sleeper (SL), AC 3-tier (3A), AC 2-tier (2A), First AC (1A) |
