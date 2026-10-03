@@ -90,7 +90,10 @@ export function WebHome() {
     const max = Math.max(1, contentSize.height - layoutMeasurement.height);
     progress.current = contentOffset.y / max;
     const el = veil.current as unknown as HTMLElement | null;
-    if (el) el.style.opacity = String(Math.min(0.78, Math.max(0, contentOffset.y / layoutMeasurement.height - 0.15) * 0.9));
+    if (el)
+      el.style.opacity = String(
+        Math.min(0.78, Math.max(0, contentOffset.y / layoutMeasurement.height - 0.15) * 0.9),
+      );
     if (!statsSeen && contentOffset.y > layoutMeasurement.height * 0.9) setStatsSeen(true);
   };
 
@@ -110,7 +113,11 @@ export function WebHome() {
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFill,
-          { position: 'fixed', opacity: 0, backgroundColor: theme.background } as unknown as ViewStyle,
+          {
+            position: 'fixed',
+            opacity: 0,
+            backgroundColor: theme.background,
+          } as unknown as ViewStyle,
         ]}
       />
       <ScrollView

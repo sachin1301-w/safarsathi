@@ -3,6 +3,7 @@ import { Fragment, useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TabScene } from '@/components/tab-scene';
 import { DemoFooter } from '@/components/demo-footer';
 import { TicketScene } from '@/components/scenes';
 import { FullScreenLoader } from '@/components/travel-loader';
@@ -45,7 +46,15 @@ function group(trips: Trip[], now: number): Sections {
   };
 }
 
-export default function TripsScreen() {
+export default function TripsScreenTab() {
+  return (
+    <TabScene>
+      <TripsScreen />
+    </TabScene>
+  );
+}
+
+function TripsScreen() {
   const theme = useTheme();
   const t = useT();
   const [sections, setSections] = useState<Sections | null>(null);

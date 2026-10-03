@@ -319,6 +319,12 @@ function build(THREE: Three, el: HTMLElement, dark: boolean, progress: { current
   const cam = { z: 40, y: 20 };
   let raf = 0;
   const tick = () => {
+    raf = requestAnimationFrame(tick);
+    // Home is hidden (another tab is open): don't draw.
+    if (!el.getClientRects().length) {
+      clock.getDelta();
+      return;
+    }
     const dt = Math.min(clock.getDelta(), 0.05);
     const t = clock.elapsedTime;
     const p = Math.max(0, Math.min(1, progress.current));
@@ -358,7 +364,6 @@ function build(THREE: Three, el: HTMLElement, dark: boolean, progress: { current
       windows.material.opacity = 0.75 + Math.sin(t * 1.3) * 0.15;
     }
     renderer.render(scene, camera);
-    raf = requestAnimationFrame(tick);
   };
   tick();
 

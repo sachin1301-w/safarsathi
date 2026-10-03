@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TabScene } from '@/components/tab-scene';
 import { DemoFooter } from '@/components/demo-footer';
 import { LeafletMap } from '@/components/leaflet-map';
 import { ParkingScene } from '@/components/scenes';
@@ -54,7 +55,15 @@ function availabilityColor(lot: ParkingLot) {
   return '#EF4444';
 }
 
-export default function ParkingScreen() {
+export default function ParkingScreenTab() {
+  return (
+    <TabScene>
+      <ParkingScreen />
+    </TabScene>
+  );
+}
+
+function ParkingScreen() {
   const theme = useTheme();
   const t = useT();
   const { profile } = useApp();

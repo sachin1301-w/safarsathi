@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TabScene } from '@/components/tab-scene';
 import { ChatCards } from '@/components/chat-cards';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
 import { OrbitScene } from '@/components/scenes';
@@ -47,7 +48,15 @@ const SUGGESTIONS = [
 
 let nextId = 1;
 
-export default function ChatScreen() {
+export default function ChatScreenTab() {
+  return (
+    <TabScene>
+      <ChatScreen />
+    </TabScene>
+  );
+}
+
+function ChatScreen() {
   const theme = useTheme();
   const t = useT();
   const { profile, setLanguage } = useApp();

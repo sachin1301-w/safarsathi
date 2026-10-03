@@ -52,6 +52,7 @@ export function WebChrome() {
       {wide && <TopBar />}
       {wide && <LeftDock />}
       {wide && <RightDock />}
+      <CloseButton wide={wide} />
       <Mascot />
     </>
   );
@@ -180,6 +181,32 @@ function RightDock() {
   );
 }
 
+/** "Close" on every page except Home: back to the home page. */
+function CloseButton({ wide }: { wide: boolean }) {
+  const theme = useTheme();
+  const path = usePathname();
+  if (path === '/') return null;
+  return (
+    <Pressable
+      onPress={() => router.navigate('/')}
+      accessibilityRole="button"
+      accessibilityLabel="Close and go back to Home"
+      style={(state) => [
+        wide
+          ? fixed({ top: 18, right: 26 })
+          : fixed({ left: 14, bottom: 84 }),
+        styles.close,
+        webInteractive,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+        isHovered(state) && { backgroundColor: theme.dangerSoft, borderColor: theme.danger },
+      ]}
+      {...webData('glass')}>
+      <Icon name="close" size={20} color={theme.text} />
+      <Text style={[styles.closeText, { color: theme.text }]}>Close</Text>
+    </Pressable>
+  );
+}
+
 /** A little drone robot: propellers spin, it hovers, and a bubble invites you to chat. */
 function Mascot() {
   const path = usePathname();
@@ -191,7 +218,11 @@ function Mascot() {
       onPress={() => router.navigate('/chat')}
       accessibilityRole="button"
       accessibilityLabel="Ask the SafarSathi copilot"
-      style={[fixed({ right: narrow ? 14 : 26, bottom: narrow ? 84 : 34 }), styles.mascot, narrow && styles.mascotSmall]}
+      style={[
+        fixed({ right: narrow ? 14 : 26, bottom: narrow ? 84 : 34 }),
+        styles.mascot,
+        narrow && styles.mascotSmall,
+      ]}
       {...webData('mascot')}>
       <View style={styles.bubble} {...webData('bubble')}>
         <Text style={styles.bubbleText}>Ask SafarSathi ✨</Text>
@@ -254,6 +285,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  close: {
+    zIndex: 65,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  closeText: { fontWeight: '700', fontSize: 14 },
   mascot: { zIndex: 70, width: 96, alignItems: 'center' },
   mascotSmall: { transform: [{ scale: 0.8 }] },
   bubble: {

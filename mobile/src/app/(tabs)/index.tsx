@@ -4,6 +4,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AlertBanner } from '@/components/alert-banner';
+import { TabScene } from '@/components/tab-scene';
 import { WebHome } from '@/components/web-home';
 import { DemoFooter } from '@/components/demo-footer';
 import { JourneyCard } from '@/components/journey-card';
@@ -46,7 +47,7 @@ function greeting(): StringKey {
 
 export default function HomeScreen() {
   // The website gets the cinematic 3D home page; the phone app keeps its own Home.
-  return Platform.OS === 'web' ? <WebHome /> : <AppHome />;
+  return <TabScene>{Platform.OS === 'web' ? <WebHome /> : <AppHome />}</TabScene>;
 }
 
 function AppHome() {

@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TabScene } from '@/components/tab-scene';
 import { ChargerRow } from '@/components/charger-row';
 import { DemoFooter } from '@/components/demo-footer';
 import { LeafletMap } from '@/components/leaflet-map';
@@ -29,7 +30,15 @@ const POWER = [
   { label: '50+ kW', minKw: 50 },
 ];
 
-export default function EvScreen() {
+export default function EvScreenTab() {
+  return (
+    <TabScene>
+      <EvScreen />
+    </TabScene>
+  );
+}
+
+function EvScreen() {
   const theme = useTheme();
   const t = useT();
   const { profile } = useApp();
