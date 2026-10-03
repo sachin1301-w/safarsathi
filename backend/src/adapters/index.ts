@@ -11,7 +11,9 @@ import { MockScheduleAdapter } from './schedules.mock';
 import { NoSpeechAdapter, SarvamSpeechAdapter } from './speech.sarvam';
 import { MockTransitAdapter } from './transit.mock';
 import { haversineKm } from '../lib/geo';
+import { touristPlace } from '../lib/hotels';
 import { searchOsmPlaces } from '../lib/osm';
+import { wikiPlace } from '../lib/wiki';
 import type { Place } from '../types';
 import type {
   BookingAdapter,
@@ -90,10 +92,35 @@ export async function findPlaces(query: string, limit = 6): Promise<Place[]> {
   }
 }
 
-/** One place for a name: a close demo match, else OpenStreetMap, else a loose demo match. */
+/**
+ * One place for a name: a close demo match, else OpenStreetMap, else (when that free service is
+ * busy or down) our tourist places from the hotel list, then Wikipedia, then a loose demo match.
+ */
 export async function lookupPlace(query: string): Promise<Place | null> {
   const strict = geocode.resolve(query, { strict: true });
   if (strict) return strict;
-  const online = await searchOsmPlaces(query, geocode.all(), 1).catch(() => []);
-  return online[0] ?? geocode.resolve(query);
+  // Tried twice: the public OpenStreetMap search is sometimes slow or rate-limited.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const online = await searchOsmPlaces(query, geocode.all(), 1);
+      if (online[0]) return online[0];
+      break;
+    } catch (err) {
+      console.warn(`Place search for "${query}" failed:`, (err as Error).message);
+    }
+  }
+  const town = touristPlace(query);
+  if (town) return town;
+  const wiki = await wikiPlace(query).catch(() => null);
+  if (wiki)
+    return {
+      id: `wiki-${wiki.pageId}`,
+      name: wiki.name,
+      city: wiki.name,
+      lat: wiki.lat,
+      lng: wiki.lng,
+      type: 'AREA',
+      aliases: [],
+    };
+  return geocode.resolve(query);
 }

@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import type { Place } from '../types';
 import { haversineKm } from './geo';
 
 export type Tier = 'budget' | 'comfort' | 'luxury';
@@ -39,6 +40,8 @@ const USD_INR = Number(process.env.USD_INR) || 88;
 const TIER_LIMITS = { comfort: 3000, luxury: 8000 };
 
 let cache: DataHotel[] | null = null;
+/** Tourist destinations in the hotel list, each placed at the middle of its hotels. */
+let towns: { name: string; area: string; lat: number; lng: number; hotels: number }[] = [];
 
 function load(): DataHotel[] {
   if (cache) return cache;
@@ -63,6 +66,20 @@ function load(): DataHotel[] {
     }[];
   };
   const city = new Map(raw.cities.map((c) => [c.geo, c.name]));
+  const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+  towns = raw.cities.flatMap((c) => {
+    const own = raw.hotels.filter((h) => h.g === c.geo);
+    if (!own.length) return [];
+    return [
+      {
+        name: c.name,
+        area: (c as { area?: string }).area ?? c.name,
+        lat: median(own.map((h) => h.lat)),
+        lng: median(own.map((h) => h.lng)),
+        hotels: own.length,
+      },
+    ];
+  });
   const inr = (usd: number | null) => (usd ? Math.round((usd * USD_INR) / 50) * 50 : null);
   // A hotel can be listed under two localities (different "g", same "d" number); keep one.
   const seen = new Set<string>();
@@ -94,6 +111,39 @@ function load(): DataHotel[] {
 }
 
 export const hotelCount = () => load().length;
+
+const norm = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/,?\s*india$/, '')
+    .replace(/[^a-z]+/g, ' ')
+    .trim();
+
+/**
+ * A tourist destination from the hotel list by name ("Udaipur", "udaipur, rajasthan"), so the
+ * holiday planner still finds well-known places when the online place search is down.
+ */
+export function touristPlace(query: string): Place | null {
+  load();
+  const q = norm(query);
+  if (q.length < 3) return null;
+  const hit = towns
+    .filter((t) => {
+      const n = norm(t.name);
+      return q === n || q.startsWith(`${n} `) || norm(t.area).startsWith(q);
+    })
+    .sort((a, b) => b.hotels - a.hotels)[0];
+  if (!hit) return null;
+  return {
+    id: `town-${norm(hit.name).replace(/ /g, '-')}`,
+    name: hit.name,
+    city: hit.name,
+    lat: hit.lat,
+    lng: hit.lng,
+    type: 'AREA',
+    aliases: [],
+  };
+}
 
 export function tierOf(h: DataHotel): Tier | null {
   if (!h.min) return null;

@@ -175,6 +175,24 @@ export async function sightsNear(points: { lat: number; lng: number }[], radiusK
   return places;
 }
 
+/** India's rough bounding box, to reject same-named places abroad. */
+const inIndia = (lat: number, lng: number) => lat > 6 && lat < 37.6 && lng > 68 && lng < 97.5;
+
+/** A place's coordinates from its Wikipedia article ("Udaipur" → the city), if it's in India. */
+export async function wikiPlace(name: string) {
+  const res = await call({
+    action: 'query',
+    titles: name.trim(),
+    redirects: '1',
+    prop: 'coordinates|description',
+  });
+  const page = res.query?.pages?.[0];
+  const c = page?.coordinates?.[0];
+  if (!page || !c || !inIndia(c.lat, c.lon)) return null;
+  const title = page.title.replace(/,\s*[A-Z][\w ]+$/, '');
+  return { pageId: page.pageid, name: title, lat: c.lat, lng: c.lon };
+}
+
 /** Notable hotels found by the last sightsNear() call for the same points. */
 export function notableHotels(points: { lat: number; lng: number }[], radiusKm = 10) {
   const key =

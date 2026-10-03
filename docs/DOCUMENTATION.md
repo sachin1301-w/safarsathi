@@ -540,6 +540,7 @@ All of this happened on 2–3 October 2026. The code in brackets is the save poi
 | A cab was charged once per person | The trip planner prices one traveller | Tickets are per person; a cab is shared by up to 4 people |
 | "Internal server error" when logging in, now and then | The online database (MongoDB Atlas) sometimes takes too long to answer | Try again after a few seconds |
 | The Expo app server stopped by itself | Unknown; nothing in its log | Start it again (`npx expo start` in the `mobile` folder) |
+| Holidays said "I couldn't find Udaipur" | The free OpenStreetMap place search was busy for a moment, and the app had no backup | It now tries twice, then looks in our own list of 337 tourist places, then on Wikipedia |
 | The public tunnel said "took too long to connect" | This network blocks it (like the FortiGate Wi-Fi) | Use the laptop's Wi-Fi address on the same network, switch to the phone hotspot, or deploy to Render |
 
 ---
