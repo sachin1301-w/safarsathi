@@ -25,7 +25,24 @@ export const pageWidth = (max = 880) =>
  * Website-only data attributes, styled in app/+html.tsx: 'tilt' (3D tilt towards the mouse with a
  * light reflection), 'glass' (frosted), 'gradientText', 'float', 'glowButton'. Nothing on phones.
  */
-export const webData = (...keys: ('tilt' | 'glass' | 'gradientText' | 'float' | 'glowButton')[]) =>
+type WebEffect =
+  | 'tilt'
+  | 'glass'
+  | 'hud'
+  | 'gradientText'
+  | 'float'
+  | 'glowButton'
+  | 'display'
+  | 'reveal'
+  | 'spin'
+  | 'mascot'
+  | 'bubble'
+  | 'scrollCue'
+  | 'hudNav'
+  | 'hudLink'
+  | 'titleGlow';
+
+export const webData = (...keys: WebEffect[]) =>
   (Platform.OS === 'web'
     ? { dataSet: Object.fromEntries(keys.map((k) => [k, ''])) }
     : {}) as object;
@@ -72,7 +89,7 @@ export function Card({
   const base = [styles.card, { backgroundColor: theme.surface, borderColor: theme.border }, style];
   if (!onPress)
     return (
-      <View style={base} {...webData('glass')}>
+      <View style={base} {...webData('glass', 'hud')}>
         {children}
       </View>
     );
@@ -83,7 +100,7 @@ export function Card({
       // Reserve buttons some cards hold, so cards are plain clickable containers there.
       accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       accessibilityLabel={accessibilityLabel}
-      {...webData('tilt')}
+      {...webData('tilt', 'hud')}
       style={(state) => [
         base,
         webInteractive,

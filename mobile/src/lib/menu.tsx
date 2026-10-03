@@ -3,23 +3,25 @@
  * including Home, always lead somewhere.
  */
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 
 import { AccountSheet } from '@/components/account-sheet';
 import { LanguagePicker } from '@/components/language-picker';
+import { WIDE_CHROME } from '@/components/web-chrome';
 import { Icon, isHovered, webInteractive } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 import { useApp } from '@/lib/app-context';
 
-const MenuContext = createContext<{ openMenu: () => void } | null>(null);
+const MenuContext = createContext<{ openMenu: () => void; openLanguage: () => void } | null>(null);
 
 export function MenuProvider({ children }: { children: ReactNode }) {
   const { profile, setLanguage } = useApp();
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const openMenu = useCallback(() => setOpen(true), []);
+  const openLanguage = useCallback(() => setLanguageOpen(true), []);
   return (
-    <MenuContext.Provider value={{ openMenu }}>
+    <MenuContext.Provider value={{ openMenu, openLanguage }}>
       {children}
       <AccountSheet
         visible={open}
@@ -46,6 +48,9 @@ export function useMenu() {
 export function MenuButton() {
   const theme = useTheme();
   const { openMenu } = useMenu();
+  const width = useWindowDimensions().width;
+  const chrome = Platform.OS === 'web' && width >= WIDE_CHROME;
+  if (chrome) return null; // the website's right dock has the menu
   return (
     <Pressable
       onPress={openMenu}

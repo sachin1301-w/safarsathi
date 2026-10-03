@@ -1,10 +1,10 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AlertBanner } from '@/components/alert-banner';
-import { WebHero } from '@/components/web-hero';
+import { WebHome } from '@/components/web-home';
 import { DemoFooter } from '@/components/demo-footer';
 import { JourneyCard } from '@/components/journey-card';
 import { LanguagePicker, nativeName } from '@/components/language-picker';
@@ -45,12 +45,16 @@ function greeting(): StringKey {
 }
 
 export default function HomeScreen() {
+  // The website gets the cinematic 3D home page; the phone app keeps its own Home.
+  return Platform.OS === 'web' ? <WebHome /> : <AppHome />;
+}
+
+function AppHome() {
   const theme = useTheme();
   const { profile, setLanguage } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [status, setStatus] = useState<Status>('checking');
   const [query, setQuery] = useState('');
-  const searchRef = useRef<TextInput>(null);
   const [hello] = useState(greeting);
   const t = useT();
   const { alerts, dismiss, refresh } = useAlerts();
@@ -167,8 +171,6 @@ export default function HomeScreen() {
           />
         ))}
 
-        <WebHero onPlan={() => searchRef.current?.focus()} />
-
         <View>
           <Text style={[styles.hello, { color: theme.textSecondary }]}>
             {t(hello)}
@@ -185,7 +187,6 @@ export default function HomeScreen() {
           ]}>
           <Icon name="magnify" size={26} color={theme.accent} />
           <TextInput
-            ref={searchRef}
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={submit}

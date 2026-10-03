@@ -1,8 +1,11 @@
 /**
  * The website's HTML page (Expo Router web only). Adds the look that React Native styles can't
  * express: a slowly drifting aurora background, frosted glass, 3D cards that tilt towards the
- * mouse with a moving light reflection, gradient headline text and gentle floating. Components
- * opt in with data attributes: data-tilt, data-glass, data-gradient-text, data-float.
+ * mouse with a moving light reflection, gradient headline text and gentle floating, plus the
+ * HUD look (cut-corner framed panels, angled top nav, side docks, scroll cue, robot mascot) and
+ * fade-in-on-scroll. Components opt in with data attributes: data-tilt, data-glass, data-hud,
+ * data-gradient-text, data-float, data-display, data-reveal, data-spin, data-mascot, data-bubble,
+ * data-scroll-cue, data-hud-nav.
  */
 import { ScrollViewStyleReset } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
@@ -32,6 +35,29 @@ body::after{background:radial-gradient(34% 34% at 64% 86%,var(--a3),transparent 
 ::selection{background:rgba(0,191,166,.35)}
 *{scrollbar-width:thin;scrollbar-color:rgba(0,191,166,.45) transparent}
 ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:rgba(0,191,166,.4);border-radius:9px}
+#root [dir=auto],#root input,#root textarea{font-family:'Space Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif}
+[data-display]{font-family:'Orbitron','Space Grotesk',sans-serif !important;letter-spacing:.08em}
+:root{--panel:rgba(255,255,255,.62);--hud-edge:linear-gradient(135deg,#E9B949,#00BFA6 40%,#6366F1 75%,#E9B949)}
+html[data-theme=dark]{--panel:rgba(10,13,20,.58)}
+[data-hud]{--cut:16px;clip-path:polygon(var(--cut) 0,calc(100% - var(--cut)) 0,100% var(--cut),100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,var(--cut) 100%,0 calc(100% - var(--cut)),0 var(--cut));background:var(--panel) !important;border-color:transparent !important}
+[data-hud]::before{content:'';position:absolute;inset:0;padding:1.6px;background:var(--hud-edge);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.85}
+[data-hud]:hover::before{opacity:1;filter:drop-shadow(0 0 6px rgba(0,191,166,.8))}
+[data-hud-nav]{clip-path:polygon(0 0,100% 0,calc(100% - 34px) 100%,34px 100%);background:var(--panel) !important;backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border-bottom:1.5px solid rgba(0,191,166,.65) !important}
+[data-hud-link]{transition:color .2s ease,text-shadow .2s ease}
+[data-hud-link]:hover{color:#00BFA6 !important;text-shadow:0 0 12px rgba(0,191,166,.8)}
+[data-reveal]{opacity:0;transform:translateY(42px) scale(.97);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+[data-reveal][data-shown]{opacity:1;transform:none}
+[data-reveal-delay='1']{transition-delay:.12s}[data-reveal-delay='2']{transition-delay:.24s}[data-reveal-delay='3']{transition-delay:.36s}
+[data-spin]{animation:ss-spin .35s linear infinite}
+@keyframes ss-spin{to{transform:rotateY(360deg)}}
+[data-mascot]{animation:ss-hover 3.2s ease-in-out infinite;cursor:pointer}
+@keyframes ss-hover{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-14px) rotate(2deg)}}
+[data-bubble]{opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;pointer-events:none}
+[data-mascot]:hover [data-bubble]{opacity:1;transform:none}
+[data-scroll-cue]{animation:ss-cue 1.8s ease-in-out infinite}
+@keyframes ss-cue{0%{transform:translateY(-8px);opacity:0}40%{opacity:1}100%{transform:translateY(26px);opacity:0}}
+[data-title-glow]{text-shadow:0 0 18px rgba(0,191,166,.55),0 0 42px rgba(99,102,241,.35)}
+@media (prefers-reduced-motion:reduce){[data-reveal]{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none !important;transition:none !important}[data-tilt]{transform:none !important}}
 `;
 
@@ -54,6 +80,12 @@ const TILT = `
     el.style.setProperty('--my',(py*100).toFixed(1)+'%');
   },{passive:true});
   document.addEventListener('pointerleave',function(){if(active){reset(active);active=null;}});
+  // Fade [data-reveal] elements in as they scroll into view (they can appear at any time).
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.setAttribute('data-shown','');io.unobserve(en.target);}});},{threshold:.15});
+    var scan=function(){document.querySelectorAll('[data-reveal]:not([data-shown]):not([data-watched])').forEach(function(el){el.setAttribute('data-watched','');io.observe(el);});};
+    new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});scan();
+  } else { document.querySelectorAll('[data-reveal]').forEach(function(el){el.setAttribute('data-shown','');}); }
 })();
 `;
 
@@ -70,6 +102,12 @@ export default function Root({ children }: PropsWithChildren) {
           content="SafarSathi: one AI copilot for your whole journey across India: metro, bus, train, flight, cab and EV."
         />
         <title>SafarSathi · AI travel copilot</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        />
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: CSS }} />
       </head>
